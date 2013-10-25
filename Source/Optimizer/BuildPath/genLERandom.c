@@ -1,7 +1,11 @@
-#include "../Libs/Random123-1.08/include/Random123/philox.h"
+#include "Random123/philox.h"
 #include "le.h"
 
 
+void LE_random(philox2x32_ctr_t *rand_c, philox2x32_key_t rand_k, __constant struct vertex *vertex, mask_t end,struct string_ctx le);
+
+
+void print_le(struct string_ctx s);
 
 #define QUIET
 	
@@ -52,8 +56,6 @@ extend(mask_t a, mask_t b, struct string_ctx *s)
 void
 print_le(struct string_ctx s)
 {
-	static int i;
-	DEBUG_PRINTF("%d\n",i++);
 #ifndef QUIET
 	unsigned int i;
 
@@ -101,10 +103,11 @@ __kernel void genWalkLE_NR_kernel(__constant struct vertex *vertex, unsigned int
 
 		extend(ctx.node->mask,ctx.prev_mask,&le);
 		
-		if (le.s_index+1 >= max_depth)//(ctx.node->mask == graph->end)
+		if (le.s_index >= le.s_len)//(ctx.node->mask == graph->end)
 		{	
 			//le.s_len = max_depth;
-			DEBUG_PRINTF("count: %d\n", ctx.node->count);
+			DEBUG_PRINTF("count: %llu\n", ctx.node->count);
+            printf("{%d,%d,%d,%d,%d}\n", le_buf[0], le_buf[1], le_buf[2], le_buf[3], le_buf[4]);
 			print_le(le);
 		}
 		else
@@ -133,6 +136,70 @@ __kernel void genWalkLE_NR_kernel(__constant struct vertex *vertex, unsigned int
 	}
 
 }
+
+
+/*
+__kernel void genWalkLE_NR_kernel(__constant struct vertex *vertex, unsigned int max_depth)
+{
+	int i, si = 1;
+	struct stack_context nodes_to_visit[DFS_MAX_STACKLEN+1];
+	struct stack_context ctx;
+	struct string_ctx le;
+	unsigned char le_buf[COMBO_LEN];
+    
+	le.s_index = 0;
+	le.s_len   = COMBO_LEN;
+	le.s_ptr   = le_buf;
+    
+	nodes_to_visit[0].node      = &vertex[1];
+	nodes_to_visit[0].prev_mask = 0;
+	nodes_to_visit[0].le_index  = 0;
+    
+	
+	while (si > 0)
+	{
+		ctx = nodes_to_visit[--si];
+		le.s_index = ctx.le_index;
+        //	printf("v=%d\n", ctx.prev_mask);
+        //	printf("le_index=%d\n", le.s_index);
+        
+		extend(ctx.node->mask,ctx.prev_mask,&le);
+		
+		if (le.s_index >= max_depth)//(ctx.node->mask == graph->end)
+		{
+			//le.s_len = max_depth;
+			DEBUG_PRINTF("count: %llu\n", ctx.node->count);
+            printf("{%d,%d,%d,%d,%d}\n", le_buf[0], le_buf[1], le_buf[2], le_buf[3], le_buf[4]);
+			print_le(le);
+		}
+		else
+		{
+			struct stack_context x;
+            
+			for (i = MAX_NEIGHBORS - 1; i >= 0 ; --i)
+			{
+				if (ctx.node->neighbors_out[i] == 0)
+					continue;
+                
+				if (si+1 > DFS_MAX_STACKLEN)
+				{
+					DEBUG_PRINTF("SI=1>combolen:%d,%d\n", COMBO_LEN, si);
+					return;
+				}
+                
+				x.node      = &vertex[ctx.node->neighbors_out[i]];
+				x.prev_mask = ctx.node->mask;
+				x.le_index  = le.s_index;
+                
+				nodes_to_visit[si++] = x;
+			}
+		}
+        
+	}
+    
+}
+*/
+
 
 
 
@@ -187,9 +254,9 @@ __kernel void kernel_LE_random(
 	philox2x32_key_t rand_k, 
 	__constant struct vertex *vertex,
 	mask_t end, 
-	unsigned int nsamples)
+	ulong nsamples)
 {
-	philox2x32_ctr_t rand_c = {0,0};
+	philox2x32_ctr_t rand_c;
 	struct string_ctx le;
 	unsigned char le_buf[COMBO_LEN];
 	unsigned int i;
@@ -216,7 +283,9 @@ __kernel void kernel_LE_random(
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
-#include <Windows.h>
+
+//#include <Windows.h>
+
 #include <time.h>
 
 #include "le_test.h"
@@ -260,16 +329,18 @@ void AssignWrapper(struct graph *g)
 
 void init_all(struct graph *g, philox2x32_key_t *rand_k)
 {
-	LARGE_INTEGER t1,t2;
-	memset(rand_k, 0, sizeof *rand_k);
-	rand_k->v[0] = clock();
-
+	//LARGE_INTEGER t1,t2;
+    if (rand_k)
+    {
+        memset(rand_k, 0, sizeof *rand_k);
+        rand_k->v[0] = (unsigned int) clock();
+    }
 	init_graph(g, vertices, sizeof(vertices)/sizeof(struct vertex));
 
-	QueryPerformanceCounter(&t1);
+	//QueryPerformanceCounter(&t1);
 	AssignWrapper(g);
-	QueryPerformanceCounter(&t2);
-	DEBUG_PRINTF("count=%d, time=%d\n", g->vertex[1].count, t2.QuadPart-t1.QuadPart);
+	//QueryPerformanceCounter(&t2);
+	//DEBUG_PRINTF("count=%d, time=%d\n", g->vertex[1].count, t2.QuadPart-t1.QuadPart);
 }
 
 uint64_t samples_needed(struct graph *g, double precision)
@@ -363,12 +434,13 @@ void genWalkLE(const struct graph *graph, struct vertex *root, struct string_ctx
 */
 
 
-extern void gpu_start(void *ctx);
+extern void gpu_LERandom(void *ctx);
+extern void gpu_LETree(void *ctx);
 void * gpu_init(char *, char *);
 
-void main()
+int main()
 {
-	LARGE_INTEGER t1,t2;
+	//LARGE_INTEGER t1,t2;
 	philox2x32_key_t rand_k;
 	struct string_ctx le;
 	uint64_t nsamples;
@@ -377,7 +449,6 @@ void main()
 	struct graph g;
 	unsigned char le_buf[COMBO_LEN];
 
-	int i = 0;
 	
 	init_all(&g, &rand_k);
 
@@ -391,10 +462,10 @@ void main()
 	printf("DEPTH FIRST SEARCH: %d\n", t2.QuadPart-t1.QuadPart);
 */
 
-	QueryPerformanceCounter(&t1);
+	//QueryPerformanceCounter(&t1);
 	genWalkLE_NR_kernel(g.vertex, 2);
-	QueryPerformanceCounter(&t2);
-	DEBUG_PRINTF("ITERATIVE DEPTH FIRST SEARCH: %d\n", t2.QuadPart-t1.QuadPart);
+	//QueryPerformanceCounter(&t2);
+	//DEBUG_PRINTF("ITERATIVE DEPTH FIRST SEARCH: %d\n", t2.QuadPart-t1.QuadPart);
 
 
 
@@ -406,13 +477,13 @@ void main()
 	nsamples = samples_needed(&g, 0.99);
 	{
 		unsigned char *set = (unsigned char*) calloc(COMBO_LEN, nsamples);
-		int filtered_count = 0;
+		//int filtered_count = 0;
 
-		DEBUG_PRINTF("SAMPLE_SIZE=%d\n",nsamples);
+		DEBUG_PRINTF("SAMPLE_SIZE=%llu\n",nsamples);
 		le.s_index = 0;
 		le.s_len   = COMBO_LEN;
 
-		QueryPerformanceCounter(&t1);
+		//QueryPerformanceCounter(&t1);
 		// fill set
 		/*
 		for (i = 0; i < nsamples; ++i)
@@ -422,8 +493,8 @@ void main()
 		}*/
 		kernel_LE_random(rand_k, g.vertex, g.end, nsamples);
 
-		QueryPerformanceCounter(&t2);
-		DEBUG_PRINTF("RANDOM SAMPLING: %d\n", t2.QuadPart-t1.QuadPart);
+		//QueryPerformanceCounter(&t2);
+		//DEBUG_PRINTF("RANDOM SAMPLING: %d\n", t2.QuadPart-t1.QuadPart);
 
 #ifdef FILTER_RANDOM
 		// mark duplicates
@@ -458,8 +529,9 @@ void main()
 		free(set);
 	}
 
-	gpu_ctx = gpu_init(__FILE__, "-DUSE_OPENCL -I../Optimizer");
-	gpu_start(gpu_ctx);
+	gpu_ctx = gpu_init(__FILE__, "-DUSE_OPENCL -I/Users/NHA/llio/Source/Optimizer/BuildPath -I/Users/NHA/llio/Source/Optimizer/Libs/Random123-1.08/include/");
+	gpu_LERandom(gpu_ctx);
+    gpu_LETree(gpu_ctx);
 	free(gpu_ctx);
 }
 

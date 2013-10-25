@@ -32,7 +32,7 @@ struct stack_context
 	unsigned int le_index;
 };
 
-#define BIG
+//#define BIG
 
 
 #ifdef BIG
@@ -52,7 +52,7 @@ struct vertex {
 };
 
 
-static void init_graph(struct graph *g, __constant struct vertex *vs, int len)
+static inline void init_graph(struct graph *g, __constant struct vertex *vs, int len)
 {
 	g->end   = vs[len-1].mask;
 	g->end_v = &vs[len-1];

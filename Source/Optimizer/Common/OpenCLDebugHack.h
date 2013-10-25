@@ -11,17 +11,17 @@
 #define __constant
 #define __local
 
-#define INFINITY 9999999
+//#define INFINITY 9999999
 #define CLK_LOCAL_MEM_FENCE 0
 #define barrier(X)  ;
 
 static int __global_id, __local_id, __global_size, __local_size, __group_id;
 
-static int get_global_id(int x)  { return __global_id; }
-static int get_local_id(int x)   { return __local_id; }
-static int get_group_id(int x)  { return __group_id; }
-static int get_global_size(int x){ return __global_size; }
-static int get_local_size(int x) { return __local_size; }
+static inline int get_global_id(int x)  { return __global_id; }
+static inline int get_local_id(int x)   { return __local_id; }
+static inline int get_group_id(int x)  { return __group_id; }
+static inline int get_global_size(int x){ return __global_size; }
+static inline int get_local_size(int x) { return __local_size; }
 
 typedef struct { int x; int y; } int2;
 typedef int mint;

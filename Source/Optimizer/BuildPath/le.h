@@ -1,63 +1,69 @@
 #ifndef _LE_H_
 #define _LE_H_
 
+
+/*
 #ifndef __OPENCL_VERSION__ 
 #include "../Common/OpenCLDebugHack.h"
 #else
 #define DEBUG_PRINTF(...) 
 #endif
+*/
 
-typedef unsigned int mask_t;
+/*
+#ifdef __OSX__
+#include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
+*/
 
+
+//#pragma pack (push, 16)
+typedef struct { cl_float metric; cl_ulong index; }    cl_result_t;
+//#pragma pack(pop)
+typedef cl_uint  cl_mask_t;
 
 struct graph {
-	mask_t end;
-	__constant struct vertex *end_v;
-	__constant struct vertex *vertex;
+	cl_mask_t end;
+	//struct cl_vertex *end_v;
+	cl_mask_t        *masks;
+	cl_ulong         *counts;
+	cl_short         *idmap;
+	unsigned int idmap_len;
 	unsigned int vertex_count;
+	cl_uchar         *adjacency;
+	unsigned int max_neighbors;
+	unsigned int combo_len;
 };
 
 
-struct string_ctx
+static __inline void init_graph(
+	struct graph *g, 
+	cl_mask_t *ms, 
+	unsigned int len, 
+	cl_uchar *adjacency, 
+	unsigned int max_neighbors, 
+	unsigned int combo_len,
+	cl_short *idmap,
+	unsigned int idmap_len)
 {
-	unsigned char *s_ptr;
-	unsigned int   s_len;
-	unsigned int   s_index;
-};
+	g->end           = ms[len-1]; // TODO: make sure this is a valid assumption
+	//g->end_v        = &vs[len-1];
+	g->idmap         = idmap;
+	g->idmap_len     = idmap_len;
+	g->masks         = ms;
+	g->vertex_count  = len;
+	g->adjacency     = adjacency;
+	g->max_neighbors = max_neighbors;
+	g->combo_len     = combo_len;
+	g->counts        = calloc(len, sizeof(*g->counts));
 
-struct stack_context 
-{
-	__constant struct vertex *node;
-	mask_t prev_mask;
-	unsigned int le_index;
-};
-
-//#define BIG
-
-
-#ifdef BIG
-#define MAX_NEIGHBORS 3
-#define COMBO_LEN 9
-#else
-#define MAX_NEIGHBORS 2
-#define COMBO_LEN 5
-#endif
-
-
-struct vertex {
-	mask_t mask;
-	unsigned short neighbors_out[MAX_NEIGHBORS];
-	uint64_t count;
-	unsigned char visited;
-};
-
-
-static inline void init_graph(struct graph *g, __constant struct vertex *vs, int len)
-{
-	g->end   = vs[len-1].mask;
-	g->end_v = &vs[len-1];
-	g->vertex = vs;
-	g->vertex_count = len;
+	if (g->counts == NULL)
+	{
+		printf("init_graph: malloc failure\n");
+		exit(-1);
+	}
 }
 
 #endif

@@ -8,14 +8,14 @@
 #define CFG_SIZE       5
 ////////////////////////////////////////////
 
-#define AS_OFFSET         (-0.04)
-#define AS_LVPER          (0.0322)
-#define AS_BASE           (0.625/(1+AS_OFFSET))
+#define AS_OFFSET         (-0.04f)
+#define AS_LVPER          (0.0322f)
+#define AS_BASE           (0.625f/(1.0f+AS_OFFSET))
 
 #define CALC_ATTACKSPEED(LV,GEAR) \
-	min(2.5, AS_BASE * (1+(AS_LVPER*(LV-1)) + GEAR))
+	min(2.5f, AS_BASE * (1.0f+(AS_LVPER*(LV-1.0f)) + GEAR))
 
-#define CALC_CRIT(B,C)    (1.0 + (1.0 + B) * min(1.0, C))
+#define CALC_CRIT(B,C)    (1.0f + (1.0f + B) * min(1.0f, C))
 
 #define CALC_ARMOR_MITIGATION(ARMOR, APP, APF)   \
 	(100/(100+((ARMOR*(1-APP))-APF)))

@@ -15,24 +15,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\BuildPath\genLE.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\BuildPath\genLE_GPU.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\BuildPath\genLERandom.c">
+    <ClCompile Include="..\..\..\BuildPath\genLE_Kernel.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\BuildPath\le_init.c">
+    <ClCompile Include="..\..\..\BuildPath\genLE_Debug.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\BuildPath\genLE_Init.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\le.h">
+    <ClInclude Include="..\..\..\BuildPath\le.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\le_test.h">
+    <ClInclude Include="..\..\..\BuildPath\le_test.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\BuildPath\le_kernel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

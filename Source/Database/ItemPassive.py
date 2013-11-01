@@ -88,7 +88,6 @@ def print_items(
     output_name, 
     output_item, 
     output_passive,
-    output_depgraph,
     itemdb_unsorted, filter_func=lambda _: True):
     itemdb  = OrderedDict(sorted(itemdb_unsorted.items(), key=lambda t: t[1].id))
     viable  = list(filter(filter_func, itemdb.values()))
@@ -116,8 +115,8 @@ def print_items(
         output_item(v, passive_index)
         
         #output graph
-        edges = v.buildTreeToEdges(itemdb)
-        output_depgraph(edges)
+        #edges = v.buildTreeToEdges(itemdb)
+        #output_depgraph(edges)
     
     for v in passive_unique.values():
         output_passive(v)
@@ -139,30 +138,36 @@ null_item.BuildTo = []
 itemdb[0] = null_item
 # TODO: parameterize this
 mathematica_code = """
-itemDatabaseFields = {"F_ID", "F_PASSIVE", "F_COST", "F_AD", "F_CRIT_CHANCE", "F_CRIT_BONUS", "F_ATTACK_SPEED", "F_ARMORPEN_FLAT", "F_ARMORPEN_PERCENT", "F_HP", "F_HP2AD"}
+itemDatabaseFields = {"F_ID", "F_PASSIVE", "F_COST", "F_UPGRADE_COST", "F_AD", "F_CRIT_CHANCE", "F_CRIT_BONUS", "F_ATTACK_SPEED", "F_ARMORPEN_FLAT", "F_ARMORPEN_PERCENT", "F_HP", "F_HP2AD"}
 itemDatabaseRules  = ArrayRules [itemDatabaseFields]  /. (({x_} -> y_) :> y -> x)
-itemPassiveSyncOffset = 3
+itemPassiveSyncOffset = 4
 """
 
 item_columns = """
 #define F_ID                         0
 #define F_PASSIVE                    1
 #define F_COST                       2 
-#define F_AD                         3
-#define F_CRIT_CHANCE                4
-#define F_CRIT_BONUS                 5
-#define F_ATTACK_SPEED               6 
-#define F_ARMORPEN_FLAT              7
-#define F_ARMORPEN_PERCENT           8
-#define F_HP                         9
-#define F_HP2AD                      10
-#define ITEM_WIDTH                   11
+#define F_UPGRADE_COST               3
+#define F_AD                         4
+#define F_CRIT_CHANCE                5
+#define F_CRIT_BONUS                 6
+#define F_ATTACK_SPEED               7 
+#define F_ARMORPEN_FLAT              8
+#define F_ARMORPEN_PERCENT           9
+#define F_HP                         10
+#define F_HP2AD                      11
+#define ITEM_WIDTH                   12
 #define ITEM_PASSIVE_SYNC_OFFSET     F_AD /* Passive layout matches item layout after first few columns are dropped */
 #define PASSIVE_WIDTH                (ITEM_WIDTH-ITEM_PASSIVE_SYNC_OFFSET)
 #define PASSIVE_NULL                 %d
 """ % list(passive_unique.keys()).index("(NULL)")
 
-    
+def item_fields(v,passive_index):
+    return (v.id, passive_index, total_cost(itemdb,v.id), v.Cost, v.AD, v.CritChance, v.CritDamage, v.AttackSpeed, v.ArmorPen, v.ArmorPenPercent, v.HP, v.HPtoAD)
+
+def passive_fields(v):
+    return (v.AD, v.CritChance, v.CritDamage, v.AttackSpeed, v.ArmorPen, v.ArmorPenPercent, v.HP, v.HPtoAD)
+
 def static_output():
     
     with open("database.h", "w") as source:
@@ -172,19 +177,19 @@ def static_output():
         fmt_name = lambda n: n
 
         fmt_item = lambda v, passive_index: items.append(
-            "  {%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f}" % 
-            (v.id, passive_index, total_cost(itemdb,v.id), v.AD, v.CritChance, v.CritDamage, v.AttackSpeed, v.ArmorPen, v.ArmorPenPercent, v.HP, v.HPtoAD))
+            "  {%ff,%ff,%ff,%ff,%ff,%ff,%ff,%ff,%ff,%ff,%ff,%ff}" % item_fields(v, passive_index)
+           )
          
         fmt_passive = lambda v: passives.append(
-            "  {%d,%f,%f,%f,%f,%f,%f,%f}" % 
-            (v.AD, v.CritChance, v.CritDamage, v.AttackSpeed, v.ArmorPen, v.ArmorPenPercent, v.HP, v.HPtoAD))
+            "  {%ff,%ff,%ff,%ff,%ff,%ff,%ff,%ff}" % passive_fields(v)
+            )
             
         print_items(fmt_name,fmt_item,fmt_passive,itemdb,lambda x: x.valid)
                     
-        source.write("\nstatic float db_items[][ITEM_WIDTH] = {\n")
+        source.write("\nstatic cl_float db_items[][ITEM_WIDTH] = {\n")
         source.write(",\n".join(items))
         source.write("\n};\n\n");
-        source.write("static float db_passives[][ITEM_WIDTH-ITEM_PASSIVE_SYNC_OFFSET] = {\n")
+        source.write("static cl_float db_passives[][ITEM_WIDTH-ITEM_PASSIVE_SYNC_OFFSET] = {\n")
         source.write(",\n".join(passives))
         source.write("\n};\n\n");
         
@@ -201,22 +206,17 @@ def dat_output():
                         fmt_name = lambda n: names.write(n+"\n")
 
                         fmt_item = lambda v, passive_index: items.write(
-                            "%d %d %d %d %f %f %f %f %f %f %f\n" % 
-                            (v.id, passive_index, total_cost(itemdb,v.id), v.AD, v.CritChance, v.CritDamage, v.AttackSpeed, v.ArmorPen, v.ArmorPenPercent, v.HP, v.HPtoAD))
+                            "%d %d %d %d %d %f %f %f %f %f %f %f\n" % item_fields(v,passive_index))
                          
                         fmt_passive = lambda v: passives.write(
-                            "%d %f %f %f %f %f %f %f\n" % 
-                            (v.AD, v.CritChance, v.CritDamage, v.AttackSpeed, v.ArmorPen, v.ArmorPenPercent, v.HP, v.HPtoAD))
+                            "%d %f %f %f %f %f %f %f\n" % passive_fields(v)
+                            )
                             
-
                         print_items(fmt_name,fmt_item,fmt_passive,itemdb,lambda x: x.valid)
 
  
 
-#static_output()
-#dat_output()
 
-   
    
 def build_tree():
     lines = []
@@ -229,4 +229,6 @@ def build_tree():
 
     sys.stdout.write("buildTree = {\n%s\n};\n" % ",\n".join(lines))
     
+static_output()
+dat_output()
 build_tree()

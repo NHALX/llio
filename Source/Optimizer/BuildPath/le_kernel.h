@@ -15,4 +15,8 @@ struct string_ctx
 
 
 typedef struct STRUCT_ALIGNMENT { float metric; ulong index; } result_t;
-typedef uint    mask_t;
+
+typedef uint   index_t;
+typedef uchar  ideal_t;
+typedef ulong  count_t;
+typedef ushort itemid_t;

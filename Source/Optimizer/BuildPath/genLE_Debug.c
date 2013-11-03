@@ -22,45 +22,118 @@
 
 void init_all(struct graph *g)
 {
-	init_graph(g, vertices, sizeof(vertices) / sizeof(*vertices), (cl_uchar*)adjacency, ADJACENCY_MAX, LE_SIZE, node2id, IDMAP_LEN);
+	init_graph(g, LE_T_DATA_LEN, ideals, adjacency, LE_T_ADJACENCY_MAX, LE_T_EXTENSION_SIZE, node2id, LE_T_IDMAP_LEN);
 	init_count(g);
 }
 
 
-extern cl_result_t * gpu_LE(struct gpu_context *ctx, struct graph *g, cl_float *cfg_input, size_t * result_n);
+extern c_result_t * gpu_LE(struct gpu_context *ctx, struct graph *g, cl_float *cfg_input, size_t * result_n);
 extern void * gpu_init(char *, char *);
 
 //#define DEBUG_ON_CPU
 /*
-Starting: 20,10
-[0]={1061,7}
-[1]={0,0}
+Starting: 20,1
+Args: db_size=10464, passive_size=480, cfg_size=20, id_size=12, mask_size=68, co
+unt_size=136, adjacency_size=51, max_neighbor=3, combo_len=6
+[0]={1010.394226,0}
+[1]={1010.394226,1}
+[2]={1019.491089,2}
+[3]={1027.983643,3}
+[4]={1061.424683,4}
+[5]={1019.491089,5}
+[6]={1027.983643,6}
+[7]={1061.424683,7}
+[8]={1028.950684,8}
+[9]={1037.443237,9}
+[10]={1070.884277,10}
+[11]={1046.419189,11}
+[12]={1079.860352,12}
+[13]={1113.389038,13}
+[14]={1028.950684,14}
+[15]={1037.443237,15}
+[16]={1070.884277,16}
+[17]={1046.419189,17}
+[18]={1079.860352,18}
+[19]={1113.389038,19}
+max=1113.389038,i=13
+============remake=================================================
+CL_INFO: compute_units=30, const_size=65536, work_group_size=512, little_endian=
+1
+OpenCL: allocating 11214/65536 const storage.
+Starting: 20,1
+Args: db_size=10464, passive_size=480, cfg_size=20, id_size=12, ideals_size=51,
+count_size=136, adjacency_size=51, max_neighbor=3, combo_len=6
+[0]={1010.394226,0}
+[1]={1010.394226,1}
+[2]={1019.491089,2}
+[3]={1027.983643,3}
+[4]={1061.424683,4}
+[5]={1019.491089,5}
+[6]={1027.983643,6}
+[7]={1061.424683,7}
+[8]={1028.950684,8}
+[9]={1037.443237,9}
+[10]={1070.884277,10}
+[11]={1046.419189,11}
+[12]={1079.860352,12}
+[13]={1113.389038,13}
+[14]={1028.950684,14}
+[15]={1037.443237,15}
+[16]={1070.884277,16}
+[17]={1046.419189,17}
+[18]={1079.860352,18}
+[19]={1113.389038,19}
+max=1113.389038,i=13
+
+CL_INFO: compute_units=30, const_size=65536, work_group_size=512, little_endian=
+1
+OpenCL: allocating 11367/65536 const storage.
+Starting: 20,1
+Args: db_size=10464, passive_size=480, cfg_size=20, id_size=12, ideals_size=51,
+count_size=136, adjacency_size=204, max_neighbor=3, combo_len=6
+[0]={1010.394226,0}
+[1]={1010.394226,1}
+[2]={1019.491089,2}
+[3]={1027.983643,3}
+[4]={1061.424683,4}
+[5]={1019.491089,5}
+[6]={1027.983643,6}
+[7]={1061.424683,7}
+[8]={1028.950684,8}
+[9]={1037.443237,9}
+[10]={1070.884277,10}
+[11]={1046.419189,11}
+[12]={1079.860352,12}
+[13]={1113.389038,13}
+[14]={1028.950684,14}
+[15]={1037.443237,15}
+[16]={1070.884277,16}
+[17]={1046.419189,17}
+[18]={1079.860352,18}
+[19]={1113.389038,19}
+max=1113.389038,i=13
+
+
 */
 
-int main1()
+int main2()
 {
-	//struct cl_string_ctx le;
 	void *gpu_ctx;
-	int i;
-	cl_ulong n;
-	cl_result_t *results;
-	cl_float cfg[CFG_SIZE] = { 3.0f, 3.4f, 100.0f, 18.0f, 15000.0f };
-	//cl_uchar le_buf[COMBO_LEN];
-
 	struct graph g;
-	cl_result_t maximum = { -1, -1 };
+	int i;
+	c_count_t n;
+	c_result_t *results;
+	c_result_t maximum = { -1, -1 };
+	cl_float cfg[CFG_SIZE] = { 3.0f, 3.4f, 100.0f, 18.0f, 15000.0f };
 
 #ifdef DEBUG_ON_CPU
 	int global_size, local_size;
-	cl_result_t *scratch;
+	c_result_t *scratch;
 #endif
 	int result_n;
 
 	init_all(&g);
 
-	//le.s_index = 0;
-	///le.s_len = COMBO_LEN;
-	//le.s_ptr = le_buf;
 
 	n = g.counts[1]; // TODO: make sure this is a valid assumption
 
@@ -72,7 +145,7 @@ int main1()
 	results = calloc(result_n, sizeof(*results));
 	scratch = calloc(local_size, sizeof(*results));
 
-	MAINLOOP(i, kernel_LE(db_items, db_passives, cfg, node2id, g.masks, g.counts, g.adjacency, g.max_neighbors, g.combo_len, scratch, results), global_size, local_size);
+	MAINLOOP(i, kernel_LE(db_items, db_passives, cfg, node2id, g.ideals, g.counts, g.adjacency, g.max_neighbors, g.combo_len, scratch, results), global_size, local_size);
 #else
 	gpu_ctx = gpu_init("D:/GitRoot/llio/Source/Optimizer/BuildPath/genLE_Kernel.c", "-DUSE_OPENCL -ID:/GitRoot/llio/Source/Optimizer/BuildPath -ID:/GitRoot/llio/Source/Optimizer/Libs/Random123-1.08/include/");
 	results = gpu_LE(gpu_ctx, &g, cfg, &result_n);
@@ -96,116 +169,8 @@ int main1()
 #else
 	free(gpu_ctx);
 #endif
+	return 0;
 }
 
 #endif
 
-
-/*
-struct vertex {
-int label;
-struct vertex *parent;
-struct vertex *left;
-struct vertex *right;
-};
-
-struct vertex * vertex_new()
-{
-struct vertex * x = (struct vertex *) calloc(1, sizeof (struct vertex));
-if (!x)
-abort();
-
-return x;
-}
-
-struct vertex * vertex_dup(struct vertex *x)
-{
-struct vertex *y = (struct vertex *) calloc(1, sizeof (struct vertex));
-if (!y)
-abort();
-
-if (x)
-memcpy(y,x,sizeof(*y));
-
-return y;
-}
-
-
-
-int ImPredTest(int k, struct vertex *children)
-{
-
-}
-
-
-void right(int i, struct vertex *r, struct vertex *root)
-{
-int index;
-#define CHILD_N 2
-struct vertex *children[CHILD_N];
-
-if (r->left && r->right && (r->left->label < r->right->label))
-{
-children[0] = r->left;
-children[1] = r->right;
-} else
-{
-children[1] = r->left;
-children[0] = r->right;
-}
-
-for (index = 0; index < CHILD_N; ++index)
-{
-struct vertex *s,*t;
-
-if (children[index] == NULL || ImPredTest(s->label, children))
-continue;
-
-s = children[index];
-t = vertex_dup(s);
-
-t->parent = root;
-root->left = t;
-t->label = s->label;
-right(i,s,t);
-}
-}
-
-struct vertex * left(int i)
-{
-struct vertex *root = vertex_new();
-struct vertex *r;
-
-if (i == 0)
-return root;
-
-r = left(i-1);
-right(i,r,root);
-
-r->parent  = root;
-root->left = r;
-r->label   = i;
-
-return root;
-}
-
-char *
-toString(struct vertex *v)
-{
-char *l,*r,*buffer;
-
-l = (v->left)  ? toString(v->left) : "{}";
-r = (v->right) ? toString(v->right) : "{}";
-
-buffer = malloc(strlen(l)+strlen(r)+128);
-
-sprintf(buffer, "{%d,%s,%s,%p}", v->label, l, r, v->parent);
-return buffer; // leaks memory
-}
-
-void main()
-{
-struct vertex *v = left(1);
-printf("%s\n", toString(v));
-}
-*/

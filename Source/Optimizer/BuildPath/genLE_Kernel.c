@@ -8,54 +8,9 @@
 #include "../../Database/db_layout.h"
 #define COMBO_WIDTH_MAX 64
 
+//////////////////////////// Debug  ////////////////////////////
 
 void print_le(struct string_ctx s);
-
-
-
-static 
-unsigned char
-set_difference(mask_t a, mask_t b, int le_n) // PORTING: possible endian issues
-{
-	int j;
-	unsigned char ideal = 0;
-	mask_t mask = a & ~b;
-	
-
-	for (j = 0; j < le_n; j++)
-	{
-		if (1<<j & mask)
-		{
-			ideal = j+1;
-			break;
-		}
-	}
-
-	return ideal;
-}
-
-
-
-static
-unsigned char
-extend(mask_t a, mask_t b, struct string_ctx *s)
-{
-	unsigned char ideal;
-	
-	if (a == b)
-		return 0;
-
-	ideal = set_difference(a, b, s->s_len);
-
-	if (ideal != 0 && s->s_index < s->s_len)
-	{
-		s->s_ptr[s->s_index] = ideal;
-		s->s_index++;
-	}
-	return ideal;
-}
-
-
 
 void
 print_le(struct string_ctx s)
@@ -75,13 +30,14 @@ print_le(struct string_ctx s)
 }
 
 
+//////////////////////////// Metrics  ////////////////////////////
 
 float metricAreaDPS(
 	__constant float items[][ITEM_WIDTH],
 	__constant float passives[][PASSIVE_WIDTH],
 	__constant float *cfg,
-	ushort *ids,
-	uint    combo_len)
+	itemid_t *ids,
+	uint combo_len)
 {
 	int passive_unique[COMBO_WIDTH_MAX]; // must be less than or eq combo_len
 	float metric = 0;
@@ -131,43 +87,52 @@ float metricAreaDPS(
 	return metric / 1000;
 }
 
+//////////////////////////// Generate linear extension  ////////////////////////////
 
-#define GET_NEIGHBORS(P,S,I) &P[I*S]
+#define GET_EDGES(P,S,I) (&P[I*S])
 
+static
+unsigned char
+extend(unsigned char ideal, struct string_ctx *s)
+{
+	if (ideal != 0 && s->s_index < s->s_len)
+	{
+		s->s_ptr[s->s_index] = ideal;
+		s->s_index++;
+	}
+	return ideal;
+}
 
 int linear_extension(
-	__constant mask_t *masks, 
-	__constant ulong  *counts,
-	__constant uchar  *adjacency,
+	__constant ideal_t *ideals,
+	__constant count_t *counts,
+	__constant index_t *adjacency,
 	uint  max_neighbors,
-	ulong nth_extension, 
+	count_t nth_extension,
 	struct string_ctx *le)
 {
-	mask_t prev_mask;
-	//uchar neighbors[NEIGHBOR_LIMIT];
-	__constant uchar *neighbors;
-
+	__constant index_t *neighbors;
+	__constant ideal_t *iedges;
 	size_t i;
 	int node_index = 1; // TODO: make sure this is a valid assumption
 
-	prev_mask = masks[node_index];
-	
 
 	while (le->s_index < le->s_len)
 	{
-		ulong interval[2];
-		ulong prev_count;
+		count_t interval[2];
+		count_t prev_count;
+		ideal_t ideal;
+		
+		ideal      = 0;
+		neighbors  = GET_EDGES(adjacency, max_neighbors, node_index);
+		iedges     = GET_EDGES(ideals, max_neighbors, node_index);
+		node_index = -1;
 
-		neighbors = GET_NEIGHBORS(adjacency, max_neighbors, node_index);
-		//for (i = 0; i < max_neighbors; ++i)
-		//	neighbors[i] = adjacency[(node_index*max_neighbors)+i];
-
-		for (prev_count = 0, node_index = -1, i = 0; i < max_neighbors; ++i)
+		for (prev_count = 0, i = 0; i < max_neighbors; ++i)
 		{
 			if (neighbors[i] == 0)
 				continue; // TODO: break instead?
 
-			//next = GET_VERTEX(vertex, sizeof(struct vertex), node->neighbors_out[i]);
 			node_index = neighbors[i];
 
 			interval[0] = prev_count;
@@ -175,17 +140,16 @@ int linear_extension(
 			interval[1] = prev_count - 1;
 
 			if (nth_extension >= interval[0] && nth_extension <= interval[1])
+			{
+				ideal = iedges[i];
 				break;
-			else
-				node_index = -1;
+			}
 		}
 
-		if (node_index == -1) // error, nothing found
+		if (ideal == 0) // error, nothing found
 			return 1;
 
-		extend(masks[node_index], prev_mask, le);
-
-		prev_mask = masks[node_index];
+		extend(ideal, le);
 		nth_extension -= interval[0];
 	}
 
@@ -193,6 +157,8 @@ int linear_extension(
 }
 
 
+
+//////////////////////////// Find maximum  ////////////////////////////
 
 void reduce(result_t dps, __local result_t* scratch, __global result_t* result)
 {
@@ -222,16 +188,17 @@ void reduce(result_t dps, __local result_t* scratch, __global result_t* result)
 }
 
 
+//////////////////////////// Kernel  ////////////////////////////
 
 __kernel void kernel_LE(
 	__constant float items[][ITEM_WIDTH],
 	__constant float passives[][PASSIVE_WIDTH],
 	__constant float *cfg,
-	__constant ushort node2id[],
+	__constant itemid_t node2id[],
 
-	__constant mask_t *masks,
-	__constant ulong  *counts,
-	__constant uchar  *adjacency,
+	__constant ideal_t *ideals,
+	__constant count_t *counts,
+	__constant index_t *adjacency,
 	uint max_neighbors,
 	uint combo_len,
 
@@ -240,8 +207,8 @@ __kernel void kernel_LE(
 {
 	size_t nth_extension = get_global_id(0);
 	struct string_ctx le;
-	uchar le_buf[COMBO_WIDTH_MAX];
-	ushort ids[COMBO_WIDTH_MAX];
+	ideal_t le_buf[COMBO_WIDTH_MAX];
+	itemid_t ids[COMBO_WIDTH_MAX];
 	uint i;
 	result_t metric;
 
@@ -249,7 +216,11 @@ __kernel void kernel_LE(
 	le.s_len   = combo_len;
 	le.s_ptr   = le_buf;
 
-	i = linear_extension(masks, counts, adjacency, max_neighbors, (ulong) nth_extension, &le);
+	// TODO: the size_t precision of nth_extension is a problem.
+	// the system wont be able to queue the full workload anyway
+	// so an offset should be added later to split the work up 
+
+	i = linear_extension(ideals, counts, adjacency, max_neighbors, (count_t) nth_extension, &le);
 	//result[nth_extension].index = i;// vertex[nth_extension].count;// sizeof(struct vertex);
 	//result[nth_extension].metric = le_buf[4];//vertex[nth_extension].mask;//le_buf[4];//adjacency[nth_extension][1];
 	//result[nth_extension].index = adjacency[(nth_extension*3)+1];

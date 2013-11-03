@@ -1,5 +1,9 @@
 (* ::Package:: *)
 
+(* ::Text:: *)
+(*Code based on: "Ef\[FiLigature]cient computation of rank probabilities in posets" by Karel De Loof.*)
+
+
 BeginPackage["LatticePoset`"]
 idealLattice::usage          = "idealLattice[g] - Generates lattice of ideals from poset relationships defined by graph G"
 allLinearExtensions::usage   = "allLinearExtensions[l] - Finds all linear extensions from lattice of ideals 'l'"
@@ -11,11 +15,13 @@ MaxCombo
 MaxOutDegree
 CVertex
 CAdjacency
+CIdeals
 Begin["`Private`"]
 
 
 (* ::Text:: *)
-(*Source: "Ef\[FiLigature]cient computation of rank probabilities in posets" by Karel De Loof*)
+(*Constructing the lattice of ideals.*)
+(*See: Notes/LatticePoset_1_construction.png*)
 
 
 minimalElements[G_?(VertexCount[#] == 0&)] := {}
@@ -82,6 +88,8 @@ allLinearExtensions[lattice]
 
 (* ::Text:: *)
 (**)
+(*Counting the number of linear extensions/paths beneath a node.*)
+(*See: Notes/LatticePoset_2_comparison.png*)
 
 
 AssignWrapper[g_] := With[{
@@ -93,11 +101,7 @@ AssignWrapper[g_] := With[{
 ]
 
 Assign[end_,graph_,vertex_] := Module[{f,iGraph,rGraph,rE},
-		(*
-		f[{g_,e_}, v2_? VertexOutDegree[g,v2] \[Equal] 0]      := (Print[v2];{g, 1});
-		f[{g_,e_}, v2_/; PropertyValue[{g,v2}, Visited]] := {g, e + PropertyValue[{g,v2}, LEF]};
-		f[{g_,e_}, v2_]                                   := With[{r=Assign[g,v2]}, {r\[LeftDoubleBracket]1\[RightDoubleBracket], e + r\[LeftDoubleBracket]2\[RightDoubleBracket]}];
-		*)
+
 		f[{g_,e_}, v2_] := Piecewise[{
 			{{g,1}, v2 == end},
 			{{g, e + PropertyValue[{g,v2}, LEF]}, PropertyValue[{g,v2}, Visited]}
@@ -124,6 +128,7 @@ countLinearExtensions[idealLattice[testGraph]]
 (*Unranking paths in a graph/lattice: *)
 (*http://cs.stackexchange.com/questions/16433/unranking-paths-in-a-graph-lattice *)
 (**)
+(*See: Notes/LatticePoset_3_unrank.png*)
 
 
 nthPath[g_, {}, n_, xs_] := xs
@@ -146,7 +151,10 @@ setProps[widthTest,LEF]
 Map[nthLinearExtension[widthTest,#]&, Range[0,8]] // MatrixForm
 
 
-(* Random generation of LE *)
+(* ::Text:: *)
+(**)
+(*Random generation of linear extensions*)
+
 
 randomLinearExtension[g_] := Block[{v={},le={}, t, c, r},
 	While[imSucc[g,v] != {},
@@ -186,7 +194,12 @@ Length[uniq]
 
 
 
-(* GRAPH EXPORT *)
+(* ::Text:: *)
+(**)
+(*Exporting data as C structs.*)
+
+
+
 
 bitmask[list_, subset_] := Module[{f},
   f[_] = 0;
@@ -198,9 +211,10 @@ maxCombo[g_]     := Reverse@First@VertexList[g,_?(VertexOutDegree[g,#] == 0&)]
 
 exportIdealLattice[g_,comboMax_, maxOutDegree_]:= 
 	Map[With[{
-		label = FromDigits[bitmask[comboMax, Reverse[#]], 2],
-		edges = Map[\[Alpha] \[Function] VertexIndex[g, \[Alpha]], imSucc[g,#]]},
-		{label, PadRight[edges,maxOutDegree]}
+		label  = FromDigits[bitmask[comboMax, Reverse[#]], 2],
+		edges  = Map[\[Alpha] \[Function] VertexIndex[g, \[Alpha]], imSucc[g,#]],
+		ideals = Map[\[Alpha] \[Function] First@Complement[\[Alpha],#], imSucc[g,#]]},
+		{label, PadRight[edges,maxOutDegree], PadRight[ideals,maxOutDegree]}
 
 		]&, VertexList[g]]
 
@@ -208,25 +222,16 @@ exportIdealLattice[g_,comboMax_, maxOutDegree_]:=
 test = idealLattice[System`Graph[{1\[DirectedEdge]2,3\[DirectedEdge]2,4\[DirectedEdge]3,5\[DirectedEdge]6,7\[DirectedEdge]6,8\[DirectedEdge]9}]];
 test = lattice;
 countLinearExtensions[test] *)
+
 export[g_] := Block[{a=maxCombo[g],b=maxOutDegree[g],dat},
 	dat = exportIdealLattice[g,a,b];
 	{MaxCombo     -> Length[a],
 	 MaxOutDegree -> b,
 	 CVertex      -> Prepend[dat[[All, 1]], 0],
-	 CAdjacency   -> Prepend[dat[[All, 2]], ConstantArray[0,b]]}
+	 CAdjacency   -> Prepend[dat[[All, 2]], ConstantArray[0,b]],
+	 CIdeals      -> Prepend[dat[[All, 3]], ConstantArray[0,b]]
+	}
 ]
-(*
-DepthFirstScan[lattice, {}, {"PrevisitVertex" \[Rule] Print}]
-DepthFirstScan[lattice, {}, {
-	"DiscoverVertex" \[Rule] discover, 
-	"UnvisitedVertex" \[Rule] visited,
-	"VisitedVertex" \[Rule] visited}]*)
-
-(*
-DepthFirstScan[lattice, {"DiscoverVertex" \[Rule] discover}]
-DepthFirstScan[lattice, {"UnvisitedVertex" \[Rule] visited}]
-DepthFirstScan[lattice, {"VisitedVertex" \[Rule] visited}]*)
-
 
 
 End[]

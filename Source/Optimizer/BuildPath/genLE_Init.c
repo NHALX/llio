@@ -7,18 +7,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 #include "le.h"
+#include "genLE_Init.h"
+typedef cl_uint c_mask_t;
 
 ////////////////////// count data //////////////////////
 
+
+
 #define GET_NEIGHBORS(P,S,I) (P + (I*S))
 
-cl_ulong assign_count(const struct graph *graph, cl_uchar *visited, cl_uchar vertex_index)
+STATIC c_count_t assign_count(const struct graph *graph, unsigned char *visited, c_index_t vertex_index)
 {
 	unsigned int i;
-	cl_ulong lef = 0;
-	cl_uchar *neighbors = GET_NEIGHBORS(graph->adjacency, graph->max_neighbors, vertex_index);
-	cl_uchar next;
+	c_count_t lef = 0;
+	c_index_t *neighbors = GET_NEIGHBORS(graph->adjacency, graph->max_neighbors, vertex_index);
+	c_index_t next;
 
 	visited[vertex_index] = 1;
 
@@ -29,7 +34,7 @@ cl_ulong assign_count(const struct graph *graph, cl_uchar *visited, cl_uchar ver
 
 		next = neighbors[i];
 		
-		if (graph->masks[next] == graph->end)
+		if (next == graph->end)
 			lef = 1;
 
 		else if (visited[next])
@@ -55,176 +60,64 @@ void init_count(struct graph *g)
 	free(visited);
 }
 
-////////////////////// stack //////////////////////
-#define BULLSHIT_STACK_SIZE 64
-
-struct stack 
-{
-	struct vertex *base[BULLSHIT_STACK_SIZE];
-	int length;
-};
-
-void stack_init(struct stack *s)
-{ 
-	memset(s, 0x0, sizeof (*s)); 
-}
-
-struct vertex *
-stack_last(struct stack *s)
-{
-	if (s->length > 0)
-		return s->base[s->length - 1];
-	else
-		abort();
-}
-
-void
-stack_push(struct stack *s, struct vertex *value)
-{
-	s->base[s->length++] = value;
-}
-
-#define STACK_FORALL(I,STACK) for (I = 0; (I) < (STACK).length; ++(I))
-#define STACK_FORALL_REVERSE(I,STACK) for (I = (STACK).length-1; (I) >= 0; --(I))
-
 ////////////////////// tree of ideals //////////////////////
 
-struct vertex 
+#define LATTICE_N 6
+
+
+STATIC void Right(struct ctx *x, int index, struct vertex *r, struct vertex *root)
 {
-	int label;
-
-	struct vertex *parent;
-	struct stack   children;
-	struct stack   ImPred;
-	struct stack   edges;
-	struct stack   visited;
-};
-
-
-struct vertex * vertex()
-{
-	struct vertex *v;
-	v = calloc(1, sizeof(*v));
-	stack_init(&v->ImPred);
-	stack_init(&v->children);
-	stack_init(&v->edges);
-	return v;
-}
-
-
-
-void addChild(struct vertex *p, struct vertex *c)
-{
-	stack_push(&p->children, c);
-}
-
-void delChild(struct vertex *p, struct vertex *c)
-{
-	struct stack temp;
-	int i;
-
-	memcpy(&temp, &p->children, sizeof(temp));
-
-	stack_init(&p->children);
-
-	STACK_FORALL(i, temp)
-	{
-		struct vertex *v = temp.base[i];
-		if (v != c)
-			stack_push(&p->children, temp.base[i]);
-	}
-}
-
-/*
-int
-isImPred(struct vertex *s, int i)
-{
-	int a, b;
-	a = isImPred1(s, i);
-	b = isImPred2(s, i);
-	assert(a == b);
-	return a;
-}
-*/
-
-int
-isImPred(struct vertex *s, int i)
-{
-	static int adjacency[6][6] = { { 0, 1, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0 }, { 1, 0, 0, 0, 0, 0 }, { 0, 1, 0,
-		0, 0, 0 }, { 0, 0, 0, 1, 0, 0 }, { 0, 0, 0, 1, 0, 0 } };
-
-	static int map[6] = {5, 3, 1, 6, 4, 2};
+	struct slist *node;
 	
-	return adjacency[map[s->label - 1] - 1][map[i - 1] - 1];
-}
-
-/*
-int
-isImPred1(struct vertex *s, int i)
-{
-
-
-	if (i == 2 || i == 1 || i == 4)
-		return 0;
-
-	else if (i == 3 && s->label == 1)
-		return 1;
-
-	else if (i == 3 && s->label == 2)
-		return 1;
-
-	else if (i == 5 && s->label == 4)
-		return 1;
-
-	else if (i == 6 && s->label == 5)
-		return 1;
-
-	else if (i == 6 && s->label == 3)
-		return 1;
-
-	else
-		return 0;
-
-}
-*/
-
-void Right(int index, struct vertex *r, struct vertex *root)
-{
-	int i;
-	struct vertex *s;
-	struct vertex *t;
-
-	//for (i = 0; i < r->children.length; ++i)
-	STACK_FORALL(i, r->children)
+	if (r->children_len)
 	{
-		s = r->children.base[i];
+		struct vertex **set = _alloca(r->children_len * sizeof(*set));
+		size_t i            = r->children_len - 1;
 
-		if (isImPred(s, index))
-			continue;
+		for (node = r->children; node; node = node->next) 
+			set[i--] = node->value;
 
-		t = vertex();
-		memcpy(t, s, sizeof(*t));
-		t->children.length = 0;
-		memset(&t->children, 0x0, sizeof(t->children));
-		t->parent = root;
-		addChild(root, t);
-		t->label = s->label;
-		Right(index, s, t);
+		for (i = 0; i < r->children_len; ++i)
+		{
+			struct vertex *s = set[i];
+			struct vertex *t;
+
+			static int adjacency[6][6] = {
+				{ 0, 1, 0, 0, 0, 0 },
+				{ 0, 0, 0, 0, 0, 0 },
+				{ 1, 0, 0, 0, 0, 0 },
+				{ 0, 1, 0, 0, 0, 0 },
+				{ 0, 0, 0, 1, 0, 0 },
+				{ 0, 0, 0, 1, 0, 0 }
+			};
+			static int map[6] = { 5, 3, 1, 6, 4, 2 };
+			
+			if (adjacency[map[s->label - 1] - 1][map[index - 1] - 1])
+				continue;
+
+			t = vertex(x);
+			t->parent = root;
+			addChild(x, root, t);
+			t->label = s->label;
+			Right(x, index, s, t);
+		}
 	}
 }
 
-struct vertex * Left(int i)
+
+STATIC struct vertex * Left(struct ctx *x, int i)
 {
-	struct vertex * root = vertex();
+	struct vertex * root = vertex(x);
 	struct vertex * r;
 
 	if (i == 0)
 		return root;
 	
-	r = Left(i - 1);
-	Right(i,r,root);
+	r = Left(x, i - 1);
+
+	Right(x,i,r,root);
 	r->parent = root;
-	addChild(root, r);
+	addChild(x, root, r);
 	r->label = i;
 	return root;
 }
@@ -233,162 +126,144 @@ struct vertex * Left(int i)
 
 ////////////////////// hasse diagram of the lattice of ideals //////////////////////
 
-
-// TODO: check malloc failure
-void findAll(struct vertex *v, int k, struct stack *s)
+STATIC void push_edge(struct ctx *x, struct vertex *v, c_ideal_t ideal)
 {
-	struct vertex *v2;
-	int i;
+	assert(ideal != 0);
 
-	if (v->label == k)
-		stack_push(s, v);
+	x->edges[(v->index*x->max_neighbors) + v->edge_len] = ideal;
+	v->edge_len++;
+}
 
-	//for (i = 0; i < v->children.length; i++)
-	STACK_FORALL_REVERSE(i, v->children)
+STATIC void push_children(struct ctx *x, struct vertex *v) 
+{
+	struct slist *node;
+
+	for (node = v->children; node; node = node->next)
 	{
-		v2 = v->children.base[i];
-		findAll(v2, k, s);
+		slh_append(&v->impred, node->value); 
+		push_edge(x, v, node->value->label);
 	}
 }
 
-void
-push_children(struct vertex *v)
+
+/*
+STATIC void groupAll(struct ctx *x, struct slist_head *E, struct vertex *v) 
 {
-	int i;
-	//for (i = 0; i < v->children.length; ++i)
-	STACK_FORALL_REVERSE(i, v->children)
+	struct slist *node;
+
+	if (v->label != 0)
+		slh_append(&E[v->label - 1], v); 
+
+	for (node = v->children; node; node = node->next)
+		groupAll(x, E, node->value);
+}
+*/
+
+STATIC void groupAll2(struct ctx *x, struct slist_head *E) 
+{
+	size_t i;
+
+	for (i = 0; i < v_alloc_index; ++i)
 	{
-		stack_push(&v->ImPred, v->children.base[i]);
-		stack_push(&v->edges, v->children.base[i]->label);
+		c_ideal_t label = v_alloc_storage[i].label;
+
+		if (label != 0)
+			slh_append(&E[label-1], &v_alloc_storage[i]);
 	}
 }
 
-void buildLattice(struct vertex *Tp, int n)
+
+STATIC __inline void process(struct ctx *ctx, size_t k, struct vertex *v)
 {
-	int i,k;
-	struct stack *E = calloc(n,sizeof(*E));
+	struct slist *n;
+	struct vertex *v2, *v3;
+	size_t i;
 
-	push_children(Tp);
+	// OPTIMIZATION: This loop is a major hotspot. Accounts for ~2/3 of total execution time.
+	for (
+		n = v->parent->impred.first, i = 0;
+		n && n->value != v;
+		n = n->next, ++i)
+	{
+		v2 = n->value;
+		v3 = v2->children->value;
+		
+		assert(v2->label > k && v->label == k);
+		assert(v3->label == k);
 
-	for (k = 1; k <= n; k++)
-		findAll(Tp, k, &E[k-1]);
+		slh_append(&v->impred, v3);
+		push_edge(ctx, v, EDGE(ctx, v->parent->index, i));
+	}
+
+	push_children(ctx, v);
+}
+
+
+STATIC void buildLattice(struct ctx *ctx, struct vertex *root, int n)
+{
+	int k;
+	struct slist *node;
+	struct slist_head *E = _alloca(n * sizeof(*E)); 
+	
+	memset(E, 0, n*sizeof(*E));
+	push_children(ctx, root);
+
+	groupAll2(ctx, E);
 
 	for (k = n; k >= 1; k--)
 	{
-		//for (i = 0; i < E[k].length; ++i)
-		STACK_FORALL(i, E[k-1])
-		{
-			int j;
-			struct vertex *v2, *v3;
-			struct vertex *v = E[k-1].base[i];
+		for (node = E[k - 1].first; node != NULL; node = node->next)
+			process(ctx, k, node->value);
 
-			v->ImPred.length = 0;
-			
-			for (
-				j=0, v2 = v->parent->ImPred.base[j]; 
-				v2 != v; 
-				++j, v2 = v->parent->ImPred.base[j])
-			{
-				int h, found = 0;
-				v3 = stack_last(&v2->children);
-
-				assert(v2->label > k && v->label == k);
-				assert(v3->label == k);
-				stack_push(&v->ImPred, v3);
-
-				STACK_FORALL(h, v->parent->ImPred)
-				{
-					if (v->parent->ImPred.base[h] != v2)
-						continue;
-
-					assert(v->parent->ImPred.base[h] == v2);
-					assert(v->parent->edges.base[h] != 0);
-
-					found = v->parent->edges.base[h];
-				}
-
-				assert(found != 0);
-				stack_push(&v->edges, found);
-			}
-
-			push_children(v);
-		}
-
-		STACK_FORALL(i, E[k-1])
-		{
-			struct vertex *v = E[k-1].base[i];
-			delChild(v->parent, v);
-		}
+		for (node = E[k - 1].first; node != NULL; node = node->next)
+			delChild(node->value->parent, node->value);
 	}
 }
 
-////
 
 
 
-void print_tree(struct vertex *v)
+///// top level wrappers /////
+
+
+void idealLattice(void *data, c_ideal_t n, c_index_t *start, c_ideal_t **outideal, c_index_t **outneighbors)
 {
-	struct vertex *v2;
-	int i;
+	struct ctx x;
+	memset(&x, 0, sizeof x);
+	struct vertex *root = Left(&x, n);
 
-	STACK_FORALL_REVERSE(i, v->children)
+	x.edges = calloc(x.vertex_count*x.max_neighbors, sizeof (*x.edges));
+
+	if (x.edges == NULL)
 	{
-		v2 = v->children.base[i];
+		printf("error: %s:%d. malloc failure.\n", __FILE__, __LINE__);
+		exit(-1);
+	}
+
+	buildLattice(&x, root, n);
+	*outideal     = x.edges;
+	//*outneighbors = x.ImPred; TODO: copy/convert preds
+	*start        = root->index;
+}
+
+/////////////////// DEBUG ///////////////////
+
+
+
+void print_tree(struct ctx *x, struct vertex *v)
+{
+	struct slist *node;
+
+	for (node = v->children; node != NULL; node = node->next)
+	{
+		struct vertex *v2 = node->value;
 		printf("(\"%d::%p\" -> \"%d::%p\"), \n", v->label, v, v2->label, v2);
-		print_tree(v2);
+		print_tree(x, v2);
 	}
 
 }
 
-void reset_visited(struct vertex *v)
-{
-	int i;
-
-	STACK_FORALL(i, v->ImPred)
-	{
-		v->visited.base[i] = 0;
-		reset_visited(v->ImPred.base[i]);
-	}
-	
-}
-
-void print_pred2(struct vertex *v)
-{
-	struct vertex *v2;
-	int i;
-
-	STACK_FORALL(i, v->ImPred)
-	{
-		if (v->visited.base[i])
-			continue;
-		else
-			v->visited.base[i] = 1;
-
-		v2 = v->ImPred.base[i];
-
-		printf("{\"%d::%p\" -> \"%d::%p\", %d}, \n", v->label, v, v2->label, v2, v->edges.base[i]);
-		print_pred2(v2);
-	}
-}
-
-
-int mask(struct vertex *v, unsigned char *le_local, unsigned char *le, int max)
-{
-	int i, j;
-
-	memset(le_local, 0, 5);
-
-	for (j = i = 0; j < max; ++j)
-	{
-		if (le[j] != v->label && le[j] != 0)
-			le_local[i++] = le[j];
-	}
-
-	return i;
-}
-
-
-void show_mask(cl_mask_t mask, char *buf)
+void show_mask(c_mask_t mask, char *buf)
 {
 	char number[(sizeof(mask)* 8) + 1];
 	int nonempty = 0;
@@ -418,81 +293,233 @@ void show_mask(cl_mask_t mask, char *buf)
 		buf[1] = '}';
 }
 
-
-void print_pred(struct vertex *v, cl_mask_t le)
+void print_final(struct ctx *x, unsigned char *visited, struct vertex *v, c_mask_t le)
 {
-	cl_mask_t next;
-	struct vertex *v2;
-	int i;
-	int ideal;
+	c_mask_t next;
 	char s1[256];
 	char s2[256];
+	struct slist *node;
+	size_t i;
 
 	show_mask(le, s1);
 
-	STACK_FORALL(i, v->ImPred)
-	{
-		static int map[6] = { 5, 3, 1, 6, 4, 2 };
 
-		if (v->visited.base[i])
+	for (i=0, node=v->impred.first; node; ++i, node=node->next)
+	{
+		c_ideal_t ideal = EDGE(x, v->index, i);
+
+		static int map[6] = { 5, 3, 1, 6, 4, 2 }; // TODO: remove
+
+		if (visited[(v->index*x->max_neighbors) + i])
 			continue;
 		else
-			v->visited.base[i] = 1;
+			visited[(v->index*x->max_neighbors) + i] = 1;
 
-		ideal = v->edges.base[i];
+		
 		next = le & ~(1<<(ideal-1));
 		show_mask(next, s2);
 
 		printf("{%s -> %s, %d},\n", s1, s2, map[ideal-1]);
-		print_pred(v->ImPred.base[i], next);
+		print_final(x, visited, node->value, next);
 	}
 }
 
-
-/* Helper macros */
-#define HEX__(n) 0x##n##LU
-#define B8__(x) ((x&0x0000000FLU)?1:0) \
-	+ ((x & 0x000000F0LU) ? 2 : 0) \
-	+ ((x & 0x00000F00LU) ? 4 : 0) \
-	+ ((x & 0x0000F000LU) ? 8 : 0) \
-	+ ((x & 0x000F0000LU) ? 16 : 0) \
-	+ ((x & 0x00F00000LU) ? 32 : 0) \
-	+ ((x & 0x0F000000LU) ? 64 : 0) \
-	+ ((x & 0xF0000000LU) ? 128 : 0)
-
-/* User macros */
-#define B8(d) ((unsigned char)B8__(HEX__(d)))
-#define B16(dmsb,dlsb) (((unsigned short)B8(dmsb)<<8) \
-	+ B8(dlsb))
-#define B32(dmsb,db2,db3,dlsb) (((unsigned long)B8(dmsb)<<24) \
-	+ ((unsigned long)B8(db2) << 16) \
-	+ ((unsigned long)B8(db3) << 8) \
-	+ B8(dlsb))
-
-
-#define LATTICE_N 6
-
-void
-main()
+void print_lattice(struct ctx *x, struct vertex *root, unsigned char *visited, struct vertex *v)
 {
-	unsigned char buf[1024];
-	cl_mask_t le = B8(11111111) >> (8 - LATTICE_N);
-	struct vertex *v = Left(LATTICE_N);
+	size_t i;
+	struct slist *node;
 
-	printf("idealtree = {\n");
-	print_tree(v);
-	printf("};\n");
+	for (i=0, node=v->impred.first; node; ++i, node=node->next)
+	{
+		if (visited[(v->index*x->max_neighbors) + i])
+			continue;
+		else
+			visited[(v->index*x->max_neighbors) + i] = 1;
 
-	buildLattice(v, LATTICE_N);
+		printf("{\"%d::%p\" -> \"%d::%p\", %d}, \n", v->label, v, node->value->label, node->value, EDGE(x, v->index, i));
+		print_lattice(x, root, visited, node->value);
+	}
+}
 
+void print_rest(struct ctx *x, struct vertex *v)
+{
+	size_t output_len = x->vertex_count*x->max_neighbors;
+	c_mask_t le = 0xffffffff >> (32 - LATTICE_N);
+	unsigned char *visited;
+	
+
+	visited = calloc(output_len, sizeof (*visited));
+
+	if (visited == NULL)
+	{
+		printf("error: %s:%d. malloc failure.\n", __FILE__, __LINE__);
+		exit(-1);
+	}
 
 	printf("ideallattice = {\n");
-	print_pred2(v);
+	print_lattice(x, v, (unsigned char*)visited, v);
 	printf("};\n");
 
-	reset_visited(v);
+	memset(visited, 0, output_len*sizeof(*visited));
 
 	printf("latticeEdges = {\n");
-	print_pred(v, le);
+	print_final(x, (unsigned char*)visited, v, le);
 	printf("};\n");
+
+	free(visited);
 }
+
+
+
+//#define PRINT
+
+#ifdef PRINT
+#define SIMULATION_RUNS 1
+#else
+#define SIMULATION_RUNS 100000000
+#endif
+
+void reset(struct ctx *x, size_t n)
+{
+	//memset(x->edges, 0, n);
+	//memset(s_alloc_storage, 0, sizeof s_alloc_storage);
+	//memset(v_alloc_storage, 0, sizeof v_alloc_storage);
+	s_alloc_index    = 0;
+	v_alloc_index    = 0;
+	x->max_neighbors = 0;
+	x->vertex_count  = 0;
+}
+
+int
+main()
+{
+	struct vertex *v;
+	struct ctx x;
+	int i;
+	size_t edgelen = 0;
+	memset(&x, 0, sizeof x);
+
+	for (i = 0; i < SIMULATION_RUNS; ++i)
+	{
+		v = Left(&x, LATTICE_N);
+
+		if (x.edges == NULL)
+		{
+			edgelen = x.vertex_count*x.max_neighbors*sizeof (*x.edges);
+			x.edges = calloc(edgelen,1);
+
+			if (x.edges == NULL)
+			{
+				printf("error: %s:%d. malloc failure.\n", __FILE__, __LINE__);
+				exit(-1);
+			}
+		}
+#ifdef PRINT
+		printf("idealtree = {\n");
+		print_tree(&x, v);
+		printf("};\n");
+#endif
+		buildLattice(&x, v, LATTICE_N);
+
+#ifdef PRINT
+		print_rest(&x, v);
+#endif
+		reset(&x, edgelen);
+	}
+
+	free(x.edges);
+	return 0;
+}
+
+/*idealtree = {
+   ("0::0094AFE8" -> "6::0094B0F4"),
+   ("6::0094B0F4" -> "5::0094B200"),
+   ("5::0094B200" -> "4::0094B30C"),
+   ("4::0094B30C" -> "3::0094B418"),
+   ("3::0094B418" -> "2::0094B524"),
+   ("2::0094B524" -> "1::0094B630"),
+   ("3::0094B418" -> "1::0094B73C"),
+   ("4::0094B30C" -> "1::0094B848"),
+   ("5::0094B200" -> "3::0094BA60"),
+   ("3::0094BA60" -> "2::0094BC78"),
+   ("2::0094BC78" -> "1::0094BD84"),
+   ("3::0094BA60" -> "1::0094BB6C"),
+   ("5::0094B200" -> "1::0094B954"),
+   ("6::0094B0F4" -> "3::0094BE90"),
+   ("3::0094BE90" -> "2::0094BF9C")
+   };
+idealtree2 = {
+   ("0::007FA010" -> "6::007FA068"),
+   ("6::007FA068" -> "5::007FA0C0"),
+   ("5::007FA0C0" -> "4::007FA118"),
+   ("4::007FA118" -> "3::007FA170"),
+   ("3::007FA170" -> "2::007FA1C8"),
+   ("2::007FA1C8" -> "1::007FA220"),
+   ("3::007FA170" -> "1::007FA278"),
+   ("4::007FA118" -> "1::007FA2D0"),
+   ("5::007FA0C0" -> "3::007FA458"),
+   ("3::007FA458" -> "2::007FA5E0"),
+   ("2::007FA5E0" -> "1::007FAFE8"),
+   ("3::007FA458" -> "1::007FA540"),
+   ("5::007FA0C0" -> "1::007FA3B8"),
+   ("6::007FA068" -> "3::007FB088"),
+   ("3::007FB088" -> "2::007FB170")
+   };
+
+ideallattice = {
+   {"0::0094AFE8" -> "6::0094B0F4", 6},
+   {"6::0094B0F4" -> "5::0094B200", 5},
+   {"5::0094B200" -> "4::0094B30C", 4},
+   {"4::0094B30C" -> "3::0094B418", 3},
+   {"3::0094B418" -> "2::0094B524", 2},
+   {"2::0094B524" -> "1::0094B630", 1},
+   {"3::0094B418" -> "1::0094B73C", 1},
+   {"1::0094B73C" -> "1::0094B630", 2},
+   {"4::0094B30C" -> "1::0094B848", 1},
+   {"1::0094B848" -> "1::0094B73C", 3},
+   {"5::0094B200" -> "3::0094BA60", 3},
+   {"3::0094BA60" -> "3::0094B418", 4},
+   {"3::0094BA60" -> "2::0094BC78", 2},
+   {"2::0094BC78" -> "2::0094B524", 4},
+   {"2::0094BC78" -> "1::0094BD84", 1},
+   {"1::0094BD84" -> "1::0094B630", 4},
+   {"3::0094BA60" -> "1::0094BB6C", 1},
+   {"1::0094BB6C" -> "1::0094B73C", 4},
+   {"1::0094BB6C" -> "1::0094BD84", 2},
+   {"5::0094B200" -> "1::0094B954", 1},
+   {"1::0094B954" -> "1::0094B848", 4},
+   {"1::0094B954" -> "1::0094BB6C", 3},
+   {"6::0094B0F4" -> "3::0094BE90", 3},
+   {"3::0094BE90" -> "3::0094BA60", 5},
+   {"3::0094BE90" -> "2::0094BF9C", 2},
+   {"2::0094BF9C" -> "2::0094BC78", 5}
+   };
+latticeEdges = {
+   {{5, 3, 1, 6, 4, 2} -> {5, 3, 1, 6, 4}, 2},
+   {{5, 3, 1, 6, 4} -> {5, 3, 1, 6}, 4},
+   {{5, 3, 1, 6} -> {5, 3, 1}, 6},
+   {{5, 3, 1} -> {5, 3}, 1},
+   {{5, 3} -> {5}, 3},
+   {{5} -> {}, 5},
+   {{5, 3} -> {3}, 5},
+   {{3} -> {}, 3},
+   {{5, 3, 1} -> {3, 1}, 5},
+   {{3, 1} -> {3}, 1},
+   {{5, 3, 1, 6} -> {5, 3, 6}, 1},
+   {{5, 3, 6} -> {5, 3}, 6},
+   {{5, 3, 6} -> {5, 6}, 3},
+   {{5, 6} -> {5}, 6},
+   {{5, 6} -> {6}, 5},
+   {{6} -> {}, 6},
+   {{5, 3, 6} -> {3, 6}, 5},
+   {{3, 6} -> {3}, 6},
+   {{3, 6} -> {6}, 3},
+   {{5, 3, 1, 6} -> {3, 1, 6}, 5},
+   {{3, 1, 6} -> {3, 1}, 6},
+   {{3, 1, 6} -> {3, 6}, 1},
+   {{5, 3, 1, 6, 4} -> {5, 3, 6, 4}, 1},
+   {{5, 3, 6, 4} -> {5, 3, 6}, 4},
+   {{5, 3, 6, 4} -> {5, 6, 4}, 3},
+   {{5, 6, 4} -> {5, 6}, 4}
+   };
+   */

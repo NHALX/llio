@@ -1,87 +1,31 @@
 #define STATIC
 
-////////////////////// list //////////////////////
-
-struct slist {
-	struct slist  *next;
-	struct vertex *value;
-};
-
-struct slist_head {
-	struct slist *first;
-	struct slist *last;
-};
-
-
-STATIC __inline void sl_unlink(struct slist **head, struct vertex *v)
-{
-	struct slist *node;
-	struct slist *prev = NULL;
-
-	for (node = *head; node != NULL; node = node->next)
-	{
-		if (node->value == v)
-		{
-			if (prev)
-				prev->next = node->next;
-			else
-			{
-				assert(node == *head);
-				*head = node->next;
-			}
-
-			// TODO: free(node);
-			return;
-		}
-		prev = node;
-	}
-}
-
-#define BULLSHIT_STORAGE_SIZE 9048576
-size_t s_alloc_index = 0;
-struct slist s_alloc_storage[BULLSHIT_STORAGE_SIZE];
-
-STATIC __inline struct slist * sl_alloc()
-{
-	assert(s_alloc_index + 1 <= BULLSHIT_STORAGE_SIZE);
-	return &s_alloc_storage[s_alloc_index++];
-}
-
-
-
-STATIC __inline void sl_push(struct slist **head, struct vertex *v)
-{
-	struct slist *node = sl_alloc();
-	node->next = *head;
-	node->value = v;
-	*head = node;
-}
-
-
-STATIC __inline void slh_append(struct slist_head *head, struct vertex *value)
-{
-	struct slist *x = sl_alloc();
-	x->value = value;
-	x->next = NULL;
-
-	if (head->first == NULL)
-		head->first = head->last = x;
-	else
-	{
-		head->last->next = x;
-		head->last       = x;
-	}
-}
-
+#include "p_alloc.h"
+#include "u_list.h"
 
 ////////////////////// Vertex //////////////////////
+typedef cl_uint c_mask_t;
+
+struct ideal_lattice
+{
+	c_ideal_t *ideals;
+	c_index_t *neighbors;
+	c_index_t source;
+	c_index_t sink;
+
+	size_t vertex_count;
+	size_t max_neighbors;
+	size_t extension_length;
+};
+
+
 
 struct vertex
 {
-	size_t           index; // this can be optimized out since its easy to calculate the offset from the pool start
+	size_t            index; // this can be optimized out since its easy to calculate the offset from the pool start
 	struct vertex    *parent;
-	struct slist     *children;
-	struct slist_head impred;
+	struct u_lhead children;
+	struct u_lhead impred;
 	c_ideal_t         label;
 
 	// HARD_LIMITS: these will be too small if we have 2^256 vertices in our lattice...
@@ -89,47 +33,73 @@ struct vertex
 	unsigned char     edge_len;
 };
 
-#define EDGE(X,I,J)	   (X->edges[(I*X->max_neighbors)+J])
+
+#define INDEX2(N,I,J)			(((I)*(N))+(J))
+#define IMMEDIATE_PRED(X,I,J)	((X)->adjacency[INDEX2((X)->adjacency_dim,I,J)])
+
 
 struct ctx {
-	c_ideal_t *edges;
-	size_t max_neighbors;
-	size_t vertex_count;
+	size_t         max_neighbors;
+	size_t         vertex_count;
+
+	unsigned char *linear_extension;
+	unsigned char *adjacency;
+	size_t         adjacency_dim;
 };
 
-size_t v_alloc_index = 0;
-struct vertex v_alloc_storage[BULLSHIT_STORAGE_SIZE];
-STATIC __inline struct vertex * v_alloc()
-{
-	assert(v_alloc_index + 1 <= BULLSHIT_STORAGE_SIZE);
-	// TODO: memory must be zero initialized
-	return &v_alloc_storage[v_alloc_index++];
-}
+
 
 STATIC __inline struct vertex *vertex(struct ctx *x)
 {
 	size_t i = x->vertex_count++;
 
-	struct vertex *v = v_alloc();
+	struct vertex *v = p_alloc(P_ALLOC_VERTEX);
 	memset(v, 0, sizeof *v);
 	v->index = i;
 	return v;
 }
 
+/////////////////////// tree of ideals support functions ////////////////////
 
-STATIC __inline void addChild(struct ctx *x, struct vertex * p, struct vertex * i)
+STATIC __inline int addChild(struct ctx *x, struct vertex * p, struct vertex * i)
 {
 	assert(p->children_len < UCHAR_MAX);
 
-	sl_push(&p->children, i);
+	GUARD(ul_push(&p->children, i));
 	p->children_len++;
 
 	if (x->max_neighbors < p->children_len)
 		x->max_neighbors = p->children_len;
+
+	return G_SUCCESS;
 }
 
 STATIC __inline void delChild(struct vertex *p, struct vertex *c)
 {
-	sl_unlink(&p->children, c);
+	ul_unlink(&p->children, c);
 	p->children_len--;
+}
+
+/////////////////////// lattice supporting functions ////////////////////
+
+STATIC __inline void push_edge(c_ideal_t *edges, size_t w, struct vertex *vertex, c_ideal_t ideal)
+{
+	assert(ideal != 0);
+
+	edges[INDEX2(w, vertex->index, vertex->edge_len)] = ideal;
+	vertex->edge_len++;
+}
+
+STATIC __inline int push_children(c_ideal_t *edges, size_t w, struct vertex *vertex)
+{
+	struct u_iterator i;
+
+	FOR_X_IN_LIST(i, &vertex->children)
+	{
+		struct vertex *c = UL_X(i);
+		GUARD(ul_push(&vertex->impred, c));
+		push_edge(edges, w, vertex, c->label);
+	}
+
+	return G_SUCCESS;
 }

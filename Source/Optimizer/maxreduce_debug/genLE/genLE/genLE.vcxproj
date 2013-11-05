@@ -80,12 +80,15 @@
     <ClCompile Include="..\..\..\BuildPath\genLE_Init.c" />
     <ClCompile Include="..\..\..\BuildPath\genLE_Kernel.c" />
     <ClCompile Include="..\..\..\BuildPath\genLE_GPU.c" />
+    <ClCompile Include="..\..\..\BuildPath\Test\unittest_lattice.c" />
+    <ClCompile Include="..\..\..\BuildPath\Test\unittest_u_list.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\BuildPath\genLE_Init.h" />
     <ClInclude Include="..\..\..\BuildPath\le.h" />
     <ClInclude Include="..\..\..\BuildPath\le_kernel.h" />
     <ClInclude Include="..\..\..\BuildPath\le_test.h" />
+    <ClInclude Include="..\..\..\BuildPath\u_list.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -27,6 +27,12 @@
     <ClCompile Include="..\..\..\BuildPath\genLE_Init.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\BuildPath\Test\unittest_u_list.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\BuildPath\Test\unittest_lattice.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\BuildPath\le.h">
@@ -39,6 +45,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\BuildPath\genLE_Init.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\BuildPath\u_list.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

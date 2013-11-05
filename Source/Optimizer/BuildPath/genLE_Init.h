@@ -1,5 +1,6 @@
 #define STATIC
 
+#include <limits.h>
 #include "p_alloc.h"
 #include "u_list.h"
 
@@ -49,57 +50,3 @@ struct ctx {
 
 
 
-STATIC __inline struct vertex *vertex(struct ctx *x)
-{
-	size_t i = x->vertex_count++;
-
-	struct vertex *v = p_alloc(P_ALLOC_VERTEX);
-	memset(v, 0, sizeof *v);
-	v->index = i;
-	return v;
-}
-
-/////////////////////// tree of ideals support functions ////////////////////
-
-STATIC __inline int addChild(struct ctx *x, struct vertex * p, struct vertex * i)
-{
-	assert(p->children_len < UCHAR_MAX);
-
-	GUARD(ul_push(&p->children, i));
-	p->children_len++;
-
-	if (x->max_neighbors < p->children_len)
-		x->max_neighbors = p->children_len;
-
-	return G_SUCCESS;
-}
-
-STATIC __inline void delChild(struct vertex *p, struct vertex *c)
-{
-	ul_unlink(&p->children, c);
-	p->children_len--;
-}
-
-/////////////////////// lattice supporting functions ////////////////////
-
-STATIC __inline void push_edge(c_ideal_t *edges, size_t w, struct vertex *vertex, c_ideal_t ideal)
-{
-	assert(ideal != 0);
-
-	edges[INDEX2(w, vertex->index, vertex->edge_len)] = ideal;
-	vertex->edge_len++;
-}
-
-STATIC __inline int push_children(c_ideal_t *edges, size_t w, struct vertex *vertex)
-{
-	struct u_iterator i;
-
-	FOR_X_IN_LIST(i, &vertex->children)
-	{
-		struct vertex *c = UL_X(i);
-		GUARD(ul_push(&vertex->impred, c));
-		push_edge(edges, w, vertex, c->label);
-	}
-
-	return G_SUCCESS;
-}

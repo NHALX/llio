@@ -8,10 +8,10 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
+#include <alloca.h>
+
 #include "le.h"
-
-
-
 #include "genLE_Init.h"
 
 
@@ -40,25 +40,25 @@ STATIC void toposort(unsigned char *graph, size_t dim, unsigned char *LE);
 void ctx_init(struct ctx *ctx, c_ideal_t edges[][2], size_t nedges, size_t n)
 {
 	size_t i, j;
-	unsigned char *graph = _alloca(n*n);
+	unsigned char *graph = calloc(n,n);
 	unsigned char *LE    = malloc(n);
 
-
 	memset(ctx, 0, sizeof *ctx);
-	memset(graph, 0, n*n);
 
 	for (i = 0; i < nedges; ++i)
 		graph[INDEX2(n, edges[i][0] - 1, edges[i][1] - 1)] = 1;
 
 	toposort(graph, n, LE);
 
-	ctx->adjacency = calloc(n*n, 1);
-	ctx->adjacency_dim = n;
+	ctx->adjacency        = calloc(n,n);
+	ctx->adjacency_dim    = n;
 	ctx->linear_extension = LE;
 
 	for (i = 0; i < ctx->adjacency_dim; ++i)
 		for (j = 0; j < ctx->adjacency_dim; ++j)
 			IMMEDIATE_PRED(ctx, i, j) = graph[INDEX2(n, LE[i] - 1, LE[j] - 1)];
+
+	free(graph);
 }
 
 
@@ -73,7 +73,7 @@ void ctx_free(struct ctx *ctx)
 STATIC void
 toposort(unsigned char *graph, size_t dim, unsigned char *LE)
 {
-	unsigned char *g = _alloca(dim*dim);
+	unsigned char *g = malloc(dim*dim);
 	size_t le_i = 0;
 	size_t i, j;
 
@@ -108,6 +108,8 @@ toposort(unsigned char *graph, size_t dim, unsigned char *LE)
 			}
 		}
 	}
+
+	free(g);
 }
 
 
@@ -160,9 +162,63 @@ void init_count(struct graph *g)
 	free(visited);
 }
 
-////////////////////// tree of ideals //////////////////////
+////////////////////// tree of ideals vertices //////////////////////
 
 
+STATIC struct vertex *vertex(struct ctx *x)
+{
+	size_t i = x->vertex_count++;
+
+	struct vertex *v = p_alloc(P_ALLOC_VERTEX);
+	memset(v, 0, sizeof *v);
+	v->index = i;
+	return v;
+}
+
+/////////////////////// tree of ideals support functions ////////////////////
+
+STATIC int addChild(struct ctx *x, struct vertex * p, struct vertex * i)
+{
+	assert(p->children_len < UCHAR_MAX);
+
+	GUARD(ul_push(&p->children, i));
+	p->children_len++;
+
+	if (x->max_neighbors < p->children_len)
+		x->max_neighbors = p->children_len;
+
+	return G_SUCCESS;
+}
+
+STATIC void delChild(struct vertex *p, struct vertex *c)
+{
+	ul_unlink(&p->children, c);
+	p->children_len--;
+}
+
+/////////////////////// lattice supporting functions ////////////////////
+
+STATIC void push_edge(c_ideal_t *edges, size_t w, struct vertex *vertex, c_ideal_t ideal)
+{
+	assert(ideal != 0);
+
+	edges[INDEX2(w, vertex->index, vertex->edge_len)] = ideal;
+	vertex->edge_len++;
+}
+
+STATIC int push_children(c_ideal_t *edges, size_t w, struct vertex *vertex)
+{
+	struct u_iterator i;
+
+	FOR_X_IN_LIST(i, &vertex->children)
+	{
+		struct vertex *c = UL_X(i);
+		GUARD(ul_push(&vertex->impred, c));
+		push_edge(edges, w, vertex, c->label);
+	}
+
+	return G_SUCCESS;
+}
 STATIC int Right(struct ctx *x, int index, struct vertex *r, struct vertex *root)
 {	
 	if (r->children_len)
@@ -212,7 +268,7 @@ STATIC struct vertex * Left(struct ctx *x, int i)
 ////////////////////// hasse diagram of the lattice of ideals //////////////////////
 
 
-STATIC __inline int process(c_ideal_t *edges, size_t edge_w, size_t k, struct vertex *v)
+STATIC int process(c_ideal_t *edges, size_t edge_w, size_t k, struct vertex *v)
 {
 	struct u_iterator j;
 	struct vertex *v2, *v3;
@@ -239,7 +295,7 @@ STATIC __inline int process(c_ideal_t *edges, size_t edge_w, size_t k, struct ve
 }
 
 
-STATIC __inline int groupAll(struct u_lhead *E)
+STATIC int groupAll(struct u_lhead *E)
 {
 	struct p_iterator p;
  
@@ -257,11 +313,11 @@ STATIC __inline int groupAll(struct u_lhead *E)
 
 
 
-STATIC int buildLattice(c_ideal_t *edges, size_t edge_w, struct vertex *root, int n)
+STATIC int buildLattice(c_ideal_t *edges, size_t edge_w, struct vertex *root, unsigned char n)
 {
 	int k;
 	struct u_iterator i;
-	struct u_lhead *E = _alloca(n * sizeof(*E)); 
+	struct u_lhead *E = alloca(n * sizeof(*E)); 
 	
 	memset(E, 0, n * sizeof *E);
 

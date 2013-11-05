@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <stdalign.h> 
+#include <stdint.h>
 #include "p_alloc.h"
 
 #define STATIC
@@ -9,8 +11,9 @@
 
 #define PUSH_PAGE_TOP (LIST_UNROLL_SIZE-1)
 
-__declspec(align(64))
-struct u_list {
+//__declspec(align(64))
+// TODO: alignas isn't working on clang..
+struct u_list  {
 	struct u_list  *next_page;
 	struct u_list  *prev_page;
 	struct vertex *value[LIST_UNROLL_SIZE];
@@ -54,11 +57,8 @@ struct u_iterator {
 #define UL_X(I)  (I).node->value[(I).i]
 #define UL_N(I)  (I).n
 
-STATIC __inline struct vertex *ul_first(struct u_lhead *x)
-{
-	assert(x && x->first->value_len >= 1);
-	return x->first->value[LIST_UNROLL_SIZE - x->first->value_len];
-}
 
 void ul_unlink(struct u_lhead *head, struct vertex *v);
 struct u_list * ul_push(struct u_lhead *head, struct vertex *v);
+struct vertex *ul_first(struct u_lhead *x);
+

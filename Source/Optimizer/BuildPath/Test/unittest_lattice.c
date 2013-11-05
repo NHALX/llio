@@ -8,6 +8,7 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
 
 #include "../le.h"
 #include "../genLE_Init.h"
@@ -46,7 +47,8 @@ void show_mask(struct ctx *x, c_mask_t mask, char *buf)
 			int n = (j + 1);
 			n = x->linear_extension[n - 1];
 
-			itoa(n, number, 10);
+			//itoa(n, number, 10);
+			sprintf(number, "%d", n);
 			strcat(buf, number);
 			strcat(buf, ",");
 			nonempty = 1;
@@ -61,9 +63,8 @@ void show_mask(struct ctx *x, c_mask_t mask, char *buf)
 void print_final(struct ctx *x, unsigned char *visited, c_ideal_t *edges, struct vertex *v, c_mask_t le)
 {
 	c_mask_t next;
-	size_t max_mask_len = (x->adjacency_dim * 2) + 3;
-	char *s1 = _alloca(max_mask_len);
-	char *s2 = _alloca(max_mask_len);
+	static char s1[(IDEAL_T_MAX*2)+3];
+	static char s2[(IDEAL_T_MAX*2)+3];
 	struct u_iterator j;
 
 	show_mask(x, le, s1);
@@ -178,7 +179,14 @@ all_extensions(struct ideal_lattice il, c_index_t index, size_t le_n)
 	
 }
 
-//#define BENCHMARK
+extern void __glbinit__lattice();
+extern int idealLattice(c_ideal_t p_relations[][2], size_t p_reln, size_t n, struct ideal_lattice *lattice);
+extern void ctx_init(struct ctx *ctx, c_ideal_t edges[][2], size_t nedges, size_t n);
+extern void unittest_u_list();
+extern struct vertex * Left(struct ctx *x, int i);
+extern STATIC int buildLattice(c_ideal_t *edges, size_t edge_w, struct vertex *root, unsigned char n);
+
+#define BENCHMARK
 
 int
 main()
@@ -207,7 +215,7 @@ main()
 		
 		for (j = 0; j < lattice.max_neighbors; ++j)
 			if (lattice.neighbors[base + j] != 0)
-				printf("{%d -> %d,%d},\n", lattice.neighbors[base + j], i, lattice.ideals[base + j]);
+				printf("{%u -> %zu,%d},\n", lattice.neighbors[base + j], i, lattice.ideals[base + j]);
 	}
 
 	all_extensions(lattice, lattice.source, 0);

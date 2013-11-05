@@ -1,5 +1,11 @@
 #include "u_list.h"
 
+struct vertex *ul_first(struct u_lhead *x)
+{
+	assert(x && x->first->value_len >= 1);
+	return x->first->value[LIST_UNROLL_SIZE - x->first->value_len];
+}
+
 // OPTIMIZATION: this accounts for too much time, fix it.
 void ul_unlink(struct u_lhead *head, struct vertex *v)
 {

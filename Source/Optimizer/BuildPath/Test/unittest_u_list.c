@@ -9,7 +9,7 @@ void
 unittest_ul_push()
 {
 	uintptr_t buf[TEST_SAMPLE_SIZE + 1];
-	int j, offset;
+	uintptr_t j, offset;
 	struct u_iterator i;
 	struct u_lhead list = ULIST_STATIC_INITIALIZER;
 
@@ -71,7 +71,7 @@ unittest_ul_unlink()
 {
 	uintptr_t buf[6];
 	uintptr_t expected[6] = { 1, 2, 4, 5, 6, 8 };
-	int j;
+	uintptr_t j;
 	struct u_iterator i;
 	struct u_lhead list = ULIST_STATIC_INITIALIZER;
 	memset(buf, 0, sizeof buf);
@@ -98,7 +98,7 @@ unittest_ul_unlink()
 void
 unittest_ul_first()
 {
-	int j;
+	uintptr_t j;
 	struct u_lhead list = ULIST_STATIC_INITIALIZER;
 	uintptr_t x;
 	uintptr_t y;

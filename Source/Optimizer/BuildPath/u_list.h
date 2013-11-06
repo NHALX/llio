@@ -1,5 +1,5 @@
 #include <assert.h>
-#include <stdalign.h> 
+//#include <stdalign.h> 
 #include <stdint.h>
 #include "p_alloc.h"
 
@@ -36,6 +36,7 @@ struct u_iterator {
 	intptr_t      n;
 };
 
+// Don't forget this is a nested loop - use goto to break.
 #define FOR_X_IN_LIST(I,HEAD) \
 	for ((I).node = (HEAD)->first, \
 		 (I).n = 0; \

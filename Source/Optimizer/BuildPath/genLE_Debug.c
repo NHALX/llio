@@ -20,10 +20,10 @@
 
 #include "../Common/OpenCLDebugHack.h"
 
-void init_all(struct graph *g)
+int init_all(struct graph *g)
 {
 	init_graph(g, LE_T_DATA_LEN, ideals, adjacency, LE_T_ADJACENCY_MAX, LE_T_EXTENSION_SIZE, node2id, LE_T_IDMAP_LEN);
-	init_count(g);
+	GUARD(init_count(g));
 }
 
 
@@ -132,7 +132,7 @@ int main2()
 #endif
 	int result_n;
 
-	init_all(&g);
+	GUARD(init_all(&g));
 
 
 	n = g.counts[1]; // TODO: make sure this is a valid assumption

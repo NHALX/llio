@@ -2,7 +2,8 @@
 
 struct vertex *ul_first(struct u_lhead *x)
 {
-	assert(x && x->first->value_len >= 1);
+	assert(x->first);
+	assert(x->first->value_len >= 1);
 	return x->first->value[LIST_UNROLL_SIZE - x->first->value_len];
 }
 
@@ -67,9 +68,7 @@ struct u_list * ul_push(struct u_lhead *head, struct vertex *v)
 	{
 		struct u_list *node;
 
-		if (!(node = p_alloc(P_ALLOC_ULIST)))
-			return 0;
-
+		GUARD(node = p_alloc(P_ALLOC_ULIST));
 		node->prev_page = 0;
 		node->next_page = x;
 		node->value[PUSH_PAGE_TOP] = v;

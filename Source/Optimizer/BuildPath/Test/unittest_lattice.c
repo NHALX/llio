@@ -71,7 +71,7 @@ void print_final(struct ctx *x, unsigned char *visited, c_ideal_t *edges, struct
 
 	FOR_X_IN_LIST_REVERSE(j, &v->impred)
 	{
-		size_t i        = (v->index*x->max_neighbors) + UL_N(j);
+		size_t i = (p_index(v, P_ALLOC_VERTEX) * x->max_neighbors) + UL_N(j);
 		c_ideal_t ideal = edges[i];
 
 		if (visited[i] == 0)
@@ -100,7 +100,8 @@ void print_lattice(struct ctx *x, c_ideal_t *edges)
 		FOR_X_IN_LIST_REVERSE(j, &v->impred)
 		{
 			struct vertex *c = UL_X(j);
-			c_ideal_t ideal = edges[INDEX2(x->max_neighbors, v->index, UL_N(j))];
+			uintptr_t index = p_index(v, P_ALLOC_VERTEX);
+			c_ideal_t ideal = edges[INDEX2(x->max_neighbors, index, UL_N(j))];
 
 			printf("{\"%d::%p\" -> \"%d::%p\", %d}, \n", v->label, v, c->label, c, ideal);
 		}
@@ -181,7 +182,7 @@ all_extensions(struct ideal_lattice il, c_index_t index, size_t le_n)
 
 extern void __glbinit__lattice();
 extern int idealLattice(c_ideal_t p_relations[][2], size_t p_reln, size_t n, struct ideal_lattice *lattice);
-extern void ctx_init(struct ctx *ctx, c_ideal_t edges[][2], size_t nedges, size_t n);
+extern int ctx_init(struct ctx *ctx, c_ideal_t edges[][2], size_t nedges, size_t n);
 extern void unittest_u_list();
 extern struct vertex * Left(struct ctx *x, int i);
 extern STATIC int buildLattice(c_ideal_t *edges, size_t edge_w, struct vertex *root, unsigned char n);
@@ -204,7 +205,11 @@ main()
 	__glbinit__lattice();
 
 #ifdef BENCHMARK
-	idealLattice(poset, 5, 17, &lattice);
+	if (idealLattice(poset, 5, 22, &lattice) != G_SUCCESS)
+	{
+		printf("idealLattice: failed.\n");
+		return;
+	}
 #else
 	idealLattice(poset, 5, 6, &lattice);
 
@@ -225,7 +230,7 @@ main()
 
 
 int
-main3()
+stuff()
 {
 	struct vertex *v;
 	struct ctx x;
@@ -244,17 +249,16 @@ main3()
 	unittest_u_list();
 #endif
 
-
-	ctx_init(&x, poset, 5, 6);
+	GUARD(ctx_init(&x, poset, 5, 6));
 
 	for (i = 0; i < SIMULATION_RUNS; ++i)
 	{
-		v = Left(&x, LATTICE_N);
+		GUARD(v = Left(&x, LATTICE_N));
 
 		if (edges == NULL)
 		{
 			edgelen = x.vertex_count * x.max_neighbors * sizeof *edges;
-			edges   = calloc(edgelen, 1);
+			GUARD(edges = calloc(edgelen, 1));
 		}
 
 #ifdef PRINT

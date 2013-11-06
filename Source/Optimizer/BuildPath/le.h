@@ -35,6 +35,10 @@ static __inline void init_graph(
 	c_itemid_t *idmap,
 	unsigned int idmap_len)
 {
+	c_count_t *counts;
+	
+	GUARD(counts = calloc(len, sizeof(*g->counts)));
+
 	g->end           = len-1; // TODO: make sure this is a valid assumption
 	g->idmap         = idmap;
 	g->idmap_len     = idmap_len;
@@ -43,13 +47,7 @@ static __inline void init_graph(
 	g->adjacency     = adjacency;
 	g->max_neighbors = max_neighbors;
 	g->combo_len     = combo_len;
-	g->counts        = calloc(len, sizeof(*g->counts));
-
-	if (g->counts == NULL)
-	{
-		printf("init_graph: malloc failure\n");
-		exit(-1);
-	}
+	g->counts        = counts;
 }
 
 #endif

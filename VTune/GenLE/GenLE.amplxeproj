@@ -10,6 +10,9 @@
   <CPUFrequency type="s64_t">2660000000</CPUFrequency>
  </rdmgr>
  <All_Configurations-All_Platforms>
+  <analysis_type_settings>
+   <selected_analysis_type_path>C:\Program Files (x86)\Intel\VTune Amplifier XE 2013\config\analysis_type\core2_bandwidth_breakdown.cfg</selected_analysis_type_path>
+  </analysis_type_settings>
   <target_settings>
    <selected_workload>launch</selected_workload>
    <result_pattern>r@@@{at}</result_pattern>
@@ -19,13 +22,13 @@
      <workload>
       <targetName>launch</targetName>
       <use_app_dir_as_work_dir type="bool">true</use_app_dir_as_work_dir>
-      <launch.userapppath>D:\GitRoot\llio\Source\Optimizer\maxreduce_debug\genLE\genLE\Release\genLE.exe</launch.userapppath>
-      <launch_app.app_to_launch>D:\GitRoot\llio\Source\Optimizer\maxreduce_debug\genLE\genLE\Release\genLE.exe</launch_app.app_to_launch>
-      <launch.userappworkdir>D:\GitRoot\llio\Source\Optimizer\maxreduce_debug\genLE\genLE\Release</launch.userappworkdir>
-      <result_directory.path>D:\GitRoot\llio\VTune\GenLE\r@@@{at}</result_directory.path>
       <system.duration>60</system.duration>
       <launch_app.resume_after type="s32_t">0</launch_app.resume_after>
       <launch_app.start_paused type="bool">false</launch_app.start_paused>
+      <result_directory.path>D:\GitRoot\llio\VTune\GenLE\r@@@{at}</result_directory.path>
+      <launch.userapppath>D:\GitRoot\llio\Source\Optimizer\maxreduce_debug\genLE\genLE\Release\unittest_lattice.exe</launch.userapppath>
+      <launch_app.app_to_launch>D:\GitRoot\llio\Source\Optimizer\maxreduce_debug\genLE\genLE\Release\unittest_lattice.exe</launch_app.app_to_launch>
+      <launch.userappworkdir>D:\GitRoot\llio\Source\Optimizer\maxreduce_debug\genLE\genLE\Release</launch.userappworkdir>
       <launch_app.working_folder>D:\GitRoot\llio\Source\Optimizer\maxreduce_debug\genLE\genLE\Release</launch_app.working_folder>
       <search_directories>
        <item>
@@ -79,9 +82,6 @@
     <category type="u8_t">4</category>
    </searchCategory>
   </searchDirs>
-  <analysis_type_settings>
-   <selected_analysis_type_path>C:\Program Files (x86)\Intel\VTune Amplifier XE 2013\config\analysis_type\core2_bandwidth_breakdown.cfg</selected_analysis_type_path>
-  </analysis_type_settings>
  </All_Configurations-All_Platforms>
  <engine>
   <knobs>

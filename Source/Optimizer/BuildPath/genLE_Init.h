@@ -23,15 +23,15 @@ struct ideal_lattice
 
 struct vertex
 {
-	size_t            index; // this can be optimized out since its easy to calculate the offset from the pool start
-	struct vertex    *parent;
+	//size_t        index; // this can be optimized out since its easy to calculate the offset from the pool start
+	struct vertex  *parent;
 	struct u_lhead children;
 	struct u_lhead impred;
-	c_ideal_t         label;
+	c_ideal_t      label;
 
 	// HARD_LIMITS: these will be too small if we have 2^256 vertices in our lattice...
-	unsigned char     children_len; 
-	unsigned char     edge_len;
+	unsigned char children_len; 
+	unsigned char edge_len;
 };
 
 

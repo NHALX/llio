@@ -6,7 +6,7 @@
 #define G_SUCCESS     1
 #define G_ERROR       0
 #define GUARD(EXPR)   if ((EXPR) == G_ERROR){ return G_ERROR; }
-
+#define G_FREE(PTR)   if (PTR) free(PTR)
 
 #define P_ALLOC_ULIST  0
 #define P_ALLOC_VERTEX 1
@@ -52,5 +52,6 @@ for ((I).local_index = 0; \
 void  p_release(size_t type_id);
 int   p_init(size_t *typsiz, int n);
 void* p_alloc(size_t type_id);
+uintptr_t p_index(void *ptr, size_t type_id);
 
 #endif

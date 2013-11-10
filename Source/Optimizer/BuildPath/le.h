@@ -1,16 +1,13 @@
 #ifndef _LE_H_
 #define _LE_H_
 
+#include "x_types.h"
 
 //#pragma pack (push, 16)
 typedef struct { cl_float metric; cl_ulong index; }    c_result_t;
 //#pragma pack(pop)
 
-#define IDEAL_T_MAX CL_UCHAR_MAX
-typedef cl_uint  c_index_t;
-typedef cl_uchar c_ideal_t;
-typedef cl_ulong c_count_t;
-typedef cl_short c_itemid_t;
+
 
 struct graph {
 	c_index_t  end;
@@ -25,7 +22,10 @@ struct graph {
 };
 
 
-static __inline void init_graph(
+// TODO: this function is out of place
+//       also, have callers check return value since it used to be void.
+
+static __inline int init_graph(
 	struct graph *g, 
 	unsigned int len,
 	c_ideal_t *ideals,

@@ -10,6 +10,7 @@
 
 #define P_ALLOC_ULIST  0
 #define P_ALLOC_VERTEX 1
+#define P_ALLOC_COO    2
 
 #define P_PAGE_SIZE 33554432
 
@@ -27,9 +28,12 @@ struct p_iterator {
 	size_t         type_size;
 };
 
+
+
 struct p_pool {
 	size_t element_size;
 	struct p_page *pages;
+	size_t page_count;
 };
 
 extern struct p_pool *p_glbpool;
@@ -52,6 +56,8 @@ for ((I).local_index = 0; \
 void  p_release(size_t type_id);
 int   p_init(size_t *typsiz, int n);
 void* p_alloc(size_t type_id);
+void p_free(void *p, size_t type_id);
+size_t p_memusage(size_t type_id);
 uintptr_t p_index(void *ptr, size_t type_id);
-
+void * p_ptr(uintptr_t ptr, size_t type_id);
 #endif

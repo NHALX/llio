@@ -1,3 +1,6 @@
+#ifndef _U_LIST_H_
+#define _U_LIST_H_
+
 #include <assert.h>
 //#include <stdalign.h> 
 #include <stdint.h>
@@ -16,18 +19,18 @@
 struct u_list  {
 	struct u_list  *next_page;
 	struct u_list  *prev_page;
-	struct vertex *value[LIST_UNROLL_SIZE];
-	intptr_t       value_len;
+	void           *value[LIST_UNROLL_SIZE];
+	intptr_t        value_len;
 };
 
-static_assert(sizeof(struct u_list) <= 64, "sizeof (struct u_list) <= 64)");
-static_assert(LIST_UNROLL_SIZE > 1, "sizeof (struct u_list) <= 64)");
+static_assert(sizeof(struct u_list) <= CACHE_LINE_SIZE, "sizeof (struct u_list) > CACHE_LINE_SIZE)");
+static_assert(LIST_UNROLL_SIZE >= 1, "LIST_UNROLL_SIZE < 1");
 
-#define ULIST_STATIC_INITIALIZER {NULL,NULL}
+#define ULIST_STATIC_INITIALIZER {0} //{NULL,NULL}
 
 struct u_lhead {
 	struct u_list *first;
-	struct u_list *last;
+	//struct u_list *last;
 };
 
 struct u_iterator {
@@ -47,19 +50,20 @@ struct u_iterator {
 			 (I).i++, (I).n++)
 
 #define FOR_X_IN_LIST_REVERSE(I,HEAD) \
-	for ((I).node = (HEAD)->last, \
+	for ((I).node = (HEAD)->first->prev_page, \
 		 (I).n = 0; \
-		 (I).node; \
+		 (I).node && ((I).node != (HEAD)->first->prev_page || (I).n == 0); \
 		 (I).node = (I).node->prev_page) \
 		for ((I).i = LIST_UNROLL_SIZE-1; \
 			 (I).i >= LIST_UNROLL_SIZE - (I).node->value_len; \
 			 (I).i--, (I).n++)
 
-#define UL_X(I)  (I).node->value[(I).i]
-#define UL_N(I)  (I).n
+#define UL_X(I)  ((I).node->value[(I).i])
+#define UL_N(I)  ((I).n)
 
 
-void ul_unlink(struct u_lhead *head, struct vertex *v);
-struct u_list * ul_push(struct u_lhead *head, struct vertex *v);
-struct vertex *ul_first(struct u_lhead *x);
+void ul_unlink(struct u_lhead *head, void *v);
+struct u_list * ul_push(struct u_lhead *head, void *v);
+void *ul_first(struct u_lhead *x);
 
+#endif

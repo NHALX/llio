@@ -1,6 +1,6 @@
 #include "u_list.h"
 
-struct vertex *ul_first(struct u_lhead *x)
+void *ul_first(struct u_lhead *x)
 {
 	assert(x->first);
 	assert(x->first->value_len >= 1);
@@ -8,7 +8,7 @@ struct vertex *ul_first(struct u_lhead *x)
 }
 
 // OPTIMIZATION: this accounts for too much time, fix it.
-void ul_unlink(struct u_lhead *head, struct vertex *v)
+void ul_unlink(struct u_lhead *head, void *v)
 {
 	struct u_iterator k;
 	struct u_list *prev = 0;
@@ -20,29 +20,20 @@ void ul_unlink(struct u_lhead *head, struct vertex *v)
 		{
 			if (k.node->value_len - 1 == 0) // unlink node
 			{
-				if (k.node == head->first && k.node == head->last)
-					head->first = head->last = 0;
-				else
-				{
-					if (k.node == head->first)
-						head->first = k.node->next_page;
+				if (k.node == head->first)
+					head->first = k.node->next_page;
 
-					else if (k.node == head->last)
-						head->last = k.node->prev_page;
+				k.node->prev_page->next_page = k.node->next_page;
 
-					if (k.node->prev_page)
-						k.node->prev_page->next_page = k.node->next_page;
-
-					if (k.node->next_page)
-						k.node->next_page->prev_page = k.node->prev_page;
-				}
+				if (k.node->next_page)
+					k.node->next_page->prev_page = k.node->prev_page;
 			}
 			else
 			{
 				int j = PUSH_PAGE_TOP;
 				for (i = PUSH_PAGE_TOP; i >= 0; --i)
-				if (k.node->value[i] != v)
-					k.node->value[j--] = k.node->value[i];
+					if (k.node->value[i] != v)
+						k.node->value[j--] = k.node->value[i];
 
 				k.node->value_len--;
 			}
@@ -53,35 +44,38 @@ void ul_unlink(struct u_lhead *head, struct vertex *v)
 }
 
 
-struct u_list * ul_push(struct u_lhead *head, struct vertex *v)
+struct u_list * ul_push(struct u_lhead *head, void *v)
 {
-	struct u_list *x = head->first;
+	struct u_list *first = head->first;
 
-	if (x && x->value_len < LIST_UNROLL_SIZE)
+	if (first && first->value_len < LIST_UNROLL_SIZE)
 	{
-		int i = x->value_len;
-		x->value[PUSH_PAGE_TOP - i] = v;
-		x->value_len++;
-		return x;
+		int i = first->value_len;
+		first->value[PUSH_PAGE_TOP - i] = v;
+		first->value_len++;
+		return first;
 	}
 	else
 	{
 		struct u_list *node;
 
 		GUARD(node = p_alloc(P_ALLOC_ULIST));
-		node->prev_page = 0;
-		node->next_page = x;
+		//GUARD(node = malloc(sizeof *node));
 		node->value[PUSH_PAGE_TOP] = v;
 		node->value_len = 1;
 
-		if (node->next_page)
-			node->next_page->prev_page = node;
+		if (first){
+			node->next_page = first;
+			node->prev_page = first->prev_page;
+			first->prev_page = node;
+		}
+		else
+		{
+			node->prev_page = node;
+			node->next_page = 0; // list is only cyclical when traversing backwards.
+		}
 
 		head->first = node;
-
-		if (head->last == 0)
-			head->last = head->first;
-
 		return node;
 	}
 }

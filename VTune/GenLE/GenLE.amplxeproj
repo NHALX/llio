@@ -10,9 +10,6 @@
   <CPUFrequency type="s64_t">2660000000</CPUFrequency>
  </rdmgr>
  <All_Configurations-All_Platforms>
-  <analysis_type_settings>
-   <selected_analysis_type_path>C:\Program Files (x86)\Intel\VTune Amplifier XE 2013\config\analysis_type\core2_bandwidth_breakdown.cfg</selected_analysis_type_path>
-  </analysis_type_settings>
   <target_settings>
    <selected_workload>launch</selected_workload>
    <result_pattern>r@@@{at}</result_pattern>
@@ -82,6 +79,9 @@
     <category type="u8_t">4</category>
    </searchCategory>
   </searchDirs>
+  <analysis_type_settings>
+   <selected_analysis_type_path>C:\Program Files (x86)\Intel\VTune Amplifier XE 2013\config\analysis_type\basic_hotspots.cfg</selected_analysis_type_path>
+  </analysis_type_settings>
  </All_Configurations-All_Platforms>
  <engine>
   <knobs>

@@ -117,8 +117,8 @@ unittest_ul_first()
 void
 unittest_u_list()
 {
-	size_t size = sizeof(struct u_list);
-	assert(size == 64);
+	//size_t size = sizeof(struct u_list);
+	//assert(size == 64);
 
 	unittest_ul_push();
 	//unittest_slh_append();

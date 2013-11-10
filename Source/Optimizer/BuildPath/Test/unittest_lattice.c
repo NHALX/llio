@@ -3,7 +3,11 @@
 #else
 #include <CL/cl.h>
 #endif
-
+#ifndef _MSC_VER
+#include <alloca.h>
+#else
+#define alloca _alloca
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -12,6 +16,7 @@
 
 #include "../le.h"
 #include "../genLE_Init.h"
+#include "../tree.h"
 
 #define LATTICE_N 6
 
@@ -19,11 +24,11 @@
 
 void print_tree(struct ctx *x, struct vertex *v)
 {
-	struct u_iterator i;
+	c_iterator i;
 
-	FOR_X_IN_LIST(i, &v->children)
+	FOR_X_IN_CHILDREN(x, i, v)
 	{
-		struct vertex *v2 = UL_X(i);
+		struct vertex *v2 = C_X(i);
 		printf("(\"%d::%p\" -> \"%d::%p\"), \n", v->label, v, v2->label, v2);
 		print_tree(x, v2);
 	}
@@ -184,6 +189,7 @@ extern void __glbinit__lattice();
 extern int idealLattice(c_ideal_t p_relations[][2], size_t p_reln, size_t n, struct ideal_lattice *lattice);
 extern int ctx_init(struct ctx *ctx, c_ideal_t edges[][2], size_t nedges, size_t n);
 extern void unittest_u_list();
+extern void unittest_tree();
 extern struct vertex * Left(struct ctx *x, int i);
 extern STATIC int buildLattice(c_ideal_t *edges, size_t edge_w, struct vertex *root, unsigned char n);
 
@@ -192,7 +198,7 @@ extern STATIC int buildLattice(c_ideal_t *edges, size_t edge_w, struct vertex *r
 int
 main()
 {
-	size_t i;
+//	size_t i;
 	struct ideal_lattice lattice;
 	c_ideal_t poset[][2] = {
 		{ 3, 1 },
@@ -203,6 +209,8 @@ main()
 	};
 
 	__glbinit__lattice();
+	unittest_u_list();
+	unittest_tree();
 
 #ifdef BENCHMARK
 	if (idealLattice(poset, 5, 22, &lattice) != G_SUCCESS)

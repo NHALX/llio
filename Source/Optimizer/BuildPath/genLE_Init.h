@@ -22,4 +22,6 @@ struct ideal_lattice
 
 
 void lattice_free(struct ideal_lattice *lattice);
-int idealLattice(c_ideal_t p_relations[][2], size_t p_reln, size_t n, struct ideal_lattice *lattice);
+int lattice_create(c_ideal_t p_relations[][2], size_t p_reln, size_t n, struct ideal_lattice *lattice);
+void lattice_valmap(struct ideal_lattice *lattice);
+void glbinit_lattice();

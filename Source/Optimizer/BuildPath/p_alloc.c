@@ -9,7 +9,7 @@
 struct p_pool *p_glbpool;
 
 
-struct p_page *findpage(void *ptr, size_t type_id, uintptr_t *out_index, struct p_page **prev)
+static struct p_page *FindPage(void *ptr, size_t type_id, uintptr_t *out_index, struct p_page **prev)
 {
 	struct p_page *page;
 	uintptr_t element = (uintptr_t)ptr;
@@ -42,7 +42,7 @@ struct p_page *findpage(void *ptr, size_t type_id, uintptr_t *out_index, struct 
 }
 
 
-static struct p_page * addpage(size_t type_id, size_t n)
+static struct p_page * AddPage(size_t type_id, size_t n)
 {
 	struct p_page *p = malloc(sizeof *p);
 	void *heap = malloc(P_PAGE_SIZE);
@@ -56,7 +56,6 @@ static struct p_page * addpage(size_t type_id, size_t n)
 
 	p->next  = p_glbpool[type_id].pages;
 	p->index = 0;
-	//p->free  = 0;
 	p->len   = n;
 	p->heap  = heap;
 	
@@ -82,7 +81,7 @@ int p_init(size_t *typsiz, int n)
 		p_glbpool[i].pages        = 0;
 		p_glbpool[i].page_count   = 0;
 
-		if (!addpage(i, P_PAGE_SIZE / typsiz[i]))
+		if (!AddPage(i, P_PAGE_SIZE / typsiz[i]))
 		{
 		FAIL:
 			for (i=i-1; i>=0; --i)
@@ -100,7 +99,7 @@ int p_init(size_t *typsiz, int n)
 }
 
 
-void* p_alloc(size_t type_id)
+void * p_alloc(size_t type_id)
 {
 	size_t typesiz;
 	struct p_pool *pool = &p_glbpool[type_id];
@@ -111,7 +110,7 @@ void* p_alloc(size_t type_id)
 	page = pool->pages;
 
 	if (!page || page->index >= page->len)
-		GUARD(page = addpage(type_id, P_PAGE_SIZE / typesiz));
+		GUARD(page = AddPage(type_id, P_PAGE_SIZE / typesiz));
 
 	mem = page->heap + (page->index * typesiz);
 	page->index++;
@@ -150,7 +149,7 @@ void * p_ptr(uintptr_t index, size_t type_id)
 uintptr_t p_index(void *ptr, size_t type_id)
 {
 	size_t index;
-	struct p_page *page = findpage(ptr, type_id, &index, 0);
+	struct p_page *page = FindPage(ptr, type_id, &index, 0);
 	assert(page);
 	if (!page)
 		return -1;

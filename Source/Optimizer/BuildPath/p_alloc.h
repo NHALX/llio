@@ -10,7 +10,6 @@
 
 #define P_ALLOC_ULIST  0
 #define P_ALLOC_VERTEX 1
-//#define P_ALLOC_COO    2
 
 #define P_PAGE_SIZE 33554432
 

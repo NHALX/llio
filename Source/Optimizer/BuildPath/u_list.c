@@ -1,6 +1,20 @@
 #include "u_list.h"
 #include <string.h>
 
+
+static struct u_list *PageNew(void *v)
+{
+	struct u_list *node;
+	GUARD(node = p_alloc(P_ALLOC_ULIST));
+
+	node->value[PUSH_PAGE_TOP] = v;
+	node->value_len = 1;
+	node->prev_page = node;
+	node->next_page = node;
+	return node;
+}
+
+
 void *ul_first(struct u_list *x)
 {
 	assert(x);
@@ -9,6 +23,38 @@ void *ul_first(struct u_list *x)
 }
 
 
+struct u_list * ul_push(struct u_list **head, void *v)
+{
+	struct u_list *first = *head;
+
+	if (first && first->value_len < LIST_UNROLL_SIZE)
+	{
+		int i = first->value_len;
+		first->value[PUSH_PAGE_TOP - i] = v;
+		first->value_len++;
+		return first;
+	}
+	else
+	{
+		struct u_list *node;
+		GUARD(node = PageNew(v));
+
+		if (first){
+			node->next_page = first;
+			node->prev_page = first->prev_page;
+			
+			first->prev_page->next_page = node;
+			first->prev_page = node;
+		}
+
+		*head = node;
+		return node;
+	}
+}
+
+
+
+/*
 // OPTIMIZATION: this accounts for too much time, fix it.
 void ul_unlink(struct u_list **head, void *v)
 {
@@ -45,18 +91,6 @@ void ul_unlink(struct u_list **head, void *v)
 	}
 }
 
-struct u_list *page_new(void *v)
-{
-	struct u_list *node;
-	GUARD(node = p_alloc(P_ALLOC_ULIST));
-
-	node->value[PUSH_PAGE_TOP] = v;
-	node->value_len = 1;
-	node->prev_page = node;
-	node->next_page = node;
-	return node;
-}
-
 
 struct u_list * ul_append(struct u_list **head, void *v)
 {
@@ -82,7 +116,7 @@ struct u_list * ul_append(struct u_list **head, void *v)
 	else
 	{
 		struct u_list *node;
-		GUARD(node = page_new(v));
+		GUARD(node = PageNew(v));
 		
 		node->next_page = tail->next_page;
 		node->prev_page = tail;
@@ -92,34 +126,4 @@ struct u_list * ul_append(struct u_list **head, void *v)
 		return node;
 	}
 }
-
-
-struct u_list * ul_push(struct u_list **head, void *v)
-{
-	struct u_list *first = *head;
-
-	if (first && first->value_len < LIST_UNROLL_SIZE)
-	{
-		int i = first->value_len;
-		first->value[PUSH_PAGE_TOP - i] = v;
-		first->value_len++;
-		return first;
-	}
-	else
-	{
-		struct u_list *node;
-		GUARD(node = page_new(v));
-
-		if (first){
-			node->next_page = first;
-			node->prev_page = first->prev_page;
-			
-			first->prev_page->next_page = node;
-			first->prev_page = node;
-		}
-
-		*head = node;
-		return node;
-	}
-}
-
+*/

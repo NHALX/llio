@@ -94,6 +94,7 @@ unittest_ul_push()
 		assert(buf[j] == j);
 }
 
+/*
 void
 unittest_ul_append()
 {
@@ -212,7 +213,7 @@ unittest_ul_unlink()
 
 	assert(memcmp(buf, expected, sizeof buf) == 0);
 }
-
+*/
 
 void
 unittest_ul_first()
@@ -240,8 +241,8 @@ unittest_u_list()
 	//assert(size == 64);
 
 	unittest_ul_push();
-	unittest_ul_append();
-	unittest_ul_append_linking();
-	unittest_ul_unlink();
+	//unittest_ul_append();
+	//unittest_ul_append_linking();
+	//unittest_ul_unlink();
 	unittest_ul_first();
 }

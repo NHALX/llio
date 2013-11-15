@@ -26,34 +26,30 @@ struct u_list  {
 static_assert(sizeof(struct u_list) <= CACHE_LINE_SIZE, "sizeof (struct u_list) > CACHE_LINE_SIZE)");
 static_assert(LIST_UNROLL_SIZE >= 1, "LIST_UNROLL_SIZE < 1");
 
-#define ULIST_STATIC_INITIALIZER {0} //{NULL,NULL}
-
-struct u_lhead {
-	struct u_list *first;
-	//struct u_list *last;
-};
 
 struct u_iterator {
 	struct u_list *node;
 	intptr_t      i;
 	intptr_t      n;
+	size_t        page;
 };
+
+
+#define _FXL_OUTER(I,HEAD,DIRECTION) \
+for ((I).node = (HEAD), (I).n = 0, (I).page = 0; \
+	(I).node && ((I).node != (HEAD) || (I).page == 0); \
+	(I).node = (I).node->##DIRECTION, (I).page++) 
+
 
 // Don't forget this is a nested loop - use goto to break.
 #define FOR_X_IN_LIST(I,HEAD) \
-	for ((I).node = (HEAD)->first, \
-		 (I).n = 0; \
-		 (I).node; \
-		 (I).node = (I).node->next_page) \
+	_FXL_OUTER(I,HEAD,next_page) \
 		for ((I).i = LIST_UNROLL_SIZE - (I).node->value_len; \
 			 (I).i < LIST_UNROLL_SIZE; \
 			 (I).i++, (I).n++)
 
 #define FOR_X_IN_LIST_REVERSE(I,HEAD) \
-	for ((I).node = (HEAD)->first->prev_page, \
-		 (I).n = 0; \
-		 (I).node && ((I).node != (HEAD)->first->prev_page || (I).n == 0); \
-		 (I).node = (I).node->prev_page) \
+	_FXL_OUTER(I,(HEAD) ? (HEAD)->prev_page : 0, prev_page) \
 		for ((I).i = LIST_UNROLL_SIZE-1; \
 			 (I).i >= LIST_UNROLL_SIZE - (I).node->value_len; \
 			 (I).i--, (I).n++)
@@ -62,8 +58,9 @@ struct u_iterator {
 #define UL_N(I)  ((I).n)
 
 
-void ul_unlink(struct u_lhead *head, void *v);
-struct u_list * ul_push(struct u_lhead *head, void *v);
-void *ul_first(struct u_lhead *x);
+void ul_unlink(struct u_list **head, void *v);
+struct u_list * ul_push(struct u_list **head, void *v);
+struct u_list * ul_append(struct u_list **head, void *v);
+void *ul_first(struct u_list *x);
 
 #endif

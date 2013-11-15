@@ -14,13 +14,15 @@ struct vertex *tree_vertex(struct ctx *x)
 	struct vertex *v;
 	GUARD(v = p_alloc(P_ALLOC_VERTEX));
 	memset(v, 0, sizeof *v);
-	//v->index = x->vertex_count;
+#ifndef NDEBUG
+	v->index = x->vertex_count;
+#endif
 	x->vertex_count++;
 	return v;
 }
 
 #define CHILD_SET(x, p, i) GUARD(ul_push(&p->children, i));
-#define CHILD_UNSET(x, p, c) ul_unlink(&p->children, c);
+//#define CHILD_UNSET(x, p, c) ul_unlink(&p->children, c);
 
 /*
 #define CHILD_SET(X,I,J) do { \
@@ -39,9 +41,24 @@ if (Rc_int != 1) \
 } while (0)
 */
 
+int tree_pushimpred(struct ctx *x, struct vertex * p, struct vertex * c)
+{
+	vertex_ptr ptr;
+	ptr.allbits      = c;
+	ptr.tag.t_impred = 1;
+	ptr.tag.t_pushed = 1;
+	//GUARD(ul_append(&p->children, ptr.allbits));
+	GUARD(ul_push(&p->children, ptr.allbits));
+	return G_SUCCESS;
+}
+
 int tree_addchild(struct ctx *x, struct vertex * p, struct vertex * i)
 {
-	CHILD_SET(x, p, i);
+	vertex_ptr ptr;
+	ptr.allbits = p;
+	assert(ptr.tag.t_hidden == 0 && ptr.tag.t_impred == 0);
+
+	CHILD_SET(x, ptr.allbits, i);
 	p->children_len++;
 
 	if (x->max_neighbors < p->children_len)
@@ -50,14 +67,48 @@ int tree_addchild(struct ctx *x, struct vertex * p, struct vertex * i)
 	return G_SUCCESS;
 }
 
+int tree_hidechild(struct ctx *x, struct vertex *p, struct vertex *c)
+{
+	c_iterator i;
+	vertex_ptr ptr;
+	
+	ptr.allbits = c;
 
+	FOR_X_IN_CHILDREN(x,i,p)
+	{
+		if (C_X_VP(i).tag.t_ptr == ptr.tag.t_ptr)
+		{
+			CHILD_HIDE(p, i);
+			
+			p->children_len--;
+			return G_SUCCESS;
+		}
+	}
+	
+	return G_ERROR;
+}
+
+struct vertex *tree_firstchild(struct ctx *x, struct vertex *v)
+{
+	//struct vertex *v2 = ul_first(&v->children);
+	c_iterator i;
+	
+	FOR_X_IN_CHILDREN(x, i, v)
+	{
+		if (!CHILD_HIDDEN(v, i) && !CHILD_IMPRED(v,i))
+			return C_X(i);
+	}
+	return 0;
+}
+
+/*
 int tree_delchild(struct ctx *x, struct vertex *p, struct vertex *c)
 {
 	CHILD_UNSET(x, p, c);
 	p->children_len--;
 	return G_SUCCESS;
 }
-
+*/
 /*
 /////////////////////// tree of ideals support functions ////////////////////
 

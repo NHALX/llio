@@ -146,6 +146,7 @@ void * p_ptr(uintptr_t index, size_t type_id)
 	return 0;
 }
 
+// TODO: change return type to page, and use null for error handling. move index result into args.
 uintptr_t p_index(void *ptr, size_t type_id)
 {
 	size_t index;

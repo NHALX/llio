@@ -42,18 +42,19 @@ unittest_tree()
 	i = 3;
 	FOR_X_IN_CHILDREN_REVERSE(&x, iter, vs[0])
 	{
-		assert(C_X(iter)->label == i);
+		struct vertex *child = C_X(iter);
+		assert(child->label == i);
 		--i;
 	}
-	assert(tree_delchild(&x, vs[0], vs[2]) == G_SUCCESS); 
+	//assert(tree_delchild(&x, vs[0], vs[2]) == G_SUCCESS); 
 	
 	//assert(children_len(&x, vs[0]) == 2);
 	//children(&x, vs[0], iter.cs);
 	//assert(iter.cs[0]->label == 3);
 	//assert(iter.cs[1]->label == 1);
 
-	tree_delchild(&x, vs[0], vs[1]);
-	tree_delchild(&x, vs[0], vs[3]);
+	//tree_delchild(&x, vs[0], vs[1]);
+	//tree_delchild(&x, vs[0], vs[3]);
 	free(vs);
 	p_release(P_ALLOC_VERTEX);
 	p_release(P_ALLOC_ULIST);

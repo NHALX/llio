@@ -50,6 +50,7 @@
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <SmallerTypeCheck>true</SmallerTypeCheck>
       <CompileAs>CompileAsC</CompileAs>
+      <PreprocessorDefinitions>LITTLE_ENDIAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -67,7 +68,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\include;$(ProjectDir)\..\..\..\Libs\;$(ProjectDir)\..\..\..\Libs\Random123-1.08\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>LITTLE_ENDIAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -90,6 +91,7 @@
     <ClInclude Include="..\..\..\BuildPath\genLE_Init.h" />
     <ClInclude Include="..\..\..\BuildPath\le.h" />
     <ClInclude Include="..\..\..\BuildPath\p_alloc.h" />
+    <ClInclude Include="..\..\..\BuildPath\Test\reference_lattice.h" />
     <ClInclude Include="..\..\..\BuildPath\tree.h" />
     <ClInclude Include="..\..\..\BuildPath\u_list.h" />
     <ClInclude Include="..\..\..\BuildPath\x_types.h" />

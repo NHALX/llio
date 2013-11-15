@@ -40,9 +40,13 @@ STATIC int toposort(unsigned char *graph, size_t dim, unsigned char *LE);
 int ctx_init(struct ctx *ctx, c_ideal_t edges[][2], size_t nedges, size_t n)
 {
 	size_t i, j;
-	unsigned char *graph = calloc(n, n);
-	unsigned char *LE    = malloc(n);
-	void *adjacency      = calloc(n, n);
+	unsigned char *graph;
+	unsigned char *LE;
+	void *adjacency;
+
+	graph     = calloc(n, n);
+	LE        = malloc(n);
+	adjacency = calloc(n, n);
 
 	if (!graph || !LE || !adjacency)
 	{
@@ -59,8 +63,15 @@ int ctx_init(struct ctx *ctx, c_ideal_t edges[][2], size_t nedges, size_t n)
 	ctx->linear_extension = LE;
 
 	// TODO: uncomment this
-	//for (i = 0; i < nedges; ++i)
-	//	graph[INDEX2(n, edges[i][0] - 1, edges[i][1] - 1)] = 1;
+	
+	for (i = 0; i < nedges; ++i)
+	{
+		size_t x = edges[i][0] - 1;
+		size_t y = edges[i][1] - 1;
+		assert(x <= n && y <= n);
+		graph[INDEX2(n, x, y)] = 1;
+	}
+	
 
 	if (toposort(graph, n, LE) != G_SUCCESS)
 		goto FAIL;
@@ -176,31 +187,10 @@ int init_count(struct graph *g)
 	return G_SUCCESS;
 }
 
-
-/////////////////////// lattice supporting functions ////////////////////
-
-STATIC int push(struct ctx *x, c_ideal_t *edges, size_t w, struct vertex *vertex, struct vertex *c, c_ideal_t ideal)
-{
-	assert(ideal != 0);
-	GUARD(ul_push(&vertex->impred, c));
-	uintptr_t index = p_index(vertex, P_ALLOC_VERTEX);
-	edges[INDEX2(w, index, vertex->edge_len)] = ideal;
-	vertex->edge_len++;
-	return G_SUCCESS;
-}
-
-STATIC int push_children(struct ctx *x, c_ideal_t *edges, size_t w, struct vertex *vertex)
-{
-	c_iterator i;
-
-	FOR_X_IN_CHILDREN(x, i, vertex)
-		GUARD(push(x, edges, w, vertex, C_X(i), C_X(i)->label));
-
-	return G_SUCCESS;
-}
+/////////////////////// Tree of ideals //////////////////////////////////
 
 STATIC int Right(struct ctx *x, int index, struct vertex *r, struct vertex *root)
-{	
+{
 	if (r->children_len)
 	{
 		c_iterator j;
@@ -209,7 +199,7 @@ STATIC int Right(struct ctx *x, int index, struct vertex *r, struct vertex *root
 		{
 			struct vertex *s = C_X(j);
 			struct vertex *t;
-			
+
 			if (IMMEDIATE_PRED(x, s->label - 1, index - 1))
 				continue;
 
@@ -231,12 +221,12 @@ STATIC struct vertex * Left(struct ctx *x, int i)
 	struct vertex *r;
 
 	GUARD(root = tree_vertex(x));
-	
+
 	if (i == 0)
 		return root;
-	
+
 	GUARD(r = Left(x, i - 1));
-	GUARD(Right(x,i,r,root));
+	GUARD(Right(x, i, r, root));
 	r->parent = root;
 	GUARD(tree_addchild(x, root, r));
 	r->label = i;
@@ -244,30 +234,68 @@ STATIC struct vertex * Left(struct ctx *x, int i)
 }
 
 
+/////////////////////// lattice supporting functions ////////////////////
+
+STATIC int push(struct ctx *x, c_ideal_t *edges, size_t w, struct vertex *vertex, struct vertex *c, c_ideal_t ideal)
+{
+	int i;
+	uintptr_t index = p_index(vertex, P_ALLOC_VERTEX);
+	c_ideal_t *neighbors = &edges[INDEX2(w, index, 0)];
+
+	assert(ideal != 0);
+	assert(vertex->edge_len < w);
+
+	GUARD(tree_pushimpred(x, vertex, c));
+
+	for (i = vertex->edge_len; i > 0; --i)
+		neighbors[i] = neighbors[i-1];
+
+	neighbors[0] = ideal;
+	vertex->edge_len++;
+	return G_SUCCESS;
+}
+
+STATIC int push_children(struct ctx *x, c_ideal_t *edges, size_t w, struct vertex *vertex)
+{/*
+	c_iterator i;
+	uintptr_t index = p_index(vertex, P_ALLOC_VERTEX);
+	
+	FOR_X_IN_CHILDREN(x, i, vertex)
+		if (!CHILD_HIDDEN(vertex, i) && !CHILD_IMPRED(vertex,i))
+			CHILD_MARK(vertex, i); // mark as pushed
+		*/
+	return G_SUCCESS;
+}
+
 
 ////////////////////// hasse diagram of the lattice of ideals //////////////////////
 
+STATIC int process2(struct ctx *x, c_ideal_t *edges, size_t edge_w, size_t k, struct vertex *v, struct vertex *v2, size_t index)
+{
+	struct vertex *v3;
+	c_ideal_t ideal;
+	
+	assert(v2->label > k && v->label == k);
+	GUARD(v3 = tree_firstchild(x, v2));
+	assert(v3->label == k);
 
+	ideal = edges[INDEX2(edge_w, p_index(v->parent, P_ALLOC_VERTEX), index)];
+	GUARD(push(x, edges, edge_w, v, v3, ideal));
+	return G_SUCCESS;
+}
+
+// OPTIMIZATION: This loop is a major hotspot. Accounts for ~2/3 of total execution time.
 STATIC int process(struct ctx *x, c_ideal_t *edges, size_t edge_w, size_t k, struct vertex *v)
 {
-	struct u_iterator j;
-	struct vertex *v2, *v3;
-
-	// OPTIMIZATION: This loop is a major hotspot. Accounts for ~2/3 of total execution time.
-	FOR_X_IN_LIST_REVERSE(j, &v->parent->impred)
+	c_iterator i;
+	
+	FOR_X_IN_CHILDREN(x, i, v->parent)
 	{
-		c_ideal_t ideal;
-		v2 = UL_X(j);
-
-		if (v2 == v)
+		if (C_X(i) == v)
 			goto OUT;
 		
-		assert(v2->label > k && v->label == k);
-		v3 = ul_first(&v2->children);
-		assert(v3->label == k);
-		
-		ideal = edges[INDEX2(edge_w, p_index(v->parent, P_ALLOC_VERTEX), UL_N(j))];
-		GUARD(push(x, edges, edge_w, v, v3, ideal));
+		//if (CHILD_MARKED(v->parent,i))
+			GUARD(process2(x, edges, edge_w, k, v, C_X(i), C_N(i)));
 	}
 OUT:
 
@@ -276,7 +304,7 @@ OUT:
 }
 
 
-STATIC int groupAll(struct u_lhead *E)
+STATIC int groupAll(struct u_list **E)
 {
 	struct p_iterator p;
  
@@ -292,28 +320,44 @@ STATIC int groupAll(struct u_lhead *E)
 	return G_SUCCESS;
 }
 
+int
+something(struct ctx *x, c_ideal_t *edges, size_t edge_w, struct vertex *v)
+{
+	c_iterator i;
+	size_t index = p_index(v, P_ALLOC_VERTEX);
 
+	FOR_X_IN_CHILDREN(x, i, v)
+	{
+		c_ideal_t ideal = C_X(i)->label;
+		edges[INDEX2(edge_w, index, v->edge_len)] = ideal;
+		v->edge_len++;
+		something(x, edges, edge_w, C_X(i));
+	}
+
+	return G_SUCCESS;
+}
 
 STATIC int buildLattice(struct ctx *x, c_ideal_t *edges, size_t edge_w, struct vertex *root, unsigned char n)
 {
 	int k;
 	struct u_iterator i;
-	struct u_lhead *E = alloca(n * sizeof(*E)); // limits to UCHAR_MAX
+	struct u_list **E = alloca(n * sizeof(*E)); // limits to UCHAR_MAX
 	
 	memset(E, 0, n * sizeof *E);
 
+	GUARD(something(x, edges, edge_w, root));
 	GUARD(push_children(x, edges, edge_w, root));
 	GUARD(groupAll(E));
 
 	for (k = n; k >= 1; k--)
 	{
-		FOR_X_IN_LIST_REVERSE(i, &E[k-1])
+		FOR_X_IN_LIST_REVERSE(i, E[k-1])
 			GUARD(process(x, edges, edge_w, k, UL_X(i)));
 
-		FOR_X_IN_LIST_REVERSE(i, &E[k-1])
+		FOR_X_IN_LIST_REVERSE(i, E[k-1])
 		{
 			struct vertex *v = UL_X(i);
-			tree_delchild(x, v->parent, v);
+			tree_hidechild(x, v->parent, v);
 		}
 	}
 
@@ -342,17 +386,15 @@ print_memusage(size_t edges, size_t neighbors)
 
 int idealLattice(c_ideal_t p_relations[][2], size_t p_reln, size_t n, struct ideal_lattice *lattice)
 {
-	struct ctx x;
-	struct vertex *root;
 	c_index_t *neighbors;
 	c_ideal_t *edges;
-	size_t i, slen, result;
+	size_t i, slen;
 	struct p_iterator p;
 
-	GUARD(ctx_init(&x, p_relations, p_reln, n));
-	GUARD(root = Left(&x, n));
+	GUARD(ctx_init(&lattice->ctx, p_relations, p_reln, n));
+	GUARD(lattice->ctx.root = Left(&lattice->ctx, n)); // sets vertex_count
 
-	slen      = x.vertex_count * x.max_neighbors;
+	slen      = lattice->ctx.vertex_count * lattice->ctx.max_neighbors;
 	edges     = malloc(slen * sizeof *edges);
 	neighbors = malloc(slen * sizeof *neighbors);
 
@@ -361,47 +403,60 @@ int idealLattice(c_ideal_t p_relations[][2], size_t p_reln, size_t n, struct ide
 	FAIL:
 		G_FREE(edges);
 		G_FREE(neighbors);
-		ctx_free(&x);
+		ctx_free(&lattice->ctx);
 		return G_ERROR;
 	}
 
-	print_memusage(slen * sizeof*edges, slen * sizeof *neighbors);
+	//print_memusage(slen * sizeof*edges, slen * sizeof *neighbors);
 
-	if (buildLattice(&x, edges, x.max_neighbors, root, n) != G_SUCCESS)
+	if (buildLattice(&lattice->ctx, edges, lattice->ctx.max_neighbors, lattice->ctx.root, n) != G_SUCCESS)
 		goto FAIL;
 
-	print_memusage(slen * sizeof*edges, slen * sizeof *neighbors);
+	//print_memusage(slen * sizeof*edges, slen * sizeof *neighbors);
 
 	FOR_X_IN_POOLS(p, P_ALLOC_VERTEX)
 	{
 		struct vertex *v = P_X(p);
-		struct u_iterator j;
+		c_iterator j;
 		size_t k;
 
-		i = p.global_index * x.max_neighbors;
+		i = p.global_index * lattice->ctx.max_neighbors;
 
-		FOR_X_IN_LIST(j, &v->impred)
-			neighbors[i + UL_N(j)] = p_index(UL_X(j), P_ALLOC_VERTEX);
+		FOR_X_IN_CHILDREN(x, j, v)
+			neighbors[i + C_N(j)] = p_index(C_X(j), P_ALLOC_VERTEX);
 
-		for (k = UL_N(j); k < x.max_neighbors; ++k)
+		for (k = C_N(j); k < lattice->ctx.max_neighbors; ++k)
 			neighbors[i + k] = 0;
 	}
 
-	for (i = 0; i < slen; ++i)
-		edges[i] = x.linear_extension[edges[i] - 1];
-	
 	lattice->ideals           = edges;
 	lattice->neighbors        = neighbors;
-	lattice->source           = p_index(root, P_ALLOC_VERTEX);
+	lattice->source           = p_index(lattice->ctx.root, P_ALLOC_VERTEX);
 	lattice->sink             = n;
-	lattice->vertex_count     = x.vertex_count;
-	lattice->max_neighbors    = x.max_neighbors;
+	lattice->vertex_count     = lattice->ctx.vertex_count;
+	lattice->max_neighbors    = lattice->ctx.max_neighbors;
 	lattice->extension_length = n;
 
-	for (i = 0; i < x.max_neighbors; ++i)
-		assert(neighbors[INDEX2(x.max_neighbors, lattice->sink, i)] == 0);
+	for (i = 0; i < lattice->ctx.max_neighbors; ++i)
+		assert(neighbors[INDEX2(lattice->ctx.max_neighbors, lattice->sink, i)] == 0);
 
-	ctx_free(&x);
 	return G_SUCCESS;
 }
 
+
+// (i in [1,2..n]) --> lattice.linear_extension[i]
+void convert_ideals(struct ideal_lattice *lattice)
+{
+	size_t i, slen = lattice->ctx.vertex_count * lattice->ctx.max_neighbors;
+
+	for (i = 0; i < slen; ++i)
+		lattice->ideals[i] = lattice->ctx.linear_extension[lattice->ideals[i] - 1];
+}
+
+
+void lattice_free(struct ideal_lattice *lattice)
+{
+	ctx_free(&lattice->ctx);
+	p_release(P_ALLOC_ULIST);
+	p_release(P_ALLOC_VERTEX);
+}

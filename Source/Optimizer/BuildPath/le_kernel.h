@@ -20,3 +20,5 @@ typedef uint   index_t;
 typedef uchar  ideal_t;
 typedef ulong  count_t;
 typedef ushort itemid_t;
+
+#define INVALID_NEIGHBOR UINT_MAX

@@ -15,22 +15,34 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\BuildPath\genLE_GPU.c">
+    <ClCompile Include="..\..\..\BuildPath\p_alloc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\BuildPath\genLE_Kernel.c">
+    <ClCompile Include="..\..\..\BuildPath\tree.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\BuildPath\genLE_Debug.c">
+    <ClCompile Include="..\..\..\BuildPath\u_list.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\BuildPath\genLE_Init.c">
+    <ClCompile Include="..\..\..\BuildPath\Test\unittest_lattice.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\BuildPath\Test\unittest_tree.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\BuildPath\Test\unittest_u_list.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\BuildPath\Test\unittest_lattice.c">
+    <ClCompile Include="..\..\..\BuildPath\Test\unittest_buildpath.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\BuildPath\lattice.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\BuildPath\opencl_host.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\BuildPath\opencl_kernel.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

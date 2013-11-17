@@ -14,8 +14,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#include "../le.h"
-#include "../genLE_Init.h"
+#include "../lattice.h"
 #include "../tree.h"
 
 
@@ -28,7 +27,7 @@
 
 /*
  * MATHEMATICA code to display the tree, and lattice in two different styles.
- * Note: you need to remove the last comma in each list output manually heh.
+ * Note: you need to remove the last comma in each list output manually, heh.
 
   TreePlot[idealtree, Automatic, idealtree[[1]][[1]][[1]],VertexLabeling -> True]
   LayeredGraphPlot[ideallattice, VertexLabeling -> True]
@@ -78,6 +77,7 @@ static void *print_edge(struct ideal_lattice *il, struct vertex *v, struct verte
 	return 0;
 }
 
+
 static void show_mask(struct ctx *x, c_mask_t mask, char *buf)
 {
 	char number[(sizeof(mask)* 8) + 1];
@@ -112,8 +112,8 @@ static void *print_edgeIS(struct ideal_lattice *il, struct vertex *v, struct ver
 {
 	c_mask_t le = (c_mask_t) state;
 	c_mask_t next;
-	static char s1[(IDEAL_T_MAX * 2) + 3];
-	static char s2[(IDEAL_T_MAX * 2) + 3];
+	static char s1[(C_IDEAL_T_MAX * 2) + 3];
+	static char s2[(C_IDEAL_T_MAX * 2) + 3];
 
 	size_t v1i      = p_index(v, P_ALLOC_VERTEX);
 	c_ideal_t ideal = il->ideals[INDEX2(il->ctx.max_neighbors, v1i, child_n)];
@@ -168,33 +168,30 @@ copy_extension(c_ideal_t *le, size_t n, c_ideal_t **storage)
 	(*storage) += n;
 }
 
+typedef void(*linext_cb_t)(c_ideal_t *, size_t, void **);
+
 void
-all_extensions(struct ideal_lattice *il, c_index_t index, c_ideal_t *le, size_t le_n, void (*callback)(c_ideal_t *, size_t, void **), void **ctx)
+all_extensions(struct ideal_lattice *il, c_index_t index, c_ideal_t *le, size_t le_n, linext_cb_t callback, void **ctx)
 {
 	size_t j,i = il->max_neighbors*index;
 
 	c_index_t *neighbors = &il->neighbors[i];
 	c_ideal_t *ideals    = &il->ideals[i];
 
-	if (le_n >= il->extension_length)
+	if (le_n == 0)
 	{
-		assert(neighbors[0] == 0);
-		size_t k;
-		c_ideal_t *temp = alloca(il->extension_length * sizeof*temp);
-		for (k = 0, j = il->extension_length; j > 0; --j)
-			temp[k++] = le[j-1];
-
-		callback(temp, il->extension_length, ctx);
+		assert(neighbors[0] == INVALID_NEIGHBOR);
+		callback(le, il->linext_width, ctx);
 		return;
 	}
 	
 	for (j = 0; j < il->max_neighbors; ++j)
 	{
-		if (neighbors[j] == 0)
+		if (neighbors[j] == INVALID_NEIGHBOR)
 			continue;
 
-		le[le_n] = ideals[j];
-		all_extensions(il, neighbors[j], le, le_n + 1, callback, ctx);
+		le[le_n - 1] = ideals[j];
+		all_extensions(il, neighbors[j], le, le_n - 1, callback, ctx);
 	}
 	
 }
@@ -225,13 +222,17 @@ int lexicographic_cmp(const void *arg1, const void *arg2)
 
 void
 unittest_lattice_p(
+	int quiet,
 	c_ideal_t poset[][2], size_t poset_n,
 	size_t    lattice_n, 
 	t_edge    *r_tree,    size_t r_tree_n,
 	t_edge    *r_lattice, size_t r_lattice_n,
-	c_ideal_t *r_le,      size_t r_le_n)
+	c_ideal_t *r_le,      size_t r_le_n,
+	c_count_t *r_counts,  size_t r_counts_n
+	)
 {
 	t_ctx test;
+	size_t i;
 	struct ideal_lattice lattice;
 
 	c_mask_t le = C_MASK_MAX >> ((sizeof(le)* 8) - lattice_n);
@@ -243,10 +244,15 @@ unittest_lattice_p(
 
 	assert(lattice_create(poset, poset_n, lattice_n, &lattice) == G_SUCCESS);
 
-#ifdef PRINT
-	PRINT_STRUCT("idealtree", tree_map(&lattice, lattice.ctx.root, 0, &print_edge, 0));
-	PRINT_STRUCT("ideallattice", tree_map(&lattice, lattice.ctx.root, 1, &print_edge, 0));
-#endif
+	if (!quiet)
+	{
+
+		PRINT_STRUCT("idealtree", tree_map(&lattice, lattice.ctx.root, 0, &print_edge, 0));
+		PRINT_STRUCT("ideallattice", tree_map(&lattice, lattice.ctx.root, 1, &print_edge, 0));
+
+		PRINT_STRUCT("idealCounts", for (i = 0; i < lattice.vertex_count; ++i)
+			printf("%d,", lattice.counts[i]));
+	}
 
 	INIT_T_CTX(test, r_tree, r_tree_n);
 	tree_map(&lattice, lattice.ctx.root, 0, &test_edge, &test);
@@ -255,19 +261,23 @@ unittest_lattice_p(
 
 	lattice_valmap(&lattice);
 
-#ifdef PRINT
-	PRINT_STRUCT("latticeEdges", tree_map(&lattice, lattice.ctx.root, 1, &print_edgeIS, (void*)le));
-	all_extensions(&lattice, lattice.source, le_set, 0, &print_extension, 0);
-#endif
+	if (!quiet)
+	{
+		PRINT_STRUCT("latticeEdges", tree_map(&lattice, lattice.ctx.root, 1, &print_edgeIS, (void*)le));
+		all_extensions(&lattice, lattice.source, le_set, lattice.linext_width, (linext_cb_t) &print_extension, 0);
+	}
 
 	rle_size = r_le_n * sizeof *r_le * lattice_n;
 	le_ptr = le_storage = malloc(rle_size); 
-	all_extensions(&lattice, lattice.source, le_set, 0, &copy_extension, (void**) &le_ptr);
+	all_extensions(&lattice, lattice.source, le_set, lattice.linext_width, (linext_cb_t) &copy_extension, (void**)&le_ptr);
 
 	lexicographic_sort_len = lattice_n;
 	qsort(r_le, r_le_n, lexicographic_sort_len, &lexicographic_cmp);
 	qsort(le_storage, r_le_n, lexicographic_sort_len, &lexicographic_cmp);
 	assert(memcmp(r_le, le_storage, rle_size) == 0);
+
+	assert(memcmp(lattice.counts, r_counts, r_counts_n) == 0);
+
 	lattice_free(&lattice);
 }
 
@@ -283,28 +293,31 @@ extern void unittest_tree();
 
 
 void
-main()
+unittest_lattice(int quiet)
 {
-	glbinit_lattice();
 	unittest_u_list();
 	unittest_tree();
 
 #define LEN(R) sizeof R / sizeof *R
 
 
-	unittest_lattice_p(
+	unittest_lattice_p(quiet,
 		reference_poset2, sizeof reference_poset2 / sizeof *reference_poset2, 
 		REFERENCE_POSET2_N,
 		reference_tree2, LEN(reference_tree2),
 		reference_lattice2, LEN(reference_lattice2),
-		reference_le2, LEN(reference_le2));
+		(c_ideal_t*) reference_le2, LEN(reference_le2),
+		reference_counts2, LEN(reference_counts2)
+		);
 	
-	unittest_lattice_p(
-		reference_poset, sizeof reference_poset / sizeof *reference_poset, 
+	unittest_lattice_p(quiet,
+		reference_poset, sizeof reference_poset / sizeof *reference_poset,
 		REFERENCE_POSET_N,
 		reference_tree, LEN(reference_tree),
 		reference_lattice, LEN(reference_lattice),
-		reference_le, LEN(reference_le));
+		(c_ideal_t*)reference_le, LEN(reference_le),
+		reference_counts, LEN(reference_counts)
+		);
 
 #undef LEN
 	printf("unittest_lattice: passed tests.\n");

@@ -16,6 +16,7 @@ MaxOutDegree
 CVertex
 CAdjacency
 CIdeals
+CCount
 Begin["`Private`"]
 
 
@@ -87,7 +88,6 @@ allLinearExtensions[lattice]
 
 
 (* ::Text:: *)
-(**)
 (*Counting the number of linear extensions/paths beneath a node.*)
 (*See: Notes/LatticePoset_2_comparison.png*)
 
@@ -152,7 +152,6 @@ Map[nthLinearExtension[widthTest,#]&, Range[0,8]] // MatrixForm
 
 
 (* ::Text:: *)
-(**)
 (*Random generation of linear extensions*)
 
 
@@ -195,10 +194,7 @@ Length[uniq]
 
 
 (* ::Text:: *)
-(**)
 (*Exporting data as C structs.*)
-
-
 
 
 bitmask[list_, subset_] := Module[{f},
@@ -212,9 +208,10 @@ maxCombo[g_]     := Reverse@First@VertexList[g,_?(VertexOutDegree[g,#] == 0&)]
 exportIdealLattice[g_,comboMax_, maxOutDegree_]:= 
 	Map[With[{
 		label  = FromDigits[bitmask[comboMax, Reverse[#]], 2],
+		count  = PropertyValue[{g,#}, LEF],
 		edges  = Map[\[Alpha] \[Function] VertexIndex[g, \[Alpha]], imSucc[g,#]],
 		ideals = Map[\[Alpha] \[Function] First@Complement[\[Alpha],#], imSucc[g,#]]},
-		{label, PadRight[edges,maxOutDegree], PadRight[ideals,maxOutDegree]}
+		{label, count, PadRight[edges,maxOutDegree,Undefined], PadRight[ideals,maxOutDegree,Undefined]}
 
 		]&, VertexList[g]]
 
@@ -227,9 +224,10 @@ export[g_] := Block[{a=maxCombo[g],b=maxOutDegree[g],dat},
 	dat = exportIdealLattice[g,a,b];
 	{MaxCombo     -> Length[a],
 	 MaxOutDegree -> b,
-	 CVertex      -> Prepend[dat[[All, 1]], 0],
-	 CAdjacency   -> Prepend[dat[[All, 2]], ConstantArray[0,b]],
-	 CIdeals      -> Prepend[dat[[All, 3]], ConstantArray[0,b]]
+	 CVertex      -> dat[[All, 1]],
+	 CCount        -> dat[[All, 2]],
+	 CAdjacency   -> dat[[All, 3]],
+	 CIdeals      -> dat[[All, 4]]
 	}
 ]
 

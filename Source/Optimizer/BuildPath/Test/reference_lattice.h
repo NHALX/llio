@@ -106,6 +106,8 @@ c_ideal_t reference_le[][REFERENCE_POSET_N] = {
 	{ 6, 5, 4, 3, 1, 2 }
 };
 
+c_count_t reference_counts[] = { 20, 20, 12, 3, 1, 1, 1, 2, 1, 6, 2, 3, 2, 1, 8, 2 };
+
 /////////////////////// POSET 2 //////////////////////////////////
 // From diagrams in "Efficient computation of rank probabilities in posets" by Karel De Loof 
 
@@ -161,3 +163,4 @@ c_ideal_t reference_le2[][REFERENCE_POSET2_N] = {
 	{ 1, 3, 5, 2, 4 }
 };
 
+c_count_t reference_counts2[] = { 9, 5, 3, 2, 1, 1, 1, 1, 2, 4, 1 };

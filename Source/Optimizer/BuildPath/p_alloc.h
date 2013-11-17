@@ -2,11 +2,8 @@
 #define _P_ALLOC_H_
 
 #include <stddef.h>
+#include "error.h"
 
-#define G_SUCCESS     1
-#define G_ERROR       0
-#define GUARD(EXPR)   if ((EXPR) == G_ERROR){ return G_ERROR; }
-#define G_FREE(PTR)   if (PTR) free(PTR)
 
 #define P_ALLOC_ULIST  0
 #define P_ALLOC_VERTEX 1

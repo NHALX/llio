@@ -1,4 +1,4 @@
-#include "le.h"
+#include "x_types.h"
 
 #define LE_T_ADJACENCY_MAX   3
 #define LE_T_EXTENSION_SIZE	6

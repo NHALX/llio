@@ -49,6 +49,7 @@
       <EnablePREfast>false</EnablePREfast>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <PreprocessorDefinitions>LITTLE_ENDIAN;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -67,6 +68,7 @@
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\include;$(ProjectDir)\..\..\..\Libs\Random123-1.08\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>LITTLE_ENDIAN;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -77,6 +79,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\Database\database.c" />
+    <ClCompile Include="..\..\..\BuildPath\db_input.c" />
     <ClCompile Include="..\..\..\BuildPath\lattice.c" />
     <ClCompile Include="..\..\..\BuildPath\opencl_host.c" />
     <ClCompile Include="..\..\..\BuildPath\opencl_kernel.c" />
@@ -89,11 +93,18 @@
     <ClCompile Include="..\..\..\BuildPath\u_list.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\Database\database.h" />
+    <ClInclude Include="..\..\..\BuildPath\db_input.h" />
+    <ClInclude Include="..\..\..\BuildPath\error.h" />
     <ClInclude Include="..\..\..\BuildPath\genLE_Init.h" />
-    <ClInclude Include="..\..\..\BuildPath\le.h" />
+    <ClInclude Include="..\..\..\BuildPath\lattice.h" />
     <ClInclude Include="..\..\..\BuildPath\le_kernel.h" />
     <ClInclude Include="..\..\..\BuildPath\le_test.h" />
+    <ClInclude Include="..\..\..\BuildPath\opencl_host.h" />
+    <ClInclude Include="..\..\..\BuildPath\p_alloc.h" />
+    <ClInclude Include="..\..\..\BuildPath\tree.h" />
     <ClInclude Include="..\..\..\BuildPath\u_list.h" />
+    <ClInclude Include="..\..\..\BuildPath\x_types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

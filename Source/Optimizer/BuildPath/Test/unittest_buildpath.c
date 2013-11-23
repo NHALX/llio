@@ -15,9 +15,284 @@
 #include "../../../Database/database.h"
 #include "../../Common/OpenCLDebugHack.h"
 #include "../lattice.h"
+#include "../db_input.h"
+#include "../opencl_host.h"
 
-extern c_result_t *gpu_LE(struct gpu_context *ctx, struct ideal_lattice *g, c_itemid_t *idmap, size_t idmap_len, cl_float cfg_input[CFG_SIZE], size_t *result_n);
-extern void * gpu_init(char *, char *);
+
+
+////////////////////// from opencl kernel ///////////////////////
+
+void k_linext_print(c_linext_t *le);
+
+int k_linext_nth(
+	__constant c_ideal_t *ideals,
+	__constant c_count_t *counts,
+	__constant c_index_t *adjacency,
+	uint  max_neighbors,
+	c_count_t nth_extension,
+	c_linext_t *le);
+ 
+c_result_t k_buildpath(
+	__constant cl_float items[][ITEM_WIDTH],
+	__constant cl_float passives[][PASSIVE_WIDTH],
+	__constant cl_short buildtree[][BUILDTREE_WIDTH],
+	__constant cl_float *cfg,
+	__constant c_itemid_t node2id[],
+
+	__global c_ideal_t *ideals,
+	__global c_count_t *counts,
+	__global c_index_t *adjacency,
+	buildpath_info info,
+	size_t global_id
+);
+
+/*
+void cpu_buildpath(
+	__constant cl_float items[][ITEM_WIDTH],
+	__constant cl_float passives[][PASSIVE_WIDTH],
+	__constant cl_short buildtree[][BUILDTREE_WIDTH],
+	__constant cl_float *cfg,
+	__constant c_itemid_t node2id[],
+
+	__global c_ideal_t *ideals,
+	__global c_count_t *counts,
+	__global c_index_t *adjacency,
+	buildpath_info info,
+	size_t global_id,
+	c_result_t *output)
+{
+	c_result_t r = k_buildpath(items, passives, buildtree, cfg, node2id, ideals, counts, adjacency, info, global_id);
+
+	if ((*output).metric < r.metric)
+		(*output) = r;
+}
+*/
+
+//////////////////////////////////////////////////////////////////
+#define ROUND_UP(N,M) ((N + M - 1) / M * M)
+
+static c_result_t
+FindMax(c_result_t *rs, size_t result_n)
+{
+	c_result_t max = { 0, 0 };
+	size_t i;
+
+	for (i = 0; i < result_n; ++i)
+	{
+		if (max.metric < rs[i].metric)
+			max = rs[i];
+	}
+
+	return max;
+}
+
+
+c_result_t unittest_buildpathGPU(struct ideal_lattice *lattice, c_itemid_t *node2id, size_t node2id_n, cl_float *cfg)
+{
+	cl_ulong time, processed;
+	c_count_t global_size;
+	size_t local_size, iterations, pass_size, saturation;
+	size_t i;
+	struct gpu_arg args[KERNEL_ARG_LEN];
+	struct gpu_context gpu;
+	buildpath_info info;
+	c_result_t max;
+	size_t result_n;
+
+	info.max_neighbors = lattice->max_neighbors;
+	info.linext_width = lattice->linext_width;
+	info.linext_offset = 0;
+	info.linext_count = lattice->linext_count;
+
+	opencl_init(&gpu, 1, "kernel_buildpath", "D:/GitRoot/llio/Source/Optimizer/BuildPath/opencl_kernel.c", "-DUSE_OPENCL -ID:/GitRoot/llio/Source/Optimizer/BuildPath -ID:/GitRoot/llio/Source/Optimizer/Libs/Random123-1.08/include/");
+	
+	saturation = 128;
+	local_size = gpu.cfg_max_workgroup_size; 
+	pass_size = (gpu.cfg_compute_units * saturation * local_size);
+	global_size = lattice->linext_count;
+
+	if (pass_size > global_size)
+		pass_size = ROUND_UP(global_size,2);
+
+	if (local_size > pass_size)
+		local_size = ROUND_UP(pass_size,2);
+
+	global_size = ROUND_UP(global_size, local_size);
+	pass_size = ROUND_UP(pass_size, local_size);
+	iterations = ceil((double)global_size / (double)pass_size);
+
+	printf("OpenCL: n=%llu, pass_size=%u, localsize=%u\n", global_size, pass_size, local_size);
+	assert(local_size % 2 == 0); // NOTE: the reduction algorithm in the kernel needs a power of 2 local size
+
+	opencl_setargs(&gpu, args, lattice, node2id, node2id_n, cfg, info, pass_size, local_size);
+	
+	result_n = args[KERNEL_OUTPUT_0].buf_size / sizeof (c_result_t);
+	max = (c_result_t){ 0, 0 };
+
+	for (i = 0, time = 0, processed = 0; i < iterations && processed < 393216000; ++i, processed += pass_size)
+	{
+		c_result_t local_max;
+
+		time               += opencl_run(&gpu, args, KERNEL_ARG_LEN, info, pass_size, local_size);
+		info.linext_offset += pass_size;
+
+		local_max = FindMax(args[KERNEL_OUTPUT_0].buf_data, result_n);
+		if (max.metric < local_max.metric)
+			max = local_max;
+	}
+
+	printf("time=%llu, processed=%d\n", time/i, processed); 
+	//time=25209728, processed=1330688
+	//time=89936320, processed=1330688
+	//time=181802912, processed = 1330688
+		
+	
+	return max;
+}
+
+
+c_result_t unittest_buildpathCPU(struct ideal_lattice *lattice, c_itemid_t *node2id, size_t node2id_n, cl_float *cfg)
+{
+	size_t j;
+	c_count_t n;
+
+	size_t local_size, pass_size, iterations;
+	c_count_t global_size, processed;
+	c_result_t result;
+	buildpath_info info;
+
+	info.max_neighbors = lattice->max_neighbors;
+	info.linext_width  = lattice->linext_width;
+	info.linext_offset = 0;
+	info.linext_count  = lattice->linext_count;
+
+	n = lattice->linext_count;
+
+	pass_size   = 1000000;//67108864;
+	local_size  = 1;
+	global_size = n;
+
+	if (pass_size > global_size)
+		pass_size = global_size;
+
+	iterations = global_size / pass_size;
+
+	printf("CPU: n=%llu, pass_size=%u\n", global_size, pass_size);
+
+	// TODO: dont forget to remove this artifical limit
+	for (j = 0, processed = 0; j < iterations && processed < 393216000; ++j, processed += pass_size)
+	{
+		int i;
+		c_result_t local_best;
+
+		#pragma omp parallel default(shared) private(i,local_best)
+		{
+			local_best = (c_result_t){ 0, 0 };
+
+			#pragma omp for schedule(static) nowait
+			for (i = 0; i < pass_size; ++i)
+			{
+				c_result_t r = k_buildpath(db_items, db_passives, db_buildtree, cfg, node2id,
+					lattice->ideals,
+					lattice->counts,
+					lattice->neighbors,
+					info, i);
+
+				if (local_best.metric < r.metric)
+					local_best = r;
+			}
+			
+			#pragma omp critical 
+			{
+				if (result.metric < local_best.metric)
+					result = local_best;
+			}
+		}
+
+		info.linext_offset += pass_size;
+		printf("CPU: progress: %d/%d (%f)\n", j+1, iterations, (float)(j+1) / (float)iterations);
+	}
+
+	return result;
+}
+
+static void
+PrintExtension(struct ideal_lattice *il, c_itemid_t *idmap, c_result_t max)
+{
+	size_t i;
+	c_linext_t le;
+	c_itemid_t expected[] = { 14, 14, 130, 20, 102, 137 };
+
+	le.le_index = il->linext_width;
+	le.le_len = il->linext_width;
+	k_linext_nth(il->ideals, il->counts, il->neighbors, il->max_neighbors, max.index, &le);
+	k_linext_print(&le);
+
+	for (i = 0; i < il->linext_width; ++i)
+	{
+		c_itemid_t index = idmap[le.le_buf[i] - 1];
+		//assert(index == expected[i]);
+		printf("%s, ", db_names[index]);
+	}
+	
+	printf("\n");
+}
+
+
+
+
+
+typedef c_result_t (*test_func)(struct ideal_lattice *, c_itemid_t *, size_t, cl_float *);
+
+
+void unittest_buildpath()
+{
+	int result;
+	struct ideal_lattice lattice;
+	size_t i;
+	test_func tests[] = {
+//		&unittest_buildpathGPU,
+		&unittest_buildpathCPU 
+	};
+	#define ITEM_LEN (sizeof(items)/sizeof(*items))
+	char *items[] = { "Last Whisper", "The Bloodthirster", "Blade of the Ruined King" };
+	c_itemid_t node2dbi[IDMAP_MAX_WIDTH*ITEM_LEN];
+	c_ideal_t poset[BUILDTREE_MAX*ITEM_LEN][2];
+	size_t poset_n;
+	size_t vertex_n;
+
+
+	vertex_n = dbi_poset(items, ITEM_LEN, node2dbi, poset, &poset_n);
+	result = lattice_create(poset, poset_n, vertex_n, &lattice);
+	assert(result == G_SUCCESS);
+	lattice_valmap(&lattice);
+
+	for (i = 0; i < sizeof tests / sizeof *tests; ++i)
+	{
+		c_result_t max;
+		cl_float cfg[CFG_SIZE] = { 3.0f, 3.4f, 100.0f, 18.0f, 15000.0f };
+
+		max = tests[i](&lattice, node2dbi, vertex_n, cfg);
+		printf("max=%f,i=%d\n", max.metric, max.index);
+		PrintExtension(&lattice, node2dbi, max);
+	}
+
+	lattice_free(&lattice);
+}
+
+
+
+extern void unittest_lattice(int quiet);
+
+int main()
+{
+	glbinit_lattice();
+	unittest_lattice(1);
+	unittest_buildpath();
+	return 0;
+}
+
+
 
 
 /*
@@ -104,133 +379,3 @@ max=1113.389038,i=13
 
 
 */
-size_t FindItemIndex(c_itemid_t item)
-{
-	size_t i;
-
-	for (i = 0; i < sizeof db_items / sizeof *db_items; i++)
-	{
-		if (db_items[i][F_ID] == item)
-			return i;
-	}
-
-	assert(0);
-	return (size_t) -1;
-}
-
-
-
-//i = linear_extension(ideals, counts, adjacency, max_neighbors, (count_t)nth_extension, &le);
-
-c_result_t *unittest_buildpathGPU(struct ideal_lattice *lattice, c_itemid_t *node2id, size_t node2id_n, cl_float *cfg, size_t *result_n)
-{
-	c_count_t n;
-	c_result_t *results;
-
-	void *gpu_ctx;
-
-	n = lattice->linext_count;
-
-	gpu_ctx = gpu_init("D:/GitRoot/llio/Source/Optimizer/BuildPath/opencl_kernel.c", "-DUSE_OPENCL -ID:/GitRoot/llio/Source/Optimizer/BuildPath -ID:/GitRoot/llio/Source/Optimizer/Libs/Random123-1.08/include/");
-	results = gpu_LE(gpu_ctx, lattice, node2id, node2id_n, cfg, result_n);
-
-	free(gpu_ctx);
-	return results;
-}
-
-
-c_result_t *unittest_buildpathCPU(struct ideal_lattice *lattice, c_itemid_t *node2id, size_t node2id_n, cl_float *cfg, size_t *result_n)
-{
-	size_t i;
-	c_count_t n;
-
-	size_t global_size, local_size;
-	c_result_t *scratch;
-	c_result_t *results;
-
-	n = lattice->linext_count;
-
-	global_size = n;
-	local_size = 1;// global_size / 2;
-	*result_n = n / local_size;
-
-	results = calloc(*result_n, sizeof(*results));
-	scratch = calloc(local_size, sizeof(*results));
-
-	MAINLOOP(i, kernel_LE(db_items, db_passives, cfg, node2id,
-		lattice->ideals,
-		lattice->counts,
-		lattice->neighbors,
-		lattice->max_neighbors,
-		lattice->linext_width, scratch, results), global_size, local_size);
-
-	free(scratch);
-	return results;
-}
-
-
-void
-PrintResults(c_result_t *results, size_t result_n)
-{
-	c_result_t maximum = { -1, -1 };
-	size_t i;
-
-	for (i = 0; i < result_n; ++i)
-	{
-		printf("[%d]={%f,%d}\n", i, results[i].metric, results[i].index);
-		if (maximum.metric < results[i].metric)
-			maximum = results[i];
-
-	}
-	printf("max=%f,i=%d\n", maximum.metric, maximum.index);
-	free(results);
-}
-
-
-
-void unittest_buildpath()
-{
-	struct ideal_lattice lattice;
-	cl_float cfg[CFG_SIZE] = { 3.0f, 3.4f, 100.0f, 18.0f, 15000.0f };
-	c_ideal_t poset[][2] = {
-		{ 3, 1 },
-		{ 5, 4 },
-		{ 6, 4 },
-		{ 1, 2 },
-		{ 4, 2 }
-	};
-	
-	c_itemid_t node2id[6];
-	size_t node2id_n = sizeof node2id / sizeof *node2id;
-	size_t result_n;
-	c_result_t *results;
-
-	node2id[1 - 1] = FindItemIndex(3093); // Avarice Blade
-	node2id[2 - 1] = FindItemIndex(3142); // Youmuu's Ghostblade
-	node2id[3 - 1] = FindItemIndex(1051); // Brawlers Gloves
-	node2id[4 - 1] = FindItemIndex(3134); // The Brutalizer
-	node2id[5 - 1] = FindItemIndex(1036); // Long Sword
-	node2id[6 - 1] = FindItemIndex(1036); // Long Sword
-
-	assert(lattice_create(poset, sizeof poset / sizeof *poset, 6, &lattice) == G_SUCCESS);
-	lattice_valmap(&lattice);
-
-	results = unittest_buildpathCPU(&lattice, node2id, node2id_n, cfg, &result_n);
-	PrintResults(results, result_n);
-	results = unittest_buildpathGPU(&lattice, node2id, node2id_n, cfg, &result_n);
-	PrintResults(results, result_n);
-
-	lattice_free(&lattice);
-}
-
-
-
-extern void unitest_lattice(int quiet);
-
-int main()
-{
-	glbinit_lattice();
-	unittest_lattice(1);
-	unittest_buildpath();
-	return 0;
-}

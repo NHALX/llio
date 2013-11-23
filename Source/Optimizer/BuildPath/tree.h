@@ -42,7 +42,7 @@ struct vertex
 	unsigned char edge_len;
 };
 
-#define INDEX2(N,I,J)			(((I)*(N))+(J))
+
 #define IMMEDIATE_PRED(X,I,J)	((X)->adjacency[INDEX2((X)->adjacency_dim,I,J)])
 
 

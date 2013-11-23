@@ -234,6 +234,7 @@ unittest_lattice_p(
 	t_ctx test;
 	size_t i;
 	struct ideal_lattice lattice;
+	int result;
 
 	c_mask_t le = C_MASK_MAX >> ((sizeof(le)* 8) - lattice_n);
 	c_ideal_t *le_ptr,*le_storage;
@@ -241,8 +242,8 @@ unittest_lattice_p(
 	size_t rle_size;
 
 
-
-	assert(lattice_create(poset, poset_n, lattice_n, &lattice) == G_SUCCESS);
+	result = lattice_create(poset, poset_n, lattice_n, &lattice);
+	assert(result == G_SUCCESS);
 
 	if (!quiet)
 	{

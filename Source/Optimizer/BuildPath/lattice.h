@@ -15,9 +15,9 @@ struct ideal_lattice
 	c_index_t sink;
 
 	size_t vertex_count;
-	size_t max_neighbors;
-	size_t linext_width;
-	size_t linext_count;    // number of linear extensions
+	c_ideal_t max_neighbors;
+	c_ideal_t linext_width;
+	c_count_t linext_count;    // number of linear extensions
 	struct ctx ctx;
 };
 

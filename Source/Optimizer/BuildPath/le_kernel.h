@@ -6,12 +6,14 @@
 #define STRUCT_ALIGNMENT 
 #endif
 
-struct string_ctx
+#define LINEXT_WIDTH_MAX 64
+
+typedef struct 
 {
-	unsigned char *s_ptr;
-	unsigned int   s_len;
-	unsigned int   s_index;
-};
+	uchar le_buf[LINEXT_WIDTH_MAX];
+	uint  le_len;
+	uint  le_index;
+} linext_t;
 
 
 typedef struct STRUCT_ALIGNMENT { float metric; ulong index; } result_t;
@@ -22,3 +24,13 @@ typedef ulong  count_t;
 typedef ushort itemid_t;
 
 #define INVALID_NEIGHBOR UINT_MAX
+
+struct buildpath_info
+{
+	uint    max_neighbors;
+	uint    linext_width;
+	count_t linext_offset;
+	count_t linext_count;
+};
+
+

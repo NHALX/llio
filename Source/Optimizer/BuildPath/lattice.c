@@ -372,6 +372,7 @@ int lattice_create(c_ideal_t p_relations[][2], size_t p_reln, size_t n, struct i
 
 	GUARD(CtxInit(&lattice->ctx, p_relations, p_reln, n));
 	GUARD(lattice->ctx.root = Left(&lattice->ctx, n)); // sets vertex_count
+	lattice->ctx.max_neighbors = n; // TODO: the actual limit of this needs to be investigated
 
 	slen      = lattice->ctx.vertex_count * lattice->ctx.max_neighbors;
 	edges     = malloc(slen * sizeof *edges);

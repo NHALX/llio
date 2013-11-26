@@ -35,8 +35,6 @@ int k_linext_nth(
  
 c_result_t k_buildpath(
 	__constant item_t items[],
-	__constant stats_t passives[],
-	__constant cl_short buildtree[][BUILDTREE_WIDTH],
 	__constant llf_criteria *cfg,
 	__constant c_itemid_t node2id[],
 
@@ -97,7 +95,8 @@ c_result_t unittest_buildpathGPU(struct ideal_lattice *lattice, c_itemid_t *node
 
 	opencl_workset workset;
 	opencl_context gpu;
-	opencl_kernel_arg args[KERNEL_ARG_LEN];
+	opencl_kernel_params args = OPENCL_KERNEL_PARAMS_INIT;
+	opencl_kernel_arg *output, *bpinfo;
 
 	buildpath_info info;
 	c_result_t max;
@@ -110,21 +109,21 @@ c_result_t unittest_buildpathGPU(struct ideal_lattice *lattice, c_itemid_t *node
 
 	opencl_init(&gpu, 1, "kernel_buildpath", "D:/GitRoot/llio/Source/Optimizer/BuildPath/opencl_kernel.c", "-DUSE_OPENCL -ID:/GitRoot/llio/Source/Optimizer/BuildPath -ID:/GitRoot/llio/Source/Optimizer/Libs/Random123-1.08/include/");
 	
-	workset = clbp_bindmem(&gpu, args, lattice, node2id, node2id_n, cfg);
-	opencl_upload(&gpu, args, KERNEL_ARG_LEN, &workset);
+	workset = clbp_bindmem(&gpu, &args, lattice, node2id, node2id_n, cfg, &output, &bpinfo);
+	opencl_upload(&gpu, &args, &workset);
 	
-	result_n = args[KERNEL_OUTPUT_0].buf_size / sizeof (c_result_t);
+	result_n = output->buf_size / sizeof (c_result_t);
 	max = (c_result_t){ 0, 0 };
 	
 	for (i = 0, time = 0; i < workset.iterations; ++i)
 	{
 		c_result_t local_max;
 		
-		clbp_bindval(&gpu, args, info);
-		time += opencl_run(&gpu, args, KERNEL_ARG_LEN, &workset);
+		clbp_bindval(&gpu, bpinfo, info);
+		time += opencl_run(&gpu, &args, &workset);
 		info.linext_offset += workset.pass_size;
 
-		local_max = FindMax(args[KERNEL_OUTPUT_0].buf_data, result_n);
+		local_max = FindMax(output->buf_data, result_n);
 		if (max.metric < local_max.metric)
 			max = local_max;
 	}
@@ -137,6 +136,7 @@ c_result_t unittest_buildpathGPU(struct ideal_lattice *lattice, c_itemid_t *node
 	//time=28561166, processed=1330688
 	//time=55859429
 	//time=58635767, processed=1966080
+	//time=55623763, processed=1966080
 	return max;
 }
 
@@ -174,7 +174,7 @@ c_result_t unittest_buildpathCPU(struct ideal_lattice *lattice, c_itemid_t *node
 			#pragma omp for schedule(static) nowait
 			for (i = 0; i < pass_size; ++i)
 			{
-				c_result_t r = k_buildpath(db_items, db_passives, db_buildtree, cfg, node2id,
+				c_result_t r = k_buildpath(db_items, cfg, node2id,
 					lattice->ideals,
 					lattice->counts,
 					lattice->neighbors,
@@ -288,7 +288,7 @@ int main()
 {
 	glbinit_lattice();
 	unittest_lattice(1);
-//	unittest_opencl();
+	unittest_opencl();
 	unittest_buildpath();
 	return 0;
 }

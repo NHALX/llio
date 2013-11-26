@@ -88,8 +88,6 @@ def out_mathematica():
 def print_items(
     output_name, 
     output_item, 
-    output_passive,
-    output_btree,
     itemdb_unsorted, filter_func=lambda _: True):
     
     filtered = list(filter(filter_func, itemdb_unsorted.items()))
@@ -108,25 +106,28 @@ def print_items(
             v += x
         
         if str(v.id) in passive_unique:
-            passive_index = passv_keys.index(str(v.id))
+            passive_key = str(v.id)
+            passive_index = passv_keys.index(passive_key)
             
         elif str(v.id) in passive_named:
-            passive_index = passv_keys.index(passive_named[str(v.id)])
+            passive_key = passive_named[str(v.id)]
+            passive_index = passv_keys.index(passive_key)
             
         else:
-            passive_index = passv_keys.index("(NULL)")
+            passive_key = "(NULL)"
+            passive_index = passv_keys.index(passive_key)
             
-        output_item(v, passive_index)
+        output_item(viable, v, passive_key, passive_index)
         
         #output graph
         #edges = v.buildTreeToEdges(itemdb)
         #output_depgraph(edges)
     
-    for v in passive_unique.values():
-        output_passive(v)
+    #for v in passive_unique.values():
+    #    output_passive(v)
             
-    for v in viable.values():
-        output_btree(viable, v)
+    #for v in viable.values():
+    #    output_btree(viable, v)
 
             
 itemdir = "D:/Dargon/output_dump/DATA/Items/"
@@ -153,6 +154,7 @@ item_columns = lambda btree_width: """
 #ifndef _DB_LAYOUT_H_
 #define _DB_LAYOUT_H_
 
+
 #ifndef __OPENCL_VERSION__
 
 #ifdef __APPLE__
@@ -160,7 +162,8 @@ item_columns = lambda btree_width: """
 #else
 #include <CL/cl.h>
 #endif
-typedef cl_short8 stats_t;
+#define STATS_T_VEC_N 8
+typedef cl_short8  stats_t;
 typedef cl_ushort  c_ushort;
 typedef cl_uint    c_uint;
 typedef cl_float   c_float;
@@ -176,7 +179,8 @@ typedef cl_short   c_itemid_t;
 #define F_HP2AD(X)                      ((X).s[7])
 
 #else
-typedef short8 stats_t;
+#define STATS_T_VEC_N 8
+typedef short8  stats_t;
 typedef ushort  c_ushort;
 typedef uint    c_uint;
 typedef float   c_float;
@@ -192,25 +196,25 @@ typedef short   c_itemid_t;
 #define F_HP2AD(X)                      ((X).S7)
 
 #endif
-#define STATS_T_VEC_N 8
-
-typedef struct {
-    stats_t    stats;      // 16
-	c_itemid_t id;         // 18
-	c_itemid_t passive;    // 20
-    c_uint   unused_00;    // 24
-	c_ushort total_cost;   // 26
-	c_ushort upgrade_cost; // 28
-	c_ushort slot_merge;   // 30
-    c_ushort unused_01;    // pad to 32 bytes (power of 2)
-#ifdef __OPENCL_VERSION__
-} __attribute__ ((aligned (32))) item_t;
-#else
-} item_t; static_assert(sizeof (item_t) == 32, "sizeof(item_t) != 32");
-#endif
 
 #define PASSIVE_NULL                 %d
 #define BUILDTREE_WIDTH              %d
+
+typedef struct {
+    stats_t    stats;                       // 16
+    stats_t    passive;                     // 32
+	c_itemid_t id;                          // 34
+	c_ushort   passive_id;                  // 36 
+	c_ushort   total_cost;                  // 38
+	c_ushort   upgrade_cost;                // 40
+	c_ushort   slot_merge;                  // 42
+    c_ushort   buildtree[BUILDTREE_WIDTH];  // ??
+    unsigned char pad[64-(42+(2*BUILDTREE_WIDTH))];                   // pad to 64 bytes (power of 2)
+#ifdef __OPENCL_VERSION__
+} __attribute__ ((aligned (64))) item_t;
+#else
+} item_t; static_assert(sizeof (item_t) == 64, "sizeof(item_t) != 64");
+#endif
 
 #endif
 """ % (list(passive_unique.keys()).index("(NULL)"), btree_width)
@@ -226,56 +230,57 @@ def static_output():
         with open("database.c", "w") as source:
             with open("db_layout.h", "w") as layout:
                 items = []
-                passives = []
                 names = []
-                btree = []
                 max_width = 0
                 
-                def fmt_btree(db, item):
+                def fmt_item(db, item, passive_key, passive_index):
                     nonlocal max_width
-                    #edges = item.buildTreeToEdges(itemdb)
                     edges = item.BuildFrom
                     max_width = max(len(edges), max_width)
+                    build = []
                     if edges:
-                        #str = ["{%s,%s}" % (a.id,b.id) for (a,b) in edges]
-                        str = ["%d" % list(db.keys()).index(e) for e in edges]
-                        line = "{%s} /*%s*/" % (", ".join(str), item.Name)
-                        btree.append(line)
+                        s = ["%d" % list(db.keys()).index(e) for e in edges]
+                        build = "{%s}" % ", ".join(s)
                     else:
-                        btree.append("{0} /*%s*/" % item.Name)
-                    
+                        build = "{0}"
+                        
+                    #if passive_key != None:
+                    #    passv = Stats(0)
+                    passv = passive_unique[passive_key]  
+                    items.append(
+"""  
+     {{%d,%d,%d,%d,%d,%d,%d,%d}, 
+      {%d,%d,%d,%d,%d,%d,%d,%d}, 
+      %d,%d,%d,%d,%d,         
+      %s,
+      {0}} /*%s*/""" % 
+                      
+                      (stats_fields(item) + 
+                       stats_fields(passv) + 
+                       item_fields(item, passive_index) +
+                       (build,) +
+                       (item.Name,))
+                   )
+                   
                 fmt_name = lambda n: names.append("\"%s\"" % n)
 
-                fmt_item = lambda v, passive_index: items.append(
-                    "  {{%d,%d,%d,%d,%d,%d,%d,%d},%d,%d,%d,%d,%d,0} /*%s*/" % 
-                       (stats_fields(v) + item_fields(v, passive_index) +(v.Name,))
-                   )
-                 
-                fmt_passive = lambda v: passives.append(
-                    "  {%d,%d,%d,%d,%d,%d,%d,%d}" % stats_fields(v)
-                    )
                     
-                print_items(fmt_name,fmt_item,fmt_passive,fmt_btree,itemdb,lambda x: x[1].valid)
+                #viable, passive_unique, passive_index, v
+                print_items(fmt_name,fmt_item,itemdb,lambda x: x[1].valid)
                          
                 layout.write(item_columns(max_width))
                 source.write("#include \"database.h\"")
                 source.write("\nconst item_t  db_items[DB_LEN] = {\n")
                 source.write(",\n".join(items))
                 source.write("\n};\n\n");
-                source.write("const stats_t db_passives[DB_LEN] = {\n")
-                source.write(",\n".join(passives))
-                source.write("\n};\n\n");
                 source.write("const char *db_names[DB_LEN] = {\n")
                 source.write(",\n".join(names))
                 source.write("\n};\n\n");
-                source.write("const cl_short db_buildtree[DB_LEN][BUILDTREE_WIDTH] = {\n%s\n};\n" % ",\n".join(btree))
                 print(max_width)
                 source_h.write("#include \"db_layout.h\"\n" + """
 #define DB_LEN %d
 extern const item_t  db_items[DB_LEN];
-extern const stats_t db_passives[DB_LEN];
 extern const char *db_names[DB_LEN];
-extern const cl_short db_buildtree[DB_LEN][BUILDTREE_WIDTH];
 """ % len(items))
 #extern const cl_short db_buildtree[DB_LEN][BUILDTREE_WIDTH][2];
  

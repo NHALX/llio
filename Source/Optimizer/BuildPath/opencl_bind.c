@@ -64,47 +64,39 @@ ConfigureWorkload(opencl_context *ctx, c_count_t linext_count)
 
 opencl_workset
 clbp_bindmem(opencl_context *ctx,
-opencl_kernel_arg args[KERNEL_ARG_LEN],
-struct ideal_lattice *g,
+	opencl_kernel_params *args,
+	struct ideal_lattice *g,
 	c_itemid_t *idmap, size_t idmap_len,
-	llf_criteria *cfg_input)
+	llf_criteria *cfg_input,
+	opencl_kernel_arg **output,
+	opencl_kernel_arg **bpinfo)
 {
 	size_t outlen;
 	opencl_workset work;
 
-#define CONST_ARGS_START 0
-#define CONST_ARGS_END   4
-#define BPINFO_ARG_INDEX 8
-	// NOTE: update KERNEL_ARG_LEN, KERNEL_OUTPUT_0 in opencl_host.h when making changes.
-
-	CONST_MEM(args[0], "db_items", 0, db_items, sizeof db_items);
-	CONST_MEM(args[1], "db_passives", 0, db_passives, sizeof db_passives);
-	CONST_MEM(args[2], "db_buildtree", 0, db_buildtree, sizeof db_buildtree);
-	CONST_MEM(args[3], "cfg_input", 0, cfg_input, sizeof(*cfg_input));
-	GLOBAL_MEM(args[4], "id_map", A_IN, CL_MEM_READ_ONLY, idmap, idmap_len*sizeof(*idmap));
-	GLOBAL_MEM(args[5], "ideals", A_IN, CL_MEM_READ_ONLY, g->ideals, g->vertex_count*sizeof(*g->ideals)*g->max_neighbors);
-	GLOBAL_MEM(args[6], "counts", A_IN, CL_MEM_READ_ONLY, g->counts, g->vertex_count*sizeof(*g->counts));
-	GLOBAL_MEM(args[7], "neighbors", A_IN, CL_MEM_READ_ONLY, g->neighbors, g->vertex_count*sizeof(*g->neighbors)*g->max_neighbors);
-	IGNORE(args[8]);
+	ka_mconst(ctx, ka_push(args), "db_items", 0, db_items, sizeof db_items);
+	ka_mconst(ctx, ka_push(args), "cfg_input", 0, cfg_input, sizeof(*cfg_input));
+	ka_mglobal(ctx, ka_push(args), "id_map", A_IN, CL_MEM_READ_ONLY, idmap, idmap_len*sizeof(*idmap));
+	ka_mglobal(ctx, ka_push(args), "ideals", A_IN, CL_MEM_READ_ONLY, g->ideals, g->vertex_count*sizeof(*g->ideals)*g->max_neighbors);
+	ka_mglobal(ctx, ka_push(args), "counts", A_IN, CL_MEM_READ_ONLY, g->counts, g->vertex_count*sizeof(*g->counts));
+	ka_mglobal(ctx, ka_push(args), "neighbors", A_IN, CL_MEM_READ_ONLY, g->neighbors, g->vertex_count*sizeof(*g->neighbors)*g->max_neighbors);
+	*bpinfo = ka_ignore(ka_push(args));
 
 	work = ConfigureWorkload(ctx, g->linext_count);
 	outlen = work.pass_size / work.local_size;
 
-	LOCAL_MEM(args[9], "scratch", work.local_size * sizeof(c_result_t));
-	GLOBAL_MEM(args[10], "output", A_OUT, CL_MEM_WRITE_ONLY, 0, sizeof(c_result_t)* outlen);
+	ka_mlocal(ka_push(args), "scratch", work.local_size * sizeof(c_result_t));
+	*output = ka_mglobal(ctx, ka_push(args), "output", A_OUT, CL_MEM_WRITE_ONLY, 0, sizeof(c_result_t)* outlen);
 
-	assert(10 == KERNEL_OUTPUT_0);
-	assert(8 == BPINFO_ARG_INDEX);
 	return work;
 }
 
 void
-clbp_bindval(opencl_context *ctx, opencl_kernel_arg args[KERNEL_ARG_LEN], buildpath_info info)
+clbp_bindval(opencl_context *ctx, opencl_kernel_arg *arg, buildpath_info info)
 {
-	VAL(args[BPINFO_ARG_INDEX], "max_neighbors", buildpath_info, info);
-
-	NOFAIL(clSetKernelArg(ctx->kernel_LE, BPINFO_ARG_INDEX,
-		args[BPINFO_ARG_INDEX].arg_size,
-		args[BPINFO_ARG_INDEX].arg));
+	ka_value(arg, "buildpath_info", &info, sizeof info);
+	NOFAIL(clSetKernelArg(ctx->kernel_LE, arg->index,
+		arg->arg_size,
+		arg->arg));
 }
 

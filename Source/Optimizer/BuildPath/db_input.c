@@ -84,8 +84,8 @@ Tree(size_t db_index, c_itemid_t *node2dbi, size_t *v_index)
 
 	node2dbi[(*v_index)-1] = db_index;
 	
-	for (j = 0; j < BUILDTREE_WIDTH && db_buildtree[db_index][j] != 0; ++j)
-		t->requires[j] = Tree(db_buildtree[db_index][j], node2dbi, v_index);
+	for (j = 0; j < BUILDTREE_WIDTH && db_items[db_index].buildtree[j] != 0; ++j)
+		t->requires[j] = Tree(db_items[db_index].buildtree[j], node2dbi, v_index);
 
 	return t;
 }

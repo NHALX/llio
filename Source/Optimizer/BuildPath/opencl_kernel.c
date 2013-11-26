@@ -27,20 +27,21 @@ for (size_t I = 0; I < (sizeof ((A).s) / sizeof *((A).s)); ++I) \
 
 #define __dbstorage __global
 
+
 inline void
-MergeStats(__dbstorage item_t items[], __dbstorage stats_t passives[], stats_t *stats, size_t item_id, bool copy_passive)
+MergeStats(__dbstorage item_t items[], stats_t *stats, size_t item_id, bool copy_passive)
 {
 	if (copy_passive)
-		VECTOR_ADD(*stats, passives[items[item_id].passive]);
+		VECTOR_ADD(*stats, items[item_id].passive);
 
 	VECTOR_ADD(*stats, items[item_id].stats);
 }
 
 inline void
-RemoveStats(__dbstorage item_t items[], __dbstorage stats_t passives[], stats_t *stats, size_t item_id, bool copy_passive)
+RemoveStats(__dbstorage item_t items[], stats_t *stats, size_t item_id, bool copy_passive)
 {
 	if (copy_passive)
-		VECTOR_SUB(*stats, passives[items[item_id].passive]);
+		VECTOR_SUB(*stats, items[item_id].passive);
 
 	VECTOR_SUB(*stats, items[item_id].stats);
 }
@@ -48,7 +49,6 @@ RemoveStats(__dbstorage item_t items[], __dbstorage stats_t passives[], stats_t 
 inline void
 PassiveUnique(
 	__dbstorage item_t items[],
-	__dbstorage stats_t passives[],
 	itemid_t *dbi,
 	uint dbi_n,
 	ushort2 uniqpasv[],
@@ -63,7 +63,7 @@ PassiveUnique(
 
 	for (bs = 0; bs < dbi_n; ++bs)
 	{
-		uint passive_id = items[dbi[bs]].passive;
+		uint passive_id = items[dbi[bs]].passive_id;
 
 		for (i = 0, found = -1; i < uniqpasv_n; ++i)
 		{
@@ -85,8 +85,6 @@ PassiveUnique(
 inline int
 ClearSubComponents(
 	__dbstorage item_t items[],
-	__dbstorage stats_t passives[],
-	__dbstorage short buildtree[][BUILDTREE_WIDTH],
 	itemid_t *dbi,
 	ushort2 unique[],
 	ideal_t unique_i[],
@@ -96,7 +94,7 @@ ClearSubComponents(
 	__dbstorage short *subcomponents;
 	int removed_n = 0;
 
-	for (subcomponents = buildtree[dbi[build_step]]; *subcomponents != 0; ++subcomponents)
+	for (subcomponents = items[dbi[build_step]].buildtree; *subcomponents != 0; ++subcomponents)
 	{
 		for (size_t k = 0; k < build_step; ++k)
 		{
@@ -104,7 +102,7 @@ ClearSubComponents(
 			if (dbi[k] != 0 && dbi[k] == *subcomponents)
 			{
 				--unique[unique_i[k]].y;
-				RemoveStats(items, passives, stats, dbi[k], unique[unique_i[k]].y == 0);
+				RemoveStats(items, stats, dbi[k], unique[unique_i[k]].y == 0);
 				dbi[k] = 0; 
 				removed_n++;
 				break;
@@ -121,8 +119,6 @@ static
 int
 MetricAreaDPS(
 	__dbstorage item_t items[],
-	__dbstorage stats_t passives[],
-	__dbstorage short buildtree[][BUILDTREE_WIDTH],
 	__constant llf_criteria *cfg,
 	itemid_t *dbi,
 	uint dbi_n,
@@ -138,17 +134,17 @@ MetricAreaDPS(
 	stats_t stats  = (stats_t){ 0, 0, 0, 0, 0, 0, 0, 0 };
 	
 
-	PassiveUnique(items, passives, dbi, dbi_n, unique, unique_i);
+	PassiveUnique(items, dbi, dbi_n, unique, unique_i);
 	
 	for (bs = 0, inventory_slots = 0; bs < dbi_n; ++bs) // TODO: This can be optimized
 	{	
-		inventory_slots += 1 - ClearSubComponents(items, passives, buildtree, dbi, unique, unique_i, &stats, bs);
+		inventory_slots += 1 - ClearSubComponents(items, dbi, unique, unique_i, &stats, bs);
 		
 		if (inventory_slots > cfg->build_maxinventory) // invalid build path
 			{ *output = 0; return ERROR_INVENTORY; }
 	
 		unique[unique_i[bs]].y++; // reference count
-		MergeStats(items, passives, &stats, dbi[bs], unique[unique_i[bs]].y == 1);
+		MergeStats(items, &stats, dbi[bs], unique[unique_i[bs]].y == 1);
 
 		result += (prev_dps * (float) items[dbi[bs]].upgrade_cost);
 		prev_dps = llf_dmgtotal(cfg, &stats); // FORMULA_TOTAL(cfg, stats); 
@@ -370,8 +366,6 @@ int k_linext_nth(
 // CPU version calls this function directly
 result_t k_buildpath(
 	__dbstorage item_t items[],
-	__dbstorage stats_t passives[],
-	__dbstorage short buildtree[][BUILDTREE_WIDTH],
 	__constant llf_criteria *cfg,
 	__constant itemid_t node2id[],
 
@@ -405,7 +399,7 @@ result_t k_buildpath(
 			ids[i] = node2id[le.le_buf[i] - 1]; // convert to zero based index
 
 		
-		error = MetricAreaDPS(items, passives, buildtree, cfg, ids, info.linext_width, &metric.metric);	
+		error = MetricAreaDPS(items, cfg, ids, info.linext_width, &metric.metric);	
 		metric.index = (error != ERROR_NONE) ? error : nth_extension;
 	}
 
@@ -413,13 +407,12 @@ result_t k_buildpath(
 }
 
 
+
 #ifdef __OPENCL_VERSION__
 	//////////////////////////// Kernel  ////////////////////////////
 
 __kernel void kernel_buildpath(
 	__dbstorage item_t items[],
-	__dbstorage stats_t passives[],
-	__dbstorage short buildtree[][BUILDTREE_WIDTH],
 	__constant llf_criteria *cfg,
 	__constant itemid_t node2id[],
 
@@ -431,7 +424,7 @@ __kernel void kernel_buildpath(
 	__local result_t* scratch,
 	__global result_t* result)
 {
-	result_t metric = k_buildpath(items, passives, buildtree, cfg, node2id, ideals, counts, adjacency, info, get_global_id(0));
+	result_t metric = k_buildpath(items, cfg, node2id, ideals, counts, adjacency, info, get_global_id(0));
 	Reduce(metric, scratch, result);
 }
 
@@ -480,7 +473,6 @@ __kernel void kunittest_le(
 
 __kernel void kunittest_mergestats(
 	__dbstorage item_t items[],
-	__dbstorage stats_t passives[],
 	__global itemid_t *xs,
 	uint xs_n,
 	__global stats_t *output)
@@ -492,7 +484,7 @@ __kernel void kunittest_mergestats(
 	xs += id * xs_n;
 
 	for (i = 0; i < xs_n; ++i)
-		MergeStats(items, passives, &stats, xs[i], true);
+		MergeStats(items, &stats, xs[i], true);
 	
 	output[get_global_id(0)] = stats;
 }
@@ -500,7 +492,6 @@ __kernel void kunittest_mergestats(
 
 __kernel void kunittest_passiveuniqe(
 	__dbstorage item_t items[],
-	__dbstorage stats_t passives[],
 	__global itemid_t *xs_in,
 	uint xs_n,
 	__global ushort2(*output)[LINEXT_WIDTH_MAX],
@@ -518,7 +509,7 @@ __kernel void kunittest_passiveuniqe(
 	for (i = 0; i < xs_n; ++i)
 		xs[i] = xs_in[i];
 
-	PassiveUnique(items, passives, xs, xs_n, unique, unique_i);
+	PassiveUnique(items, xs, xs_n, unique, unique_i);
 
 	for (i = 0; i < xs_n; ++i)
 	{
@@ -537,8 +528,6 @@ __kernel void kunittest_passiveuniqe(
 
 __kernel void kunittest_clearsubcomponents(
 	__dbstorage item_t items[],
-	__dbstorage stats_t passives[],
-	__dbstorage short buildtree[][BUILDTREE_WIDTH],
 	__global itemid_t *xs_in,
 	uint xs_n,
 	__global int(*output_inventory)[LINEXT_WIDTH_MAX],
@@ -556,13 +545,13 @@ __kernel void kunittest_clearsubcomponents(
 	for (x = 0; x < xs_n; ++x)
 		xs[x] = xs_in[x];
 
-	PassiveUnique(items, passives, xs, xs_n, unique, unique_i);
+	PassiveUnique(items, xs, xs_n, unique, unique_i);
 
 	for (x = 0, inventory_slots = 0; x < xs_n; ++x)
 	{
-		inventory_slots += 1 - ClearSubComponents(items, passives, buildtree, xs, unique, unique_i, &stats, x);
+		inventory_slots += 1 - ClearSubComponents(items, xs, unique, unique_i, &stats, x);
 		unique[unique_i[x]].y++; // reference count
-		MergeStats(items, passives, &stats, xs[x], unique[unique_i[x]].y == 1);
+		MergeStats(items, &stats, xs[x], unique[unique_i[x]].y == 1);
 
 		output_inventory[id][x] = inventory_slots;
 	}

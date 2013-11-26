@@ -55,54 +55,50 @@ typedef struct
 // TODO: make this less stupid
 typedef struct
 {
-	char *symbol;
+	size_t       index;
 	unsigned int type;
-	void  *buf_data;
-	size_t buf_size;
-	void  *arg;
-	size_t arg_size;
-	cl_mem_flags cl_flags;
+	const char  *symbol;
+	void        *arg;
+	size_t       arg_size;
+
+	////////// For ka_mem //////////
+	void        *buf_data;
+	size_t       buf_size;
 	int          io_flags;
+	int          dynamic;
+	cl_mem       cl_mem;
+	//cl_mem_flags cl_flags;
 	
-	union {
-		cl_mem  cl_mem;
-		cl_uint cl_uint;
-		buildpath_info buildpath_info;
-	} u;
+	///////// For ka_value 
+	unsigned char storage[256]; // spec says CL_DEVICE_MAX_PARAMETER_SIZE minimum is 256 
 
 } opencl_kernel_arg;
 
-#define IGNORE(X) \
-	(X).type = GA_IGNORE
+#define HCL_ARBITRARY_KPARAM_LIMIT 32
+#define OPENCL_KERNEL_PARAMS_INIT {{0},0}
 
-#define _MEM(TYPE, X, SYM, IOFLAGS, CLFLAGS, PTR, SIZE) do { \
-	X = (opencl_kernel_arg){ SYM, TYPE, (void*)(PTR), SIZE, 0, sizeof(cl_mem), CLFLAGS, IOFLAGS, 0 }; \
-	X.arg = &X.u; \
-} while (0)
+typedef struct
+{
+	opencl_kernel_arg args[HCL_ARBITRARY_KPARAM_LIMIT];
+	size_t count;
+} opencl_kernel_params;
 
-#define CONST_MEM(X, SYM, CFLAGS, PTR, SIZE)           _MEM(GA_CONST, X, SYM, A_IN, CFLAGS|CL_MEM_READ_ONLY, PTR, SIZE)
-#define GLOBAL_MEM(X, SYM, IOFLAGS, CLFLAGS, PTR, SIZE) _MEM(GA_MEM, X, SYM, IOFLAGS, CLFLAGS, PTR, SIZE)
+#define KA_DYN_OUTPUT(GPU,ARGS,SYM,SIZE) \
+	ka_mglobal(GPU, ARGS, SYM, A_OUT, CL_MEM_WRITE_ONLY, 0, SIZE)->buf_data
 
-#define LOCAL_MEM(X, SYM, SIZE) do { \
-	memset(&X, 0, sizeof X); \
-	X.symbol = SYM; \
-	X.type = GA_TMP; \
-	X.arg_size = SIZE; \
-} while (0)
+opencl_kernel_arg *ka_push(opencl_kernel_params *kp);
+void ka_free(opencl_kernel_params *kp);
 
-#define VAL(X, SYM, TYPE,V) do { \
-	memset(&X, 0, sizeof X); \
-	X.symbol    = SYM; \
-	X.type      = GA_VAL; \
-	X.u.##TYPE  = V; \
-	X.arg       = &X.u; \
-	X.arg_size  = sizeof(TYPE); \
-	} while (0)
+opencl_kernel_arg *ka_ignore(opencl_kernel_arg *x);
+opencl_kernel_arg *ka_mem(opencl_context *ctx, opencl_kernel_arg *x, unsigned int type, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size);
+opencl_kernel_arg *ka_mconst(opencl_context *, opencl_kernel_arg *x, const char *sym, cl_mem_flags cl_flags, const void *ptr, size_t size);
+opencl_kernel_arg *ka_mglobal(opencl_context *, opencl_kernel_arg *x, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size);
+opencl_kernel_arg *ka_mlocal(opencl_kernel_arg *x, const char *sym, size_t size);
+opencl_kernel_arg *ka_value(opencl_kernel_arg *x, const char *sym, void *value, size_t size);
 
 
-
-void opencl_upload(opencl_context *ctx, opencl_kernel_arg *args, size_t argc, opencl_workset *work);
-cl_ulong opencl_run(opencl_context *ctx, opencl_kernel_arg *args, size_t argc, opencl_workset *work);
+void opencl_upload(opencl_context *ctx, opencl_kernel_params *args, opencl_workset *work);
+cl_ulong opencl_run(opencl_context *ctx, opencl_kernel_params *args, opencl_workset *work);
 
 void opencl_init(opencl_context *, int profiling, char *kernel_function, char *source_file, char *build_flags);
 void opencl_free(opencl_context *ctx);

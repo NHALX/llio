@@ -65,12 +65,8 @@ static void CL_CALLBACK context_error(const char *errinfo, const void *private_i
 
 
 void
-opencl_upload(opencl_context *ctx, 
-	opencl_kernel_arg *args,
-	size_t argc,
-	opencl_workset *work)
+opencl_upload(opencl_context *ctx, 	opencl_kernel_params *args,	opencl_workset *work)
 {
-	cl_int error;
 	cl_ulong const_alloc;
 	size_t i;
 	cl_ulong cl_kernel_mem_usage = 0;
@@ -82,13 +78,15 @@ opencl_upload(opencl_context *ctx,
 	printf("OpenCL: kernel local mem usage: %llu * %d = %llu\n", 
 		cl_kernel_mem_usage, work->local_size, cl_kernel_mem_usage * work->local_size);
 
-	for (const_alloc = 0, i = 0; i <= argc; ++i)
+	for (const_alloc = 0, i = 0; i < args->count; ++i)
 	{
-		if ((args[i].type & GA_CONST) == GA_CONST)
+		opencl_kernel_arg *arg = &args->args[i];
+
+		if ((arg->type & GA_CONST) == GA_CONST)
 		{
-			const_alloc += args[i].buf_size;
+			const_alloc += arg->buf_size;
 			printf("OpenCL: const_size(%s:%d) = %d\n",
-				args[i].symbol, i, args[i].buf_size);
+				arg->symbol, i, arg->buf_size);
 		}
 	}
 
@@ -106,35 +104,14 @@ opencl_upload(opencl_context *ctx,
 			const_alloc, ctx->cfg_max_const_storage);
 	}
 
-	for (i = 0; i < argc; ++i)
+	for (i = 0; i < args->count; ++i)
 	{
-		if (args[i].type == GA_IGNORE)
+		opencl_kernel_arg *arg = &args->args[i];
+
+		if (arg->type == GA_IGNORE)
 			continue;
-		
-		else if ((args[i].type & GA_MEM) == GA_MEM)
-		{
-			args[i].u.cl_mem = clCreateBuffer(ctx->context, args[i].cl_flags, args[i].buf_size, NULL, &error);
-
-			if (args[i].u.cl_mem == 0)
-				fail(0, __LINE__, __FUNCTION__);
-
-			if (args[i].io_flags & A_IN)
-			{
-				assert(args[i].buf_data != 0);
-				NOFAIL(clEnqueueWriteBuffer(ctx->queue, 
-					args[i].u.cl_mem, CL_FALSE, 0, 
-					args[i].buf_size, 
-					args[i].buf_data, 0, NULL, NULL));
-			}
-			else if (args[i].io_flags & A_OUT)
-			{
-				assert(args[i].buf_data == 0);
-				if ((args[i].buf_data = calloc(1,args[i].buf_size)) == 0)
-					fail(0, __LINE__, __FUNCTION__);
-			}
-		}
-
-		NOFAIL(clSetKernelArg(ctx->kernel_LE, i, args[i].arg_size, args[i].arg));
+		assert(arg->index == i);
+		NOFAIL(clSetKernelArg(ctx->kernel_LE, arg->index, arg->arg_size, arg->arg));
 	}
 
 	return;
@@ -142,7 +119,7 @@ opencl_upload(opencl_context *ctx,
 
 
 cl_ulong
-opencl_run(opencl_context *ctx, opencl_kernel_arg *args, size_t argc, opencl_workset *work)
+opencl_run(opencl_context *ctx, opencl_kernel_params *args, opencl_workset *work)
 {
 	cl_event event;
 	size_t i;
@@ -153,16 +130,18 @@ opencl_run(opencl_context *ctx, opencl_kernel_arg *args, size_t argc, opencl_wor
 	
 	NOFAIL(clWaitForEvents(1, &event)); //NOFAIL(clFinish(ctx->queue));
 
-	for (i = 0; i < argc; ++i)
+	for (i = 0; i < args->count; ++i)
 	{
-		if (args[i].type != GA_MEM || !(args[i].io_flags & A_OUT))
+		opencl_kernel_arg *arg = &args->args[i];
+
+		if (arg->type != GA_MEM || !(arg->io_flags & A_OUT))
 			continue;
 		
-		assert(args[i].buf_data != 0);
+		assert(arg->buf_data != 0);
 
-		NOFAIL(clEnqueueReadBuffer(ctx->queue, args[i].u.cl_mem, CL_TRUE, 0, 
-			args[i].buf_size, 
-			args[i].buf_data, 0, NULL, NULL));
+		NOFAIL(clEnqueueReadBuffer(ctx->queue, arg->cl_mem, CL_TRUE, 0,
+			arg->buf_size,
+			arg->buf_data, 0, NULL, NULL));
 	}
 
 	if (ctx->profiling)
@@ -282,4 +261,112 @@ void opencl_free(opencl_context *ctx)
 	WARN(clReleaseCommandQueue(ctx->queue));
 	WARN(clReleaseContext(ctx->context));
 	return;
+}
+
+opencl_kernel_arg *
+ka_push(opencl_kernel_params *kp)
+{
+	size_t index = kp->count++;
+	opencl_kernel_arg *x = &kp->args[index];
+	assert(kp->count <= HCL_ARBITRARY_KPARAM_LIMIT);
+	memset(x, 0, sizeof *x);
+	x->index = index;
+	return x;
+}
+
+void
+ka_free(opencl_kernel_params *kp)
+{
+	for (size_t i = 0; i < kp->count; ++i)
+	{
+		if (kp->args[i].io_flags & A_OUT && kp->args[i].dynamic)
+			free(kp->args[i].buf_data);
+	}
+
+	kp->count = 0;
+}
+
+opencl_kernel_arg *
+ka_ignore(opencl_kernel_arg *x)
+{
+	x->arg      = 0;
+	x->arg_size = 0;
+	x->type     = GA_IGNORE;
+	return x;
+}
+
+opencl_kernel_arg *
+ka_mem(opencl_context *ctx, opencl_kernel_arg *x, unsigned int type, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size)
+{
+	cl_int error;
+
+	x->symbol   = sym;
+	x->type     = type;
+	x->buf_data = ptr;
+	x->buf_size = size;
+	x->io_flags = io_flags;
+	x->cl_mem   = clCreateBuffer(ctx->context, cl_flags, size, NULL, &error);
+	x->dynamic  = 0;
+
+	if (x->cl_mem == 0)
+		fail(error, __LINE__, __FUNCTION__);
+
+	memcpy(x->storage, &x->cl_mem, sizeof x->cl_mem);
+	x->arg      = &x->storage;
+	x->arg_size = sizeof x->cl_mem;
+
+	if (io_flags & A_IN)
+	{
+		assert(x->buf_data != 0);
+		NOFAIL(clEnqueueWriteBuffer(ctx->queue,
+			x->cl_mem, CL_FALSE, 0,
+			x->buf_size,
+			x->buf_data, 0, NULL, NULL));
+	}
+	else if (io_flags & A_OUT)
+	{
+		if (x->buf_data == 0)
+		{
+			if ((x->buf_data = calloc(1, x->buf_size)) == 0)
+				fail(0, __LINE__, __FUNCTION__);
+
+			x->dynamic = 1;
+		}
+	}
+	
+	return x;
+}; 
+
+opencl_kernel_arg *
+ka_mconst(opencl_context *ctx, opencl_kernel_arg *x, const char *sym, cl_mem_flags cl_flags, const void *ptr, size_t size)
+{
+	return ka_mem(ctx, x, GA_CONST, sym, A_IN, cl_flags | CL_MEM_READ_ONLY, (void*) ptr, size);
+}
+
+opencl_kernel_arg *
+ka_mglobal(opencl_context *ctx, opencl_kernel_arg *x, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size)
+{
+	return ka_mem(ctx, x, GA_MEM, sym, io_flags, cl_flags, ptr, size);
+}
+
+opencl_kernel_arg *
+ka_mlocal(opencl_kernel_arg *x, const char *sym, size_t size)
+{
+	x->symbol   = sym;
+	x->type     = GA_TMP;
+	x->arg_size = size;
+	x->arg      = 0;
+	return x;
+}
+
+opencl_kernel_arg *
+ka_value(opencl_kernel_arg *x, const char *sym, void *value, size_t size)
+{
+	x->symbol   = sym;
+	x->type     = GA_VAL;
+	x->arg      = &x->storage;
+	x->arg_size = size;
+
+	memcpy(x->storage, value, size);
+	return x;
 }

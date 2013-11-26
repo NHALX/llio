@@ -1,11 +1,11 @@
+#ifndef _OCL_HOST_H_
+#define _OCL_HOST_H_
+
 #include "x_types.h"
-#include "../Common/ll_formulas.h"
 
 #define PLATFORM_MAX    32
-#define KERNEL_ARG_LEN  11
-#define KERNEL_OUTPUT_0 10
 
-struct gpu_context
+typedef struct 
 {
 	cl_platform_id platform[PLATFORM_MAX];
 	size_t platform_n;
@@ -22,7 +22,7 @@ struct gpu_context
 	cl_bool  cfg_little_endian;
 	size_t   cfg_max_workgroup_size;
 	int profiling;
-};
+} opencl_context;
 
 typedef struct
 {
@@ -32,21 +32,31 @@ typedef struct
 	c_count_t linext_count;
 } buildpath_info;
 
+typedef struct
+{
+	size_t   pass_size;
+	size_t   local_size;
+	cl_ulong iterations;
+	cl_ulong total;
+
+}  opencl_workset;
 
 
-enum gpu_arg_t { GA_MEM, GA_VAL, GA_TMP };
+#define GA_IGNORE 0x0000
+#define GA_MEM    0x0001
+#define GA_CONST  0x0011
+#define GA_TMP    0x0100
+#define GA_VAL    0x1000
+
 #define A_IN    0x01
 #define A_OUT   0x10
 #define A_INOUT 0x11
 
-// TODO: the size_t precision of nth_extension is a problem.
-// the system wont be able to queue the full workload anyway
-// so an offset should be added later to split the work up 
-
-struct gpu_arg
+// TODO: make this less stupid
+typedef struct
 {
 	char *symbol;
-	enum gpu_arg_t type;
+	unsigned int type;
 	void  *buf_data;
 	size_t buf_size;
 	void  *arg;
@@ -59,14 +69,21 @@ struct gpu_arg
 		cl_uint cl_uint;
 		buildpath_info buildpath_info;
 	} u;
-};
 
-#define MEM(X, SYM, IOFLAGS, CLFLAGS, PTR, SIZE) do { \
-	X = (struct gpu_arg){ SYM, GA_MEM, PTR, SIZE, 0, sizeof(cl_mem), CLFLAGS, IOFLAGS, 0 }; \
+} opencl_kernel_arg;
+
+#define IGNORE(X) \
+	(X).type = GA_IGNORE
+
+#define _MEM(TYPE, X, SYM, IOFLAGS, CLFLAGS, PTR, SIZE) do { \
+	X = (opencl_kernel_arg){ SYM, TYPE, (void*)(PTR), SIZE, 0, sizeof(cl_mem), CLFLAGS, IOFLAGS, 0 }; \
 	X.arg = &X.u; \
 } while (0)
 
-#define TMP(X, SYM, SIZE) do { \
+#define CONST_MEM(X, SYM, CFLAGS, PTR, SIZE)           _MEM(GA_CONST, X, SYM, A_IN, CFLAGS|CL_MEM_READ_ONLY, PTR, SIZE)
+#define GLOBAL_MEM(X, SYM, IOFLAGS, CLFLAGS, PTR, SIZE) _MEM(GA_MEM, X, SYM, IOFLAGS, CLFLAGS, PTR, SIZE)
+
+#define LOCAL_MEM(X, SYM, SIZE) do { \
 	memset(&X, 0, sizeof X); \
 	X.symbol = SYM; \
 	X.type = GA_TMP; \
@@ -83,6 +100,18 @@ struct gpu_arg
 	} while (0)
 
 
-void opencl_setargs(struct gpu_context *ctx, struct gpu_arg args[KERNEL_ARG_LEN], struct ideal_lattice *g, c_itemid_t *idmap, size_t idmap_len, cl_float cfg_input[CFG_SIZE], buildpath_info info, size_t global_size, size_t local_size);
-void opencl_init(struct gpu_context *, int profiling, char *kernel_function, char *source_file, char *build_flags);
-cl_ulong opencl_run(struct gpu_context *ctx, struct gpu_arg *args, size_t argc, buildpath_info info, size_t global_size, size_t local_size);
+
+void opencl_upload(opencl_context *ctx, opencl_kernel_arg *args, size_t argc, opencl_workset *work);
+cl_ulong opencl_run(opencl_context *ctx, opencl_kernel_arg *args, size_t argc, opencl_workset *work);
+
+void opencl_init(opencl_context *, int profiling, char *kernel_function, char *source_file, char *build_flags);
+void opencl_free(opencl_context *ctx);
+
+// TODO: real error handling
+#define NOFAIL(X) 	\
+do { if ((X) != CL_SUCCESS) { fail(X, __LINE__, __FUNCTION__); } } while (0)
+
+
+extern void fail(int err, int line, const char *function);
+
+#endif

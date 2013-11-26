@@ -1,6 +1,7 @@
 #ifndef _DB_INPUT_H_
 #define _DB_INPUT_H_
 #include "x_types.h"
+#include "../../Database/db_layout.h"
 
 #define BUILDTREE_MAX 9 // TODO: pull this from db
 #define IDMAP_MAX_WIDTH (BUILDTREE_MAX*2)

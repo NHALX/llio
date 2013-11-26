@@ -379,9 +379,9 @@ int lattice_create(c_ideal_t p_relations[][2], size_t p_reln, size_t n, struct i
 	neighbors = malloc(slen * sizeof *neighbors);
 
 	if (!edges || !neighbors)
-	{
+	{ // TODO: move global memory pools into a context struct
 	FAIL:
-		G_FREE(edges);
+		G_FREE(edges); // TODO: this crashes if you create a second lattice without freeing the first one...
 		G_FREE(neighbors);
 		CtxFree(&lattice->ctx);
 		return G_ERROR;

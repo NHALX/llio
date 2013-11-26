@@ -1,4 +1,4 @@
-#ifdef __OSX__
+#ifdef __APPLE__
 #include <OpenCL/cl.h>
 #else
 #include <CL/cl.h>
@@ -196,7 +196,7 @@ all_extensions(struct ideal_lattice *il, c_index_t index, c_ideal_t *le, size_t 
 	
 }
 
-size_t lexicographic_sort_len = 0;
+size_t global_lexicographic_sort_len = 0;
 
 int lexicographic_cmp(const void *arg1, const void *arg2)
 {
@@ -204,7 +204,7 @@ int lexicographic_cmp(const void *arg1, const void *arg2)
 	c_ideal_t *a = ((c_ideal_t *)arg1);
 	c_ideal_t *b = ((c_ideal_t *)arg2);
 
-	for (i = 0; i < lexicographic_sort_len; ++i)
+	for (i = 0; i < global_lexicographic_sort_len; ++i)
 	{
 		int result = (int)a[i] - (int)b[i];
 		if (result != 0)
@@ -219,6 +219,17 @@ int lexicographic_cmp(const void *arg1, const void *arg2)
 	F; \
 	printf("};\n"); \
 } while (0)
+
+void
+unittest_lattice_cmp_reference_linext(size_t linext_width, c_ideal_t *le_storage, c_ideal_t *r_le, size_t r_le_n)
+{
+	size_t rle_size = r_le_n * sizeof *r_le * linext_width;
+	global_lexicographic_sort_len = linext_width;
+	qsort(r_le, r_le_n, linext_width, &lexicographic_cmp);
+	qsort(le_storage, r_le_n, linext_width, &lexicographic_cmp);
+	assert(memcmp(r_le, le_storage, rle_size) == 0);
+}
+
 
 void
 unittest_lattice_p(
@@ -272,15 +283,13 @@ unittest_lattice_p(
 	le_ptr = le_storage = malloc(rle_size); 
 	all_extensions(&lattice, lattice.source, le_set, lattice.linext_width, (linext_cb_t) &copy_extension, (void**)&le_ptr);
 
-	lexicographic_sort_len = lattice_n;
-	qsort(r_le, r_le_n, lexicographic_sort_len, &lexicographic_cmp);
-	qsort(le_storage, r_le_n, lexicographic_sort_len, &lexicographic_cmp);
-	assert(memcmp(r_le, le_storage, rle_size) == 0);
+	unittest_lattice_cmp_reference_linext(lattice_n, le_storage, r_le, r_le_n);
 
 	assert(memcmp(lattice.counts, r_counts, r_counts_n) == 0);
 
 	lattice_free(&lattice);
 }
+
 
 
 #ifdef PRINT

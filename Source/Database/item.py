@@ -90,47 +90,6 @@ class Item(Stats):
         f(self, edges)
         return edges
         
-def newGraph():
-    G = nx.DiGraph()
-    G.add_node(0)
-    return G
-
-
-
-
-# TODO: this function is broken
-def graph(cfg, G, output):
-    
-    item = Item(cfg, output[1])
-    
-    if item.valid == False:
-        print(item.valid)
-        return G
-    
-    #print("id: ", item.id, item.cost)
-    #print("builds from:", item.buildFrom)   
-    #print("builds into:", item.buildInto)
-    
-    G.add_node(item.id)
-    
-    if not item.buildFrom:
-        #G.add_edge(0, item.id, label=item.cost)
-        pass
-    else:
-        for v in item.buildFrom:
-
-            file = "DATA/Items/%s.inibin" % v
-            try:
-                graph(cfg, G, parse(file))
-                G.add_edge(v, item.id, label=item.cost)
-            except:
-
-                print("warning: graph: file not found", file)
-                continue
-            
-    return G
-    
-#data = parse("%s" % sys.argv[1])
 
 
 

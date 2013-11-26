@@ -174,7 +174,7 @@ def dump(file):
 
     dump_keys(output)
 
-
+#TODO: all the fields we are using arent even being loaded (like armor pen percent)
 def getFields(strings, id, file, item):
     data = parse(file)
     _setItemStats(item, id, strings, data[1])
@@ -193,10 +193,10 @@ def _setItemStats(item, fileid, strings, output):
         else:
             return 0
             
-    def get_f(str):
+    def get_f(str, scale):
         x = get(str)
         if x:
-            return float(x)
+            return round(float(x) * scale)
         else:
             return 0
         
@@ -241,16 +241,17 @@ def _setItemStats(item, fileid, strings, output):
     #self.BounceDamage=BounceDamage
         
     item.HP            = get_i("Health")
-    item.HP_5          = get_f("HealthRegenPerSecond")
+    #item.HP_5          = get_f("HealthRegenPerSecond")
     item.AD            = get_i("Damage")
-    item.ArmorPen      = get_f("ArmorPenetration")
-    item.Lifesteal     = get_f("PercentLifeSteal")
-    item.AttackSpeed   = get_f("PercentAttackSpeed")
-    item.CritChance    = get_f("PercentCriticalStrikeChance")
-    item.CritDamage    = get_f("PercentCriticalDamage")
-    item.MovementSpeed = get_f("PercentMovementSpeed")
+    #item.RuneArmorPen      = get_f("ArmorPenetration")
+    
+    item.Lifesteal     = get_f("PercentLifeSteal", 100)
+    item.AttackSpeed   = get_f("PercentAttackSpeed", 100)
+    item.CritChance    = get_f("PercentCriticalStrikeChance", 100)
+    item.CritDamage    = get_f("PercentCriticalDamage", 100)
+    item.MovementSpeed = get_f("PercentMovementSpeed", 100)
     item.MP            = get_i("Mana")
-    item.MP_5          = get_f("ManaRegenPerSecond")
+    #item.MP_5          = get_f("ManaRegenPerSecond")
     item.AbilityPower  = get_i("AbilityPower")
     #item.MagicPen      = get_f("MagicPenetration")
     #item.SpellVamp     = get()
@@ -259,7 +260,7 @@ def _setItemStats(item, fileid, strings, output):
     item.MagicRest     = get_i("MagicResist")
     #item.Tenacity      = get()
     item.Cost          = get_i("GoldCost")
-    item.ResellValue   = get_f("ResellValue")
+    #item.ResellValue   = get_f("ResellValue")
     item.Passive       = get("UniqueEffect")
     
     keys      = set(index(0, output))

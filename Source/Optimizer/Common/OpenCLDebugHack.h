@@ -8,7 +8,7 @@
 
 #define __kernel
 #define __global
-#define __constant
+#define __constant const
 #define __local
 
 //#define INFINITY 9999999
@@ -24,12 +24,15 @@ static __inline int get_global_size(int x){ return __global_size; }
 static __inline int get_local_size(int x) { return __local_size; }
 */
 typedef struct { int x; int y; } int2;
+typedef struct { unsigned int x; unsigned int y; } uint2;
+typedef struct { unsigned short x; unsigned short y; } ushort2;
 typedef int mint;
 typedef struct { float x; float y; } float2;
 typedef unsigned long long ulong;
 typedef unsigned int uint;
 typedef unsigned short ushort;
 typedef unsigned char uchar;
+typedef unsigned int bool;
 
 
 #define min(a,b) (((a) < (b)) ? (a) : (b))
@@ -51,3 +54,5 @@ typedef unsigned char uchar;
     }                                                                                   \
     
 #endif
+
+

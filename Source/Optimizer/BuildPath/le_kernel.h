@@ -7,6 +7,9 @@
 #endif
 
 #define LINEXT_WIDTH_MAX 64
+#define ERROR_INVENTORY -1
+#define ERROR_IGNORED   -2
+#define ERROR_NONE       0
 
 typedef struct 
 {
@@ -18,6 +21,7 @@ typedef struct
 
 typedef struct STRUCT_ALIGNMENT { float metric; ulong index; } result_t;
 
+// TODO: merge these definitions into original locations - db_layout.h and lattice.h?
 typedef uint   index_t;
 typedef uchar  ideal_t;
 typedef ulong  count_t;

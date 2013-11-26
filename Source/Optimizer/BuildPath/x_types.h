@@ -4,7 +4,7 @@
 #define INDEX2(N,I,J)			(((I)*(N))+(J))
 
 #ifndef NO_OPENCL
-#ifdef __OSX__
+#ifdef __APPLE__
 #include <OpenCL/cl.h>
 #else
 #include <CL/cl.h>
@@ -16,7 +16,7 @@
 typedef cl_uint  c_index_t;
 typedef cl_uchar c_ideal_t;
 typedef cl_ulong c_count_t;
-typedef cl_short c_itemid_t;
+//typedef cl_short c_itemid_t;
 typedef struct { cl_float metric; cl_ulong index; }    c_result_t;
 typedef struct 
 {
@@ -34,7 +34,7 @@ typedef struct
 typedef uintptr_t     c_index_t;
 typedef unsigned char c_ideal_t;
 typedef uint64_t      c_count_t;
-typedef int16_t       c_itemid_t;
+//typedef int16_t       c_itemid_t;
 
 typedef struct
 {

@@ -377,9 +377,9 @@ result_t k_buildpath(
 {
 	count_t nth_extension;
 	result_t metric;
-	// TODO: cahnge this
-	//nth_extension = info.linext_offset + global_id;
-	nth_extension = 1;
+	
+	nth_extension = info.linext_offset + global_id;
+
 	metric.metric = 0;
 	metric.index  = ERROR_IGNORED;
 

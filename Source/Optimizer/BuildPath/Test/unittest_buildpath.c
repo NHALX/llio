@@ -20,6 +20,8 @@
 #include "../opencl_host.h"
 #include "../opencl_bind.h"
 
+#include "../le_kernel.h"
+
 
 ////////////////////// from opencl kernel ///////////////////////
 
@@ -77,7 +79,7 @@ FindMax(c_result_t *rs, size_t result_n)
 
 	for (i = 0; i < result_n; ++i)
 	{
-		if (rs[i].metric <= 0)
+		if (rs[i].metric <= 0 && rs[i].index != ERROR_INVENTORY && rs[i].index != ERROR_IGNORED)
 			printf("warning: %f:%d\n", rs[i].metric, rs[i].index);
 
 		if (max.metric < rs[i].metric)

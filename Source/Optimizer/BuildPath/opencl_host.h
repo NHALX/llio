@@ -89,15 +89,15 @@ typedef struct
 opencl_kernel_arg *ka_push(opencl_kernel_params *kp);
 void ka_free(opencl_kernel_params *kp);
 
-opencl_kernel_arg *ka_ignore(opencl_kernel_arg *x);
-opencl_kernel_arg *ka_mem(opencl_context *ctx, opencl_kernel_arg *x, unsigned int type, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size);
+opencl_kernel_arg *ka_ignore(opencl_context *, opencl_kernel_arg *x);
+opencl_kernel_arg *ka_mem(opencl_context *, opencl_kernel_arg *x, unsigned int type, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size);
 opencl_kernel_arg *ka_mconst(opencl_context *, opencl_kernel_arg *x, const char *sym, cl_mem_flags cl_flags, const void *ptr, size_t size);
 opencl_kernel_arg *ka_mglobal(opencl_context *, opencl_kernel_arg *x, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size);
-opencl_kernel_arg *ka_mlocal(opencl_kernel_arg *x, const char *sym, size_t size);
-opencl_kernel_arg *ka_value(opencl_kernel_arg *x, const char *sym, void *value, size_t size);
+opencl_kernel_arg *ka_mlocal(opencl_context *, opencl_kernel_arg *x, const char *sym, size_t size);
+opencl_kernel_arg *ka_value(opencl_context *, opencl_kernel_arg *x, const char *sym, void *value, size_t size);
 
 
-void opencl_upload(opencl_context *ctx, opencl_kernel_params *args, opencl_workset *work);
+void opencl_memcheck(opencl_context *ctx, opencl_kernel_params *args, opencl_workset *work);
 cl_ulong opencl_run(opencl_context *ctx, opencl_kernel_params *args, opencl_workset *work);
 
 void opencl_init(opencl_context *, int profiling, char *kernel_function, char *source_file, char *build_flags);

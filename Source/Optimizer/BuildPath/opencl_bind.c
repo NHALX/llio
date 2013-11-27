@@ -75,17 +75,17 @@ clbp_bindmem(opencl_context *ctx,
 	opencl_workset work;
 
 	ka_mconst(ctx, ka_push(args), "db_items", 0, db_items, sizeof db_items);
-	ka_mconst(ctx, ka_push(args), "cfg_input", 0, cfg_input, sizeof(*cfg_input));
+	ka_value(ctx, ka_push(args), "cfg_input", cfg_input, sizeof(*cfg_input));
 	ka_mglobal(ctx, ka_push(args), "id_map", A_IN, CL_MEM_READ_ONLY, idmap, idmap_len*sizeof(*idmap));
 	ka_mglobal(ctx, ka_push(args), "ideals", A_IN, CL_MEM_READ_ONLY, g->ideals, g->vertex_count*sizeof(*g->ideals)*g->max_neighbors);
 	ka_mglobal(ctx, ka_push(args), "counts", A_IN, CL_MEM_READ_ONLY, g->counts, g->vertex_count*sizeof(*g->counts));
 	ka_mglobal(ctx, ka_push(args), "neighbors", A_IN, CL_MEM_READ_ONLY, g->neighbors, g->vertex_count*sizeof(*g->neighbors)*g->max_neighbors);
-	*bpinfo = ka_ignore(ka_push(args));
+	*bpinfo = ka_ignore(ctx, ka_push(args));
 
 	work = ConfigureWorkload(ctx, g->linext_count);
 	outlen = work.pass_size / work.local_size;
 
-	ka_mlocal(ka_push(args), "scratch", work.local_size * sizeof(c_result_t));
+	ka_mlocal(ctx, ka_push(args), "scratch", work.local_size * sizeof(c_result_t));
 	*output = ka_mglobal(ctx, ka_push(args), "output", A_OUT, CL_MEM_WRITE_ONLY, 0, sizeof(c_result_t)* outlen);
 
 	return work;
@@ -94,9 +94,7 @@ clbp_bindmem(opencl_context *ctx,
 void
 clbp_bindval(opencl_context *ctx, opencl_kernel_arg *arg, buildpath_info info)
 {
-	ka_value(arg, "buildpath_info", &info, sizeof info);
-	NOFAIL(clSetKernelArg(ctx->kernel_LE, arg->index,
-		arg->arg_size,
-		arg->arg));
+	ka_value(ctx, arg, "buildpath_info", &info, sizeof info);
+	//NOFAIL(clSetKernelArg(ctx->kernel_LE, arg->index,	arg->arg_size, arg->arg));
 }
 

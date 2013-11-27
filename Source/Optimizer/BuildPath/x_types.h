@@ -1,6 +1,8 @@
 #ifndef _X_TYPES_H_
 #define _X_TYPES_H_
 
+// TODO: figure out where in the filesystem this header should go
+
 #define INDEX2(N,I,J)			(((I)*(N))+(J))
 
 #ifndef NO_OPENCL

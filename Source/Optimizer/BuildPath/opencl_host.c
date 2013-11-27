@@ -65,7 +65,7 @@ static void CL_CALLBACK context_error(const char *errinfo, const void *private_i
 
 
 void
-opencl_upload(opencl_context *ctx, 	opencl_kernel_params *args,	opencl_workset *work)
+opencl_memcheck(opencl_context *ctx, 	opencl_kernel_params *args,	opencl_workset *work)
 {
 	cl_ulong const_alloc;
 	size_t i;
@@ -90,7 +90,7 @@ opencl_upload(opencl_context *ctx, 	opencl_kernel_params *args,	opencl_workset *
 		}
 	}
 
-	const_alloc += cl_kernel_mem_usage * work->local_size;
+	//const_alloc += cl_kernel_mem_usage * work->local_size;
 
 	if (const_alloc > ctx->cfg_max_const_storage)
 	{
@@ -102,16 +102,6 @@ opencl_upload(opencl_context *ctx, 	opencl_kernel_params *args,	opencl_workset *
 	{
 		printf("OpenCL: allocating %llu/%llu const storage.\n",
 			const_alloc, ctx->cfg_max_const_storage);
-	}
-
-	for (i = 0; i < args->count; ++i)
-	{
-		opencl_kernel_arg *arg = &args->args[i];
-
-		if (arg->type == GA_IGNORE)
-			continue;
-		assert(arg->index == i);
-		NOFAIL(clSetKernelArg(ctx->kernel_LE, arg->index, arg->arg_size, arg->arg));
 	}
 
 	return;
@@ -279,15 +269,20 @@ ka_free(opencl_kernel_params *kp)
 {
 	for (size_t i = 0; i < kp->count; ++i)
 	{
-		if (kp->args[i].io_flags & A_OUT && kp->args[i].dynamic)
-			free(kp->args[i].buf_data);
+		if (kp->args[i].type == GA_MEM)
+		{
+			if (kp->args[i].io_flags & A_OUT && kp->args[i].dynamic)
+				free(kp->args[i].buf_data);
+
+			WARN(clReleaseMemObject(kp->args[i].cl_mem));
+		}
 	}
 
 	kp->count = 0;
 }
 
 opencl_kernel_arg *
-ka_ignore(opencl_kernel_arg *x)
+ka_ignore(opencl_context *ctx, opencl_kernel_arg *x)
 {
 	x->arg      = 0;
 	x->arg_size = 0;
@@ -333,7 +328,8 @@ ka_mem(opencl_context *ctx, opencl_kernel_arg *x, unsigned int type, const char 
 			x->dynamic = 1;
 		}
 	}
-	
+
+	NOFAIL(clSetKernelArg(ctx->kernel_LE, x->index, x->arg_size, x->arg));
 	return x;
 }; 
 
@@ -350,17 +346,19 @@ ka_mglobal(opencl_context *ctx, opencl_kernel_arg *x, const char *sym, int io_fl
 }
 
 opencl_kernel_arg *
-ka_mlocal(opencl_kernel_arg *x, const char *sym, size_t size)
+ka_mlocal(opencl_context *ctx, opencl_kernel_arg *x, const char *sym, size_t size)
 {
 	x->symbol   = sym;
 	x->type     = GA_TMP;
 	x->arg_size = size;
 	x->arg      = 0;
+
+	NOFAIL(clSetKernelArg(ctx->kernel_LE, x->index, x->arg_size, x->arg));
 	return x;
 }
 
 opencl_kernel_arg *
-ka_value(opencl_kernel_arg *x, const char *sym, void *value, size_t size)
+ka_value(opencl_context *ctx, opencl_kernel_arg *x, const char *sym, void *value, size_t size)
 {
 	x->symbol   = sym;
 	x->type     = GA_VAL;
@@ -368,5 +366,6 @@ ka_value(opencl_kernel_arg *x, const char *sym, void *value, size_t size)
 	x->arg_size = size;
 
 	memcpy(x->storage, value, size);
+	NOFAIL(clSetKernelArg(ctx->kernel_LE, x->index, x->arg_size, x->arg));
 	return x;
 }

@@ -21,11 +21,11 @@ typedef struct
 #define AS_LVPER          (0.0322f)
 #define AS_BASE           (0.625f/(1.0f+AS_OFFSET))
 
-typedef c_ushort stat_t;
 
 #ifdef _MSC_VER
 #define inline __inline 
 #endif
+
 
 static inline float llf_attackspeed(c_uint LV, stat_t GEAR)
 {
@@ -56,7 +56,7 @@ static inline float llf_AD(stat_t AD, stat_t HP, stat_t HPRATIO)
 	return ((float)base) + ((float)bonus / 100);
 }
 
-static inline float llf_autoattack_DPS(float mitigation, float ad, c_uint LV, stats_t *X)
+static inline float llf_autoattack_DPS(float mitigation, float ad, c_uint LV, VECTOR(*X))
 {
 	float crit = llf_crit(F_CRIT_BONUS(*X), F_CRIT_CHANCE(*X));
 	float aspd = llf_attackspeed(LV, F_ATTACK_SPEED(*X));
@@ -70,7 +70,7 @@ static inline float llf_ability_damage(float mit, float ad, c_uint ratio)
 }
 
 
-static inline float llf_dmgtotal(__constant llf_criteria *CFG, stats_t *X)
+static inline float llf_dmgtotal(llf_criteria *CFG, VECTOR(*X))
 {
 	float mit = llf_armor_mitigation(CFG->enemy_armor, F_ARMORPEN_PERCENT(*X), F_ARMORPEN_FLAT(*X));
 	float ad = llf_AD(F_AD(*X), F_HP(*X), F_HP2AD(*X));

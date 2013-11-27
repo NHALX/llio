@@ -79,7 +79,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\Database\database.c" />
+    <ClCompile Include="..\..\..\..\Database\db_items.c" />
+    <ClCompile Include="..\..\..\..\Database\db_names.c" />
     <ClCompile Include="..\..\..\BuildPath\db_input.c" />
     <ClCompile Include="..\..\..\BuildPath\lattice.c" />
     <ClCompile Include="..\..\..\BuildPath\opencl_bind.c" />
@@ -98,6 +99,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\..\Database\database.h" />
     <ClInclude Include="..\..\..\..\Database\db_layout.h" />
+    <ClInclude Include="..\..\..\..\Database\vector.h" />
     <ClInclude Include="..\..\..\BuildPath\db_input.h" />
     <ClInclude Include="..\..\..\BuildPath\error.h" />
     <ClInclude Include="..\..\..\BuildPath\genLE_Init.h" />
@@ -110,6 +112,7 @@
     <ClInclude Include="..\..\..\BuildPath\tree.h" />
     <ClInclude Include="..\..\..\BuildPath\u_list.h" />
     <ClInclude Include="..\..\..\BuildPath\x_types.h" />
+    <ClInclude Include="..\..\..\Common\ll_formulas.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\Database\item.py" />

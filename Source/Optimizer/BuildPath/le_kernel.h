@@ -11,6 +11,7 @@
 #define ERROR_IGNORED   -2
 #define ERROR_NONE       0
 
+//#ifdef __OPENCL_VERSION__
 typedef struct 
 {
 	uchar le_buf[LINEXT_WIDTH_MAX];

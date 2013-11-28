@@ -9,9 +9,9 @@
 #include "../Common/ll_formulas.h"
 
 ////////////////////////////////////////////////////////
-  
+   
 
-#define DB __constant item_t db_items[]
+#define DB __global item_t db_items[]
 
 // TODO: handle stats that are merged multiplicatively 
 inline void
@@ -31,8 +31,8 @@ RemoveStats(DB, VECTOR(*stats), size_t item_id, bool copy_passive)
 
 	VECTOR_SUB(*stats, db_items[item_id].stats);
 }
-
-inline void
+/*
+inline size_t
 PassiveUnique(DB,
 	itemid_t *dbi,
 	uint dbi_n,
@@ -64,6 +64,8 @@ PassiveUnique(DB,
 
 		uniqpasv_idx[bs] = found;
 	}
+	
+	return uniqpasv_n;
 }
 
 
@@ -78,14 +80,18 @@ ClearSubComponents(DB,
 	index_t i;
 	int removed_n = 0;
 
+	if (build_step == 0)
+		return 0;
+
 	for (i = 0; i < BUILDTREE_WIDTH; ++i)
 	{
 		index_t id = db_items[dbi[build_step]].buildtree[i];
 
-		for (size_t k = 0; k < build_step; ++k)
+		for (size_t k = 0; k < build_step; ++k) // TODO: this isnt necissary, just get the stats directly and subtract them
 		{
+			itemid_t id_k = dbi[k];
 			// NOTE: This assumes the 0th db entry to be a null item
-			if (dbi[k] != 0 && dbi[k] == id)
+			if (id_k != 0 && id_k == id)
 			{
 				--unique[unique_i[k]].y;
 				RemoveStats(db_items, stats, dbi[k], unique[unique_i[k]].y == 0);
@@ -98,9 +104,77 @@ ClearSubComponents(DB,
 
 	return removed_n;
 }
+*/
+/*
+inline int
+ClearSubComponents3(DB,
+	ushort2 unique[],
+	size_t  unique_len,
+	VECTOR(*stats),
+	size_t item)
+{
+	int removed_n = 0;
+
+	if (item == 0)
+		return 0;
+
+	for (size_t i = 0; i < BUILDTREE_WIDTH; ++i)
+	{
+		size_t id = db_items[item].buildtree[i];
+		size_t passive_id;
+
+		if (id == 0)
+			continue;
+
+		passive_id = db_items[id].passive_id;
+
+		if (passive_id != 0)
+		{
+			for (size_t k = 0; k < unique_len; ++k)
+			{
+				if (unique[k].x == passive_id){
+					unique[k].y--;
+					break;
+				}
+			}
+		}
+		
+		RemoveStats(db_items, stats, id, passive_id != 0);
+		removed_n++;
+		break;
+	}
+
+	return removed_n;
+}
+*/
 
 
-// TODO: unit test PassiveUnique and ClearSubComp
+inline int
+AddItem(DB, uchar unique[], VECTOR(*stats), size_t item)
+{
+	int removed_n = 0;
+
+	if (item == 0)
+		return 1;
+
+	for (size_t i = 0; i < BUILDTREE_WIDTH; ++i)
+	{
+		size_t id = db_items[item].buildtree[i];
+
+		if (id == 0)
+			continue;
+
+		RemoveStats(db_items, stats, id, --unique[db_items[id].passive_id] == 0);
+		++removed_n;
+	}
+
+	MergeStats(db_items, stats, item, ++unique[db_items[item].passive_id] == 1);
+	return 1 - removed_n;
+}
+
+
+// ASSUMES: item passive_id's arent larger than LINEXT_WIDTH_MAX and 
+// that there is less than LINEXT_WIDTH_MAX passives being used 
 static
 int
 MetricAreaDPS(DB,
@@ -111,29 +185,24 @@ MetricAreaDPS(DB,
 {
 	size_t bs;
 	uint inventory_slots;
-	ushort2 unique[LINEXT_WIDTH_MAX];
-	ideal_t unique_i[LINEXT_WIDTH_MAX];
-
+	uchar unique[LINEXT_WIDTH_MAX] = { 0 }; // TODO: hmm what to do about this size
 	float result   = 0;
 	float prev_dps = 0;
-	//stats_t stats  = (stats_t){ 0, 0, 0, 0, 0, 0, 0, 0 };
-	//c_short stats[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
 	VECTOR(stats) = VECTOR_ZERO_INIT;
 
-	PassiveUnique(db_items, dbi, dbi_n, unique, unique_i);
-	
-	for (bs = 0, inventory_slots = 0; bs < dbi_n; ++bs) // TODO: This can be optimized
+
+	for (bs = 0, inventory_slots = 0; bs < dbi_n; ++bs) 
 	{	
-		inventory_slots += 1 - ClearSubComponents(db_items, dbi, unique, unique_i, (&stats), bs);
+		size_t item = dbi[bs];
+
+		inventory_slots += AddItem(db_items, unique, (&stats), item);
 		
 		if (inventory_slots > cfg->build_maxinventory) // invalid build path
 			{ *output = 0; return ERROR_INVENTORY; }
-	
-		unique[unique_i[bs]].y++; // reference count
-		MergeStats(db_items, &stats, dbi[bs], unique[unique_i[bs]].y == 1);
 
 		result += (prev_dps * (float) db_items[dbi[bs]].upgrade_cost);
-		prev_dps = llf_dmgtotal(cfg, &stats); // FORMULA_TOTAL(cfg, stats); 
+		prev_dps = llf_dmgtotal(cfg, &stats); 
 	}
 	 
 	*output = result;
@@ -294,9 +363,10 @@ result_t k_buildpath(DB,
 
 		k_linext_nth(ideals, counts, adjacency, info.max_neighbors, nth_extension, &le);
 
+		// NOTE: We dont actually need the extra precision here, but if we get rid of it
+		// some of the support functions won't be able to index the full database.
 		for (i = 0; i < info.linext_width; i++)
-			ids[i] = node2id[le.le_buf[i] - 1]; // convert to zero based index
-
+			ids[i] = le.le_buf[i]; 
 		
 		error = MetricAreaDPS(db_items, cfg, ids, info.linext_width, &metric.metric);	
 		metric.index = (error != ERROR_NONE) ? error : nth_extension;
@@ -325,14 +395,14 @@ __kernel void kernel_buildpath(DB,
 }
 
 	//////////////////////// tests /////////////////////////
-	 
+	   
 #ifdef UNIT_TEST
 
 __kernel void kunittest_mem(DB,
 	__global itemid_t id[],
-	__global ushort  stat_s0[],
-	__global ushort  stat_s3[],
-	__global ushort  stat_s6[],
+	__global stat_t  stat_s0[],
+	__global stat_t  stat_s3[],
+	__global stat_t  stat_s6[],
 	__global VECTOR(*stat_all))
 {
 	size_t i = get_global_id(0);
@@ -387,41 +457,6 @@ __kernel void kunittest_mergestats(DB,
 }
 
 
-__kernel void kunittest_passiveuniqe(DB,
-	__global itemid_t *xs_in,
-	uint xs_n,
-	__global ushort2(*output)[LINEXT_WIDTH_MAX],
-	__global ideal_t(*output_idx)[LINEXT_WIDTH_MAX]
-	)
-{
-	ushort2 unique[LINEXT_WIDTH_MAX];
-	ideal_t unique_i[LINEXT_WIDTH_MAX];
-	itemid_t xs[LINEXT_WIDTH_MAX];
-
-	size_t i;
-	size_t id = get_global_id(0);
-
-	xs_in += id * xs_n;
-	for (i = 0; i < xs_n; ++i)
-		xs[i] = xs_in[i];
-
-	PassiveUnique(db_items, xs, xs_n, unique, unique_i);
-
-	for (i = 0; i < xs_n; ++i)
-	{
-		output[id][i] = unique[i];
-		output_idx[id][i] = unique_i[i];
-	}
-
-	for (i = xs_n; i < LINEXT_WIDTH_MAX; ++i)
-	{
-		output[id][i] = (ushort2){ 0, 0 };
-		output_idx[id][i] = 0;
-	}
-}
-
-
-
 __kernel void kunittest_clearsubcomponents(DB,
 	__global itemid_t *xs_in,
 	uint xs_n,
@@ -430,24 +465,19 @@ __kernel void kunittest_clearsubcomponents(DB,
 {
 	size_t x;
 	int inventory_slots;
-	ushort2 unique[LINEXT_WIDTH_MAX];
-	ideal_t unique_i[LINEXT_WIDTH_MAX];
+	uchar unique[LINEXT_WIDTH_MAX] = {0};
 	itemid_t xs[LINEXT_WIDTH_MAX];
 	VECTOR(stats) = VECTOR_ZERO_INIT;
 	size_t id = get_global_id(0);
 
 	xs_in += id * xs_n;
-	for (x = 0; x < xs_n; ++x)
+	for (x = 0; x < xs_n; ++x) // TODO: why is this here?
 		xs[x] = xs_in[x];
 
-	PassiveUnique(db_items, xs, xs_n, unique, unique_i);
-
+	
 	for (x = 0, inventory_slots = 0; x < xs_n; ++x)
 	{
-		inventory_slots += 1 - ClearSubComponents(db_items, xs, unique, unique_i, &stats, x);
-		unique[unique_i[x]].y++; // reference count
-		MergeStats(db_items, &stats, xs[x], unique[unique_i[x]].y == 1);
-
+		inventory_slots += AddItem(db_items, unique, &stats, xs[x]);
 		output_inventory[id][x] = inventory_slots;
 	}
 
@@ -466,7 +496,7 @@ __kernel void kunittest_llformulas(DB,
 	size_t id = get_global_id(0);
 	VECTOR(stats);
 	float mit, ad, crit, aspd;
-
+	 
 	VECTOR_COPY(stats, db_items[xs[id]].stats);
 
 	mit = llf_armor_mitigation(cfg.enemy_armor, F_ARMORPEN_PERCENT(stats), F_ARMORPEN_FLAT(stats));

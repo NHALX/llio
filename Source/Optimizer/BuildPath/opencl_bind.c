@@ -66,6 +66,7 @@ opencl_workset
 clbp_bindmem(opencl_context *ctx,
 	opencl_kernel_params *args,
 	struct ideal_lattice *g,
+	item_t *items,
 	c_itemid_t *idmap, size_t idmap_len,
 	llf_criteria *cfg_input,
 	opencl_kernel_arg **output,
@@ -74,7 +75,7 @@ clbp_bindmem(opencl_context *ctx,
 	size_t outlen;
 	opencl_workset work;
 
-	ka_mconst(ctx, ka_push(args), "db_items", 0, db_items, sizeof db_items);
+	ka_mconst(ctx, ka_push(args), "db_items", 0, items, sizeof *items * idmap_len);
 	ka_value(ctx, ka_push(args), "cfg_input", cfg_input, sizeof(*cfg_input));
 	ka_mglobal(ctx, ka_push(args), "id_map", A_IN, CL_MEM_READ_ONLY, idmap, idmap_len*sizeof(*idmap));
 	ka_mglobal(ctx, ka_push(args), "ideals", A_IN, CL_MEM_READ_ONLY, g->ideals, g->vertex_count*sizeof(*g->ideals)*g->max_neighbors);

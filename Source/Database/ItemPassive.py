@@ -155,8 +155,8 @@ def stats_fields(v):
 
 def static_output():
     item_format = """  
-     {{%d,%d,%d,%d,%d,%d,%d,%d}, 
-      {%d,%d,%d,%d,%d,%d,%d,%d}, 
+     {{%ff,%ff,%ff,%ff,%ff,%ff,%ff,%ff}, 
+      {%ff,%ff,%ff,%ff,%ff,%ff,%ff,%ff}, 
       %d,%d,%d,%d,%d,         
       %s,
       {0}} /*%s*/"""

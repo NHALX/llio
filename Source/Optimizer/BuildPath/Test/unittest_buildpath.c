@@ -90,7 +90,7 @@ FindMax(c_result_t *rs, size_t result_n)
 }
 
 
-c_result_t unittest_buildpathGPU(struct ideal_lattice *lattice, c_itemid_t *node2id, size_t node2id_n, llf_criteria *cfg)
+c_result_t unittest_buildpathGPU(struct ideal_lattice *lattice, item_t *db_filtered, c_itemid_t *node2id, size_t node2id_n, llf_criteria *cfg)
 {
 	cl_ulong time;
 	size_t i;
@@ -110,8 +110,8 @@ c_result_t unittest_buildpathGPU(struct ideal_lattice *lattice, c_itemid_t *node
 	info.linext_count = lattice->linext_count;
 
 	opencl_init(&gpu, 1, "kernel_buildpath", "D:/GitRoot/llio/Source/Optimizer/BuildPath/opencl_kernel.c", "-DUSE_OPENCL -ID:/GitRoot/llio/Source/Optimizer/BuildPath -ID:/GitRoot/llio/Source/Optimizer/Libs/Random123-1.08/include/");
-	
-	workset = clbp_bindmem(&gpu, &args, lattice, node2id, node2id_n, cfg, &output, &bpinfo);
+
+	workset = clbp_bindmem(&gpu, &args, lattice, db_filtered, node2id, node2id_n, cfg, &output, &bpinfo);
 	opencl_memcheck(&gpu, &args, &workset);
 	
 	result_n = output->buf_size / sizeof (c_result_t);
@@ -141,11 +141,12 @@ c_result_t unittest_buildpathGPU(struct ideal_lattice *lattice, c_itemid_t *node
 	//time=55623763, processed=1966080
 	//time=31413480, processed=1966080
 	//time=66087542, processed=1966080
+	//time=70518173
 	return max;
 }
 
 
-c_result_t unittest_buildpathCPU(struct ideal_lattice *lattice, c_itemid_t *node2id, size_t node2id_n, llf_criteria *cfg)
+c_result_t unittest_buildpathCPU(struct ideal_lattice *lattice, item_t *db_filtered, c_itemid_t *node2id, size_t node2id_n, llf_criteria *cfg)
 {
 	c_count_t j, pass_size, iterations;
 	c_result_t result = (c_result_t){0,0};
@@ -178,7 +179,7 @@ c_result_t unittest_buildpathCPU(struct ideal_lattice *lattice, c_itemid_t *node
 			#pragma omp for schedule(static) nowait
 			for (i = 0; i < pass_size; ++i)
 			{
-				c_result_t r = k_buildpath(db_items, cfg, node2id,
+				c_result_t r = k_buildpath(db_filtered, cfg, node2id,
 					lattice->ideals,
 					lattice->counts,
 					lattice->neighbors,
@@ -203,7 +204,7 @@ c_result_t unittest_buildpathCPU(struct ideal_lattice *lattice, c_itemid_t *node
 }
 
 static void
-PrintExtension(struct ideal_lattice *il, c_itemid_t *idmap, c_result_t max)
+PrintExtension(struct ideal_lattice *il, item_t *db_filtered, c_itemid_t *idmap, c_result_t max)
 {
 	size_t i;
 	c_linext_t le;
@@ -221,9 +222,10 @@ PrintExtension(struct ideal_lattice *il, c_itemid_t *idmap, c_result_t max)
 
 		for (i = 0; i < il->linext_width; ++i)
 		{
-			c_itemid_t index = idmap[le.le_buf[i] - 1];
+			c_itemid_t index = db_filtered[le.le_buf[i]].id;
 			//assert(index == expected[i]);
-			printf("%s, ", db_names[index]);
+			assert(dbi_find(index) == idmap[le.le_buf[i]-1]);
+			printf("%s, ", db_names[idmap[le.le_buf[i] - 1]]);
 		}
 
 		printf("\n");
@@ -234,7 +236,7 @@ PrintExtension(struct ideal_lattice *il, c_itemid_t *idmap, c_result_t max)
 
 
 
-typedef c_result_t(*test_func)(struct ideal_lattice *, c_itemid_t *, size_t, llf_criteria *);
+typedef c_result_t(*test_func)(struct ideal_lattice *, item_t *, c_itemid_t *, size_t, llf_criteria *);
 
 
 void unittest_buildpath()
@@ -244,28 +246,31 @@ void unittest_buildpath()
 	size_t i; 
 	test_func tests[] = {
 		&unittest_buildpathCPU,
-		&unittest_buildpathGPU
+//		&unittest_buildpathGPU
 	};
 	#define ITEM_LEN (sizeof(items)/sizeof(*items))
 	char *items[] = { "Last Whisper", "The Bloodthirster", "Blade of the Ruined King" }; 
 	//char *items[] = { "Youmuu's Ghostblade" };
-	c_itemid_t node2dbi[IDMAP_MAX_WIDTH*ITEM_LEN];
+	c_itemid_t global_idx[IDMAP_MAX_WIDTH*ITEM_LEN];
+	
 	c_ideal_t poset[BUILDTREE_MAX*ITEM_LEN][2];
 	size_t poset_n;
 	size_t vertex_n;
+	item_t *db_filtered;
 
-
-	vertex_n = dbi_poset(items, ITEM_LEN, node2dbi, poset, &poset_n);
+	vertex_n = dbi_poset(items, ITEM_LEN, global_idx, poset, &poset_n);
 	result = lattice_create(poset, poset_n, vertex_n, &lattice);
 	assert(result == G_SUCCESS);
 	lattice_valmap(&lattice); // TODO: merge this into lattice create or something
+
+	db_filtered = dbi_filter(vertex_n, global_idx);
 
 	for (i = 0; i < sizeof tests / sizeof *tests; ++i)
 	{
 		c_result_t max;
 		llf_criteria cfg = { 0 };
 		cfg.time_frame    = 3;
-		cfg.ad_ratio      = 340;
+		cfg.ad_ratio      = 3.4f;
 		cfg.ap_ratio      = 0;
 		cfg.level         = 18;
 		cfg.enemy_armor   = 100;
@@ -273,25 +278,27 @@ void unittest_buildpath()
 		cfg.build_maxcost = 15000;
 		cfg.build_maxinventory = 6;
 
-		max = tests[i](&lattice, node2dbi, vertex_n, &cfg);
+		max = tests[i](&lattice, db_filtered, global_idx, vertex_n, &cfg);
 		printf("max=%f,i=%d\n", max.metric, max.index);
-		PrintExtension(&lattice, node2dbi, max);
+		PrintExtension(&lattice, db_filtered, global_idx, max);
 	}
 
 	lattice_free(&lattice);
+	free(db_filtered);
 }
 
 
 
 extern void unittest_lattice(int quiet);
 extern void unittest_opencl();
-
+extern void unittest_db_input();
 
 
 int main()
 {
 	glbinit_lattice();
 	unittest_lattice(1);
+	unittest_db_input();
 	unittest_opencl();
 	unittest_buildpath();
 	return 0;

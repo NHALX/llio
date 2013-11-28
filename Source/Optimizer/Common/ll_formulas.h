@@ -3,10 +3,10 @@
 
 typedef struct
 {
-	c_uint time_frame;
-	c_uint ad_ratio;
-	c_uint ap_ratio;
-	c_uint level;
+	c_uint  time_frame;
+	c_float ad_ratio;
+	c_float ap_ratio;
+	c_uint  level;
 
 	c_uint enemy_armor;
 	c_uint enemy_mr;
@@ -26,34 +26,50 @@ typedef struct
 #define inline __inline 
 #endif
 
-
-static inline float llf_attackspeed(c_uint LV, stat_t GEAR)
-{
-	float level = (float)(LV - 1);
-	float bonus = ((float)GEAR) / 100;
-
-	return min(2.5f, AS_BASE * (1.0f + (AS_LVPER*level) + bonus));
-}
-
+#ifdef INTEGER_STATS
 static inline float llf_crit(c_uint B, c_uint C)
 {
-	c_uint bonus = 200 + B;
+	c_uint bonus = 100 + B;
 	c_uint chance = min((c_uint)100, C);
 	return 1.0f + ((float)(bonus*chance) / 10000.0f);
 }
-
 static inline float llf_armor_mitigation(c_uint ARMOR, stat_t APP, stat_t APF)
 {
 	float reduceA = ((float)(ARMOR*(100 - APP))) / 100;
 	return 100 / (100 + (reduceA - (float)APF));
 }
+#define PERCENT(X) ((float)X/100)
+#else
+#define PERCENT(X) ((float)X)
+
+static inline float llf_crit(stat_t B, stat_t C)
+{
+	return 1.0f + (1.0f + ((float)B)) * min(1.0f, ((float)C));
+}
+static inline float llf_armor_mitigation(c_uint ARMOR, stat_t APP, stat_t APF)
+{
+	return 100 / (100 + ((((float)ARMOR)*(1 - ((float)APP))) - ((float)APF)));
+}
+#endif
+
+
+static inline float llf_ability_damage(float mit, float ad, float ratio)
+{
+	return mit * ad * ratio;
+}
+
 
 static inline float llf_AD(stat_t AD, stat_t HP, stat_t HPRATIO)
 {
-	c_uint base = 70 + AD;
-	c_uint bonus = HP * HPRATIO;
+	return ((float)(70 + AD)) + ((float)HP * PERCENT(HPRATIO));
+}
 
-	return ((float)base) + ((float)bonus / 100);
+static inline float llf_attackspeed(c_uint LV, stat_t GEAR)
+{
+	float level = (float)(LV - 1);
+	float bonus = PERCENT(GEAR);
+
+	return min(2.5f, AS_BASE * (1.0f + (AS_LVPER*level) + bonus));
 }
 
 static inline float llf_autoattack_DPS(float mitigation, float ad, c_uint LV, VECTOR(*X))
@@ -63,12 +79,6 @@ static inline float llf_autoattack_DPS(float mitigation, float ad, c_uint LV, VE
 
 	return mitigation * ad * crit * aspd;
 }
-
-static inline float llf_ability_damage(float mit, float ad, c_uint ratio)
-{
-	return mit * ad * ((float)ratio / 100);
-}
-
 
 static inline float llf_dmgtotal(llf_criteria *CFG, VECTOR(*X))
 {
@@ -81,32 +91,9 @@ static inline float llf_dmgtotal(llf_criteria *CFG, VECTOR(*X))
 }
 
 
-#define CALC_ATTACKSPEED(LV,GEAR) \
-	min(2.5f, AS_BASE * (1.0f + (AS_LVPER*(((float)LV) - 1.0f)) + ((float)GEAR)))
 
-#define CALC_CRIT(B,C)    (1.0f + (1.0f + ((float)B)) * min(1.0f, ((float)C)))
 
-#define CALC_ARMOR_MITIGATION(ARMOR, APP, APF)   \
-	(100 / (100 + ((((float)ARMOR)*(1 - ((float)APP))) - ((float)APF))))
 
-#define CALC_AD(AD,HP,HPRATIO)        (70.0f+((float)AD)+(((float)HP)*((float)HPRATIO)))
-
-#define FORMULA_DPS(ARMOR,LV,X)   (                                           \
-	CALC_ARMOR_MITIGATION(ARMOR, F_ARMORPEN_PERCENT(X), F_ARMORPEN_FLAT(X)) * \
-	CALC_AD(F_AD(X), F_HP(X), F_HP2AD(X)) *                                   \
-	CALC_CRIT(F_CRIT_BONUS(X), F_CRIT_CHANCE(X)) *                            \
-	CALC_ATTACKSPEED(LV, F_ATTACK_SPEED(X))                                   \
-	)
-
-#define FORMULA_ABILITY(ARMOR, SCALE, X)  (                                   \
-	CALC_ARMOR_MITIGATION(ARMOR, F_ARMORPEN_PERCENT(X), F_ARMORPEN_FLAT(X)) * \
-	CALC_AD(F_AD(X), F_HP(X), F_HP2AD(X)) * ((float)SCALE)                    \
-	)
-
-#define FORMULA_TOTAL(CFG, X) (  \
-	FORMULA_ABILITY((CFG)->enemy_armor, (CFG)->ad_ratio, X) + \
-	(FORMULA_DPS((CFG)->enemy_armor, (CFG)->level, X) * ((float)(CFG)->time_frame))  \
-	)
 
 #endif
 

@@ -89,6 +89,7 @@
     <ClCompile Include="..\..\..\BuildPath\p_alloc.c" />
     <ClCompile Include="..\..\..\BuildPath\Test\reference_lattice.c" />
     <ClCompile Include="..\..\..\BuildPath\Test\unittest_buildpath.c" />
+    <ClCompile Include="..\..\..\BuildPath\Test\unittest_db_input.c" />
     <ClCompile Include="..\..\..\BuildPath\Test\unittest_lattice.c" />
     <ClCompile Include="..\..\..\BuildPath\Test\unittest_opencl.c" />
     <ClCompile Include="..\..\..\BuildPath\Test\unittest_tree.c" />

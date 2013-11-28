@@ -196,7 +196,8 @@ def _setItemStats(item, fileid, strings, output):
     def get_f(str, scale):
         x = get(str)
         if x:
-            return round(float(x) * scale)
+            #return round(float(x) * scale)
+            return float(x)
         else:
             return 0
         

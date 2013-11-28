@@ -7,5 +7,7 @@
 #define IDMAP_MAX_WIDTH (BUILDTREE_MAX*2)
 
 c_ideal_t dbi_poset(char **items, size_t item_len, c_itemid_t *node2dbi, c_ideal_t poset[][2], size_t *p_len);
+item_t*dbi_filter(size_t vertex_n, c_itemid_t *node2dbi);
+size_t dbi_find(c_itemid_t item);
 
 #endif

@@ -21,7 +21,7 @@ static int item_cmp_id(const void * a, const void * b)
 
 
 // TODO: verify db is actually sorted somewhere.
-static size_t FindItemIndex(c_itemid_t item) // ASSUMES: database is sorted
+size_t dbi_find(c_itemid_t item) // ASSUMES: database is sorted
 {
 	item_t key;
 	uintptr_t entry;
@@ -157,3 +157,31 @@ dbi_poset(char **items, size_t item_len, c_itemid_t *node2dbi, c_ideal_t poset[]
 }
 
 
+item_t*
+dbi_filter(size_t vertex_n, c_itemid_t *node2dbi)
+{
+	item_t* db_filtered = calloc(++vertex_n, sizeof *db_filtered);
+
+	for (size_t i = 1; i < vertex_n; ++i)
+		memcpy(&db_filtered[i], &db_items[node2dbi[i-1]], sizeof *db_filtered);
+	
+	for (size_t i = 0; i < vertex_n; ++i)
+	{
+		for (size_t j = 0; j < BUILDTREE_WIDTH; ++j)
+		{
+			size_t component = db_filtered[i].buildtree[j];
+
+			if (!component)
+				continue;
+
+			for (size_t k = 0; k < vertex_n; ++k)
+			{
+				if (db_filtered[k].id == db_items[component].id)
+					db_filtered[i].buildtree[j] = k;
+			}
+		}
+	}
+
+	// TODO: remap passive_ids and be certain they do not exceed LINEXT_MAX_WIDTH
+	return db_filtered;
+}

@@ -11,14 +11,16 @@
 
 // Use arrays since __constant c_short8 is bugged on my nvidia card
 #define ARRAY_STATS 
+// NOTE: that the db input needs to be changed for % based stats if you set this
+//#define INTEGER_STATS
 
 #ifndef __OPENCL_VERSION__
-typedef cl_ushort c_ushort; typedef cl_short c_short; typedef cl_short8 c_short8;
-typedef cl_uint  c_uint;    typedef cl_float c_float;
+typedef cl_ushort c_ushort; typedef cl_short c_short;
+typedef cl_uint  c_uint;    typedef cl_float c_float; typedef cl_float8 c_float8;
 typedef cl_short c_itemid_t;
 #else
-typedef ushort c_ushort; typedef short c_short; typedef short8 c_short8;
-typedef uint   c_uint;   typedef float c_float;
+typedef ushort c_ushort; typedef short c_short; 
+typedef uint   c_uint;   typedef float c_float; typedef float8 c_float8;
 typedef short  c_itemid_t;
 #endif
 
@@ -50,17 +52,27 @@ typedef short  c_itemid_t;
 #endif
 
 #ifdef ARRAY_STATS
+#ifdef INTEGER_STATS
+
 typedef c_short stat_t;
-//#define VECTOR_P(SYM)      stat_t (*SYM)[VECTOR_VEC_N]
+#else
+typedef c_float stat_t;
+#endif
+#define VECTOR_SIZEOF      (sizeof(stat_t)*VECTOR_VEC_N)
 #define VECTOR(SYM)		   stat_t (SYM)[VECTOR_VEC_N]
 #define VECTOR_ZERO_INIT	{ 0,0,0,0,0,0,0,0 }
-//#define VECTOR_PTR(SYM)	(&SYM)
 #else
+#ifdef INTEGER_STATS
 typedef c_short stat_t;
-#define VECTOR_P(SYM)      c_short8 *SYM
+#define VECTOR_SIZEOF      (sizeof(c_short8))
 #define VECTOR(SYM)		   c_short8  SYM
 #define VECTOR_ZERO_INIT   (c_short8){ 0,0,0,0,0,0,0,0 }
-#define VECTOR_PTR(SYM)	   (&SYM)
+#else
+typedef c_float stat_t;
+#define VECTOR_SIZEOF      (sizeof(c_float8))
+#define VECTOR(SYM)		   c_float8  SYM
+#define VECTOR_ZERO_INIT   (c_float8){ 0,0,0,0,0,0,0,0 }
+#endif
+#endif
 #endif
 
-#endif

@@ -19,9 +19,9 @@ static int VECTOR_CMP(VECTOR(a), VECTOR(b))
 {
 	for (size_t j = 0; j < VECTOR_VEC_N; ++j)
 	{
-		stat_t x = PART(a, j) != PART(b,j);
+		stat_t x = PART(a, j) - PART(b,j);
 		if (x != 0)
-			return x;
+			return (x > 0) ? 1 : -1;
 	}
 
 	return 0;
@@ -34,9 +34,9 @@ void unittest_opencl_mem()
 	opencl_context gpu;
 	opencl_kernel_params args = OPENCL_KERNEL_PARAMS_INIT;
 	c_itemid_t   *output_id;
-	cl_ushort *output_stats_s0;
-	cl_ushort *output_stats_s3;
-	cl_ushort *output_stats_s6;
+	stat_t *output_stats_s0;
+	stat_t *output_stats_s3;
+	stat_t *output_stats_s6;
 //	stats_t   *output_stats_all;
 	VECTOR(*output_stats_all);
 	//stat_t (*output_stats_all)[STATS_T_VEC_N];
@@ -45,10 +45,10 @@ void unittest_opencl_mem()
 
 	ka_mconst(&gpu,  ka_push(&args), "db_items", 0, db_items, sizeof db_items);
 
-	output_id        = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_id", sizeof (c_itemid_t)*DB_LEN);
-	output_stats_s0  = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats.s0", sizeof (cl_ushort)*DB_LEN);
-	output_stats_s3  = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats.s3", sizeof (cl_ushort)*DB_LEN);
-	output_stats_s6  = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats.s6", sizeof (cl_ushort)*DB_LEN);
+	output_id = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_id", sizeof *output_id * DB_LEN);
+	output_stats_s0  = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats.s0", sizeof *output_stats_s0 * DB_LEN);
+	output_stats_s3 = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats.s3", sizeof *output_stats_s3 * DB_LEN);
+	output_stats_s6 = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats.s6", sizeof *output_stats_s6 * DB_LEN);
 	output_stats_all = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats_all", sizeof *output_stats_all * DB_LEN);
 
 	workset.iterations = 1;
@@ -116,38 +116,42 @@ void unittest_opencl_le()
 }
 
 void
-PushUsualArgs(opencl_context *gpu, opencl_kernel_params *args, size_t elem_size, void *xs, size_t xs_n, cl_uint xs_width)
+PushUsualArgs(opencl_context *gpu, opencl_kernel_params *args, item_t *items, size_t item_len, size_t elem_size, void *xs, size_t xs_n, cl_uint xs_width)
 {
-	ka_mconst(gpu, ka_push(args), "db_items", 0, db_items, sizeof db_items);
+	ka_mconst(gpu, ka_push(args), "db_items", 0, items, sizeof *items * item_len);
 	ka_mconst(gpu, ka_push(args), "xs", 0, xs, elem_size * xs_width * xs_n);
 	ka_value(gpu, ka_push(args), "xs_n", &xs_width, sizeof xs_width);
 }
 
-
 void unittest_opencl_mergestats()
 {
+	item_t db[] = {
+		{ 0 },
+
+		{ { 1, 0, 3, 0, 5, 0, 7, 0 },
+		{ 0, 2, 0, 0, 0, 0, 0, 0 }, 0 },
+		{ { 2, 0, 4, 4, 6, 0, 8, 0 },
+		{ 0, 0, 0, 0, 0, 6, 0, 0 }, 0 },
+		{ { 3, 0, 5, 0, 7, 0, 9, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 8 }, 0 },
+	};
+
 	opencl_workset workset;
 	opencl_context gpu;
 	opencl_kernel_params args = OPENCL_KERNEL_PARAMS_INIT;
 	VECTOR(*output_stats);
 	VECTOR(expected[]) = {
-		{ 0, 15, 0, 0, 0, 0, 560, 0 },
-		{ 70, 0, 0, 12, 0, 0, 0, 0 },
-		{ 0, 8, 0, 42, 0, 0, 0, 0 },
-		{ 40, 0, 0, 0, 0, 0, 280, 0 }
+		{6,2,12,4,18,6,24,8}
 	};
 
-	#define BUILD_PATH_N  4
+	#define BUILD_PATH_N  1
 	#define BUILD_PATH_WIDTH 3
 	c_itemid_t build_path[BUILD_PATH_N][BUILD_PATH_WIDTH] = {
-		{6,7,10},
-		{15,16,18},
-		{18,19,20},
-		{22,24,28}
+		{1,2,3}
 	};
 
 	opencl_init(&gpu, 1, "kunittest_mergestats", UTCL_SRC, UTCL_DEF);
-	PushUsualArgs(&gpu, &args, sizeof *build_path, build_path, BUILD_PATH_N, BUILD_PATH_WIDTH);
+	PushUsualArgs(&gpu, &args, db, sizeof db / sizeof *db, sizeof *build_path, build_path, BUILD_PATH_N, BUILD_PATH_WIDTH);
 	output_stats = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats", sizeof *output_stats * BUILD_PATH_N);
 
 	workset.iterations = 1;
@@ -167,70 +171,54 @@ void unittest_opencl_mergestats()
 }
 
 
-void unittest_opencl_passiveunique()
-{
-	opencl_workset workset;
-	opencl_context gpu;
-	opencl_kernel_params args = OPENCL_KERNEL_PARAMS_INIT;
+#define I_LONGSWORD      1
+#define I_BRUTALIZER     2
+#define I_BRAWLERSGLOVES 3
+#define I_AVARICEBLADE   4
+#define I_GHOSTBLADE     5
+#define I_RECURVEBOW     6
 
-#undef BUILD_PATH_N
-#undef BUILD_PATH_WIDTH
-#define BUILD_PATH_N  3
-#define BUILD_PATH_WIDTH 6
-	c_itemid_t build_path[BUILD_PATH_N][BUILD_PATH_WIDTH] = {
-		{ 14,  14, 130, 20, 102, 137 },
-		{ 130, 14, 130, 20, 102, 137 },
-		{ 137, 130, 130, 20, 130, 137 },
+#define TEST_DB_LEN 7
+
+#ifdef INTEGER_STATS
+#define DB_PERCENT(X) X
+#else
+#define DB_PERCENT(X) ((float)X/100)
+#endif
+
+item_t test_db[TEST_DB_LEN] = { 
+		{0},
+		{{10,0,0,0,0,0,0,0}, 
+		 {0,0,0,0,0,0,0,0}, 
+		 1036,0,400,400,0,         
+		 {0},
+		 {0}} /*Long Sword*/,
+		{{25,0,0,0,0,0,0,0}, 
+		 {0,0,0,0,10,0,0,0}, 
+		 3134,6,1337,537,2,         
+		 { I_LONGSWORD, I_LONGSWORD },
+		 {0}} /*The Brutalizer*/,
+		{{0,DB_PERCENT(8),0,0,0,0,0,0}, 
+		 {0,0,0,0,0,0,0,0}, 
+		 1051,0,400,400,0,         
+		 {0},
+		 {0}} /*Brawler's Gloves*/,
+		{{0,DB_PERCENT(10),0,0,0,0,0,0}, 
+		 {0,0,0,0,0,0,0,0}, 
+		 3093,0,800,400,1,         
+		 {3},
+		 {0}} /*Avarice Blade*/,
+		{{30,DB_PERCENT(15),0,0,0,0,0,0}, 
+		 {0,0,0,0,20,0,0,0}, 
+		 3142,8,2700,563,2,         
+		 { I_BRUTALIZER, I_AVARICEBLADE },
+		 {0}} /*Youmuu's Ghostblade*/,
+		{{0,0,0,DB_PERCENT(30),0,0,0,0}, 
+		 {0,0,0,0,0,0,0,0}, 
+		 1043,0,900,900,0,         
+		 {0},
+		 {0}} /*Recurve Bow*/,
 	};
-	cl_ushort2 expected[BUILD_PATH_N][LINEXT_WIDTH_MAX] =
-	{
-		{ { 0, 0 }, { 6, 0 }, { 8, 0 } },
-		{ { 0, 0 }, { 6, 0 }, { 8, 0 } },
-		{ { 0, 0 }, { 8, 0 }, { 6, 0 } },
-	};
-	c_ideal_t expected_idx[BUILD_PATH_N][LINEXT_WIDTH_MAX] = {
-		{ 0, 0, 1, 0, 0, 2 },
-		{ 1, 0, 1, 0, 0, 2 },
-		{ 1, 2, 2, 0, 2, 1 },
-	};
-
-	cl_ushort2 (*output)[LINEXT_WIDTH_MAX];
-	c_ideal_t (*output_idx)[LINEXT_WIDTH_MAX];
-
-	//////////////////////////////////////
-	//cl_ushort2 xoutput[BUILD_PATH_N][LINEXT_WIDTH_MAX];
-	//c_ideal_t  xoutput_idx[BUILD_PATH_N][LINEXT_WIDTH_MAX];
-	//for (size_t i = 0; i < BUILD_PATH_N; ++i)
-	//	kunittest_passiveuniqe_cpu(db_items, db_passives, build_path, BUILD_PATH_WIDTH, xoutput, xoutput_idx, i);
-	//return;
-	//////////////////////////////////////
-
-	opencl_init(&gpu, 1, "kunittest_passiveuniqe", UTCL_SRC, UTCL_DEF);
-	PushUsualArgs(&gpu, &args, sizeof *build_path, build_path, BUILD_PATH_N, BUILD_PATH_WIDTH);
-	output = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_unique", sizeof (cl_ushort2)*LINEXT_WIDTH_MAX*BUILD_PATH_N);
-	output_idx = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_unique_id", sizeof (c_ideal_t)*LINEXT_WIDTH_MAX*BUILD_PATH_N);
-
-	workset.iterations = 1;
-	workset.local_size = 1;
-	workset.pass_size = BUILD_PATH_N;
-	workset.total = BUILD_PATH_N;
-
-	opencl_run(&gpu, &args, &workset);
-
-	for (size_t i = 0; i < BUILD_PATH_N; ++i)
-	{
-		for (size_t j = 0; j < BUILD_PATH_WIDTH; ++j)
-		{
-			assert(output[i][j].s[0] == expected[i][j].s[0]);
-			assert(output[i][j].s[1] == expected[i][j].s[1]);
-			assert(output_idx[i][j] == expected_idx[i][j]);
-
-		}
-	}
-
-	ka_free(&args);
-	opencl_free(&gpu);
-}
 
 
 
@@ -245,19 +233,19 @@ void unittest_opencl_clearsubcomponents()
 #define BUILD_PATH_N  3
 #define BUILD_PATH_WIDTH 6
 	c_itemid_t build_path[BUILD_PATH_N][BUILD_PATH_WIDTH] = {
-		{ 14, 14, 130, 20, 102, 137 },
-		{ 130, 14, 130, 20, 102, 137 },
-		{ 137, 130, 130, 20, 130, 137 },
+		{ I_LONGSWORD, I_LONGSWORD, I_BRUTALIZER, I_BRAWLERSGLOVES, I_AVARICEBLADE, I_GHOSTBLADE },
+		{ I_LONGSWORD, I_LONGSWORD, I_LONGSWORD, I_LONGSWORD, I_BRUTALIZER, I_BRUTALIZER },
+		{ I_RECURVEBOW, I_LONGSWORD, I_LONGSWORD, I_BRAWLERSGLOVES, I_BRUTALIZER, I_RECURVEBOW },
 	};
 	cl_int expected_inventory[BUILD_PATH_N][LINEXT_WIDTH_MAX] = {
 		{ 1, 2, 1, 2, 2, 1 },
-		{ 1, 2, 2, 3, 3, 2 },
-		{ 1, 2, 3, 4, 5, 5 }
+		{ 1, 2, 3, 4, 3, 2 },
+		{ 1, 2, 3, 4, 3, 4 }
 	};
 	VECTOR(expected_stats[BUILD_PATH_N]) = { 
-		{30,15,0,0,20,0,0,0},
-		{55,15,0,0,30,0,0,0},
-		{110,38,0,0,30,0,0,0}
+		{30,DB_PERCENT(15),0,0,20,0,0,0},
+		{50,0,0,0,10,0,0,0},
+		{25,DB_PERCENT(8),0,DB_PERCENT(60),10,0,0,0}
 	};
 
 	cl_int (*output_inventory)[LINEXT_WIDTH_MAX];
@@ -266,9 +254,9 @@ void unittest_opencl_clearsubcomponents()
 	//////////////////////////////////////
 	//////////////////////////////////////
 	opencl_init(&gpu, 1, "kunittest_clearsubcomponents", UTCL_SRC, UTCL_DEF);
-	PushUsualArgs(&gpu, &args, sizeof *build_path, build_path, BUILD_PATH_N, BUILD_PATH_WIDTH);
-	output_inventory = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_inventory", sizeof (cl_int)*LINEXT_WIDTH_MAX*BUILD_PATH_N);
-	output_stats = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats", sizeof (*output_stats)*BUILD_PATH_N);
+	PushUsualArgs(&gpu, &args, test_db, TEST_DB_LEN, sizeof *build_path, build_path, BUILD_PATH_N, BUILD_PATH_WIDTH);
+	output_inventory = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_inventory", sizeof (*output_inventory) * BUILD_PATH_N);
+	output_stats = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats", sizeof (*output_stats) * BUILD_PATH_N);
 	
 	workset.iterations = 1;
 	workset.local_size = 1;
@@ -299,17 +287,17 @@ void unittest_opencl_llformulas()
 #undef BUILD_PATH_N
 #undef BUILD_PATH_WIDTH
 #define BUILD_PATH_N  4
-	c_itemid_t build_path[BUILD_PATH_N] = { 14, 130, 20, 19 };
+	c_itemid_t build_path[BUILD_PATH_N] = { I_LONGSWORD, I_BRUTALIZER, I_BRAWLERSGLOVES, I_RECURVEBOW };
 	cl_float expected[BUILD_PATH_N][7] = {
-		{ 200.89f, 40.30f, 0.5f, 80.0f, 0.0f, 1.0f,  80.0f },
-		{ 238.56f, 47.85f, 0.5f, 95.0f, 0.0f, 1.0f,  95.0f },
-		{ 192.70f, 40.90f, 0.5f, 70.0f, 1.16f, 1.0f, 70.0f },
-		{ 196.29f, 42.10f, 0.5f, 70.0f, 0.0f, 1.2f,  70.0f }
+		{ 200.89f, 40.30f, 0.5f, 80.0f, 1.0f, 1.0f,  80.0f },
+		{ 238.56f, 47.85f, 0.5f, 95.0f, 1.0f, 1.0f,  95.0f },
+		{ 184.24f, 38.08f, 0.5f, 70.0f, 1.08f, 1.0f, 70.0f },
+		{ 196.29f, 42.10f, 0.5f, 70.0f, 1.0f, 1.2f,  70.0f }
 	};
 	cl_float (*output)[7];
 	llf_criteria cfg = { 0 };
 	cfg.time_frame = 3;
-	cfg.ad_ratio = 200;
+	cfg.ad_ratio = 2.0f;
 	cfg.ap_ratio = 0;
 	cfg.level = 18;
 	cfg.enemy_armor = 100;
@@ -319,7 +307,7 @@ void unittest_opencl_llformulas()
 
 	opencl_init(&gpu, 1, "kunittest_llformulas", UTCL_SRC, UTCL_DEF);
 	
-	ka_mconst(&gpu, ka_push(&args), "db_items", 0, db_items, sizeof db_items);
+	ka_mconst(&gpu, ka_push(&args), "db_items", 0, test_db, sizeof test_db);
 	ka_mconst(&gpu, ka_push(&args), "build_path", 0, build_path, sizeof build_path);
 	ka_value(&gpu, ka_push(&args), "cfg_input", &cfg, sizeof cfg);
 
@@ -355,7 +343,6 @@ void unittest_opencl()
 	unittest_opencl_mem();
 	unittest_opencl_le();
 	unittest_opencl_mergestats();
-	unittest_opencl_passiveunique();
 	unittest_opencl_clearsubcomponents();
 	unittest_opencl_llformulas();
 }

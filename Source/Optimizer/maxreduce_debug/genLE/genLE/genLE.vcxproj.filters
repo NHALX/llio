@@ -66,6 +66,9 @@
     <ClCompile Include="..\..\..\..\Database\db_items.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\BuildPath\Test\unittest_db_input.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\BuildPath\le_test.h">

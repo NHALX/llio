@@ -41,27 +41,37 @@ size_t floor_pow2(size_t x)
 opencl_workset
 ConfigureWorkload(
     opencl_context *ctx, 
-    cl_kernel kernel, 
+    cl_kernel *kernel, 
+    size_t kernel_n,
     count_t linext_count, 
     cl_ulong alloc_global_input,
     cl_ulong alloc_global_scratch,
     cl_ulong alloc_local)
 {
-	//size_t hint;
 	size_t local_size, pass_size, saturation;
     cl_ulong global_limit;
 	cl_ulong iterations;
     opencl_workset work;
 
     {
-        cl_ulong kernel_local;
+        cl_ulong kernel_local = 0;
         cl_ulong wgs_globalmem, wgs_constmem;
-
+        
         //NOFAIL(clGetKernelWorkGroupInfo(kernel, ctx->device, CL_KERNEL_WORK_GROUP_SIZE, sizeof hint, &hint, 0));
-        NOFAIL(clGetKernelWorkGroupInfo(kernel, ctx->device, CL_KERNEL_LOCAL_MEM_SIZE, sizeof kernel_local, &kernel_local, 0));
+        for (size_t i = 0; i < kernel_n; ++i)
+        {
+            cl_ulong r;
+
+            NOFAIL(clGetKernelWorkGroupInfo(kernel[i], ctx->device, 
+                CL_KERNEL_LOCAL_MEM_SIZE, sizeof r, &r, 0));
+
+            if (kernel_local < r)
+                kernel_local = r;
+        }
+
         alloc_local += kernel_local;
         
-        local_size    = (size_t) floor_pow2(ctx->cfg_max_local_storage / alloc_local);
+        local_size = (size_t) floor_pow2(ctx->cfg_max_local_storage / alloc_local);
         if (alloc_global_scratch == 0)
             wgs_globalmem = floor_pow2(ctx->cfg_max_global_storage - alloc_global_input);
         else
@@ -194,7 +204,7 @@ clbp_bind(clbp_context *bp,
     alloc_global_scratch = glblN_metric + glblN_linext; // scales off pass_size
 
     // TODO: get this working with SEPRATE_KERNELS
-    work = ConfigureWorkload(ctx, ctx->kernel[0], g->linext_count, 
+    work = ConfigureWorkload(ctx, ctx->kernel, ctx->kernel_n, g->linext_count, 
         alloc_global_input, 
         alloc_global_scratch, 
         alloc_local);

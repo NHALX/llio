@@ -1,7 +1,7 @@
 #include "opencl_host.h"
 #include "opencl_kernel.h"
 #include "lattice.h"
-//#define SEPARATE_KERNELS
+#define SEPARATE_KERNELS
 
 #ifdef SEPARATE_KERNELS
 #define CLBP_KERNEL_N 3

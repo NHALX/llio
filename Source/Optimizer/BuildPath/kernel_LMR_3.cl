@@ -73,7 +73,7 @@ __kernel void kernel_linext(
 		for (i = 0; i < info.linext_width; i++)
 			output[i] = le.le_buf[i];
 	}
-	else
+	else 
 	{
 		for (i = 0; i < info.linext_width; i++)
 			output[i] = 0;

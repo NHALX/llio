@@ -1,9 +1,9 @@
-#include "../x_types.h"
+#include "../lattice.h"
 #include "reference_lattice.h"
 
 ///////////////////////// REFERENCE POSET 1: youmuu's ghostblade //////////////////
 
-c_ideal_t reference_poset[5][2] = {
+ideal_t reference_poset[5][2] = {
 	{ 3, 1 },
 	{ 5, 4 },
 	{ 6, 4 },
@@ -58,7 +58,7 @@ t_edge reference_lattice[26] = {
 	{ { 1, 15 }, { 1, 10 }, 5 },
 };
 
-c_ideal_t reference_le[20][REFERENCE_POSET_N] = {
+ideal_t reference_le[20][REFERENCE_POSET_N] = {
 	{ 3, 1, 5, 6, 4, 2 },
 	{ 3, 1, 6, 5, 4, 2 },
 	{ 3, 5, 1, 6, 4, 2 },
@@ -81,12 +81,12 @@ c_ideal_t reference_le[20][REFERENCE_POSET_N] = {
 	{ 6, 5, 4, 3, 1, 2 }
 };
 
-c_count_t reference_counts[16] = { 20, 20, 12, 3, 1, 1, 1, 2, 1, 6, 2, 3, 2, 1, 8, 2 };
+count_t reference_counts[16] = { 20, 20, 12, 3, 1, 1, 1, 2, 1, 6, 2, 3, 2, 1, 8, 2 };
 
 /////////////////////// POSET 2 //////////////////////////////////
 // From diagrams in "Efficient computation of rank probabilities in posets" by Karel De Loof 
 
-c_ideal_t reference_poset2[4][2] = {
+ideal_t reference_poset2[4][2] = {
 	{ 2, 4 },
 	{ 1, 3 },
 	{ 1, 4 },
@@ -124,7 +124,7 @@ t_edge reference_lattice2[15] = {
 	{ { 2, 10 }, { 2, 7 }, 5 },
 };
 
-c_ideal_t reference_le2[9][REFERENCE_POSET2_N] = {
+ideal_t reference_le2[9][REFERENCE_POSET2_N] = {
 	{ 2, 1, 4, 3, 5 },
 	{ 2, 1, 3, 4, 5 },
 	{ 2, 1, 3, 5, 4 },
@@ -136,4 +136,4 @@ c_ideal_t reference_le2[9][REFERENCE_POSET2_N] = {
 	{ 1, 3, 5, 2, 4 }
 };
 
-c_count_t reference_counts2[11] = { 9, 5, 3, 2, 1, 1, 1, 1, 2, 4, 1 };
+count_t reference_counts2[11] = { 9, 5, 3, 2, 1, 1, 1, 1, 2, 4, 1 };

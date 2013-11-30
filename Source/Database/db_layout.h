@@ -1,6 +1,7 @@
 #ifndef _DB_LAYOUT_H_
 #define _DB_LAYOUT_H_
 
+#include "../types.h"
 #include "vector.h"
 #include "db_info.h"
 
@@ -8,15 +9,17 @@
 #define BUILDTREE_WIDTH              4
 #define ITEM_T_SIZE 128
 
+typedef ushort_t itemid_t;
+
 typedef struct {
 	VECTOR(stats);                         
 	VECTOR(passive);                        
-	c_itemid_t id;                          // 2
-	c_ushort   passive_id;                  // 4 
-	c_ushort   total_cost;                  // 6
-	c_ushort   upgrade_cost;                // 8
-	c_ushort   slot_merge;                  // 10
-    c_ushort   buildtree[BUILDTREE_WIDTH];  // ??
+	itemid_t id;                          // 2
+	ushort_t   passive_id;                  // 4 
+	ushort_t   total_cost;                  // 6
+	ushort_t   upgrade_cost;                // 8
+	ushort_t   slot_merge;                  // 10
+    ushort_t   buildtree[BUILDTREE_WIDTH];  // ??
 	unsigned char pad[ITEM_T_SIZE - ((VECTOR_SIZEOF*2) + 10 + (2 * BUILDTREE_WIDTH))];                   // pad to 64 bytes (power of 2)
 #ifdef __OPENCL_VERSION__
 } __attribute__ ((aligned (ITEM_T_SIZE))) item_t;

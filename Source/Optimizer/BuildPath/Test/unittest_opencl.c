@@ -13,7 +13,7 @@
 #include "reference_lattice.h"
 
 #define UTCL_DEF "-DUNIT_TEST -DUSE_OPENCL -ID:/GitRoot/llio/Source/Optimizer/BuildPath -ID:/GitRoot/llio/Source/Optimizer/Libs/Random123-1.08/include/"
-#define UTCL_SRC "D:/GitRoot/llio/Source/Optimizer/BuildPath/opencl_kernel.c"
+#define UTCL_SRC "D:/GitRoot/llio/Source/Optimizer/BuildPath/Test/unittest_kernel.cl"
 
 static int VECTOR_CMP(VECTOR(a), VECTOR(b))
 {
@@ -33,30 +33,30 @@ void unittest_opencl_mem()
 	opencl_workset workset;
 	opencl_context gpu;
 	opencl_kernel_params args = OPENCL_KERNEL_PARAMS_INIT;
-	c_itemid_t   *output_id;
+	itemid_t   *output_id;
 	stat_t *output_stats_s0;
 	stat_t *output_stats_s3;
 	stat_t *output_stats_s6;
 //	stats_t   *output_stats_all;
 	VECTOR(*output_stats_all);
 	//stat_t (*output_stats_all)[STATS_T_VEC_N];
+	char *kernel_func = "kunittest_mem";
+	cl_kernel k = *opencl_init(&gpu, 1, &kernel_func, 1, UTCL_SRC, UTCL_DEF);
 
-	opencl_init(&gpu, 1, "kunittest_mem", UTCL_SRC, UTCL_DEF);
+	ka_mconst(&gpu, k, ka_push(&args), "db_items", 0, db_items, sizeof db_items);
 
-	ka_mconst(&gpu,  ka_push(&args), "db_items", 0, db_items, sizeof db_items);
-
-	output_id = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_id", sizeof *output_id * DB_LEN);
-	output_stats_s0  = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats.s0", sizeof *output_stats_s0 * DB_LEN);
-	output_stats_s3 = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats.s3", sizeof *output_stats_s3 * DB_LEN);
-	output_stats_s6 = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats.s6", sizeof *output_stats_s6 * DB_LEN);
-	output_stats_all = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats_all", sizeof *output_stats_all * DB_LEN);
+	output_id = KA_DYN_OUTPUT(&gpu, k, ka_push(&args), "output_id", sizeof *output_id * DB_LEN);
+	output_stats_s0 = KA_DYN_OUTPUT(&gpu, k, ka_push(&args), "output_stats.s0", sizeof *output_stats_s0 * DB_LEN);
+	output_stats_s3 = KA_DYN_OUTPUT(&gpu, k, ka_push(&args), "output_stats.s3", sizeof *output_stats_s3 * DB_LEN);
+	output_stats_s6 = KA_DYN_OUTPUT(&gpu, k, ka_push(&args), "output_stats.s6", sizeof *output_stats_s6 * DB_LEN);
+	output_stats_all = KA_DYN_OUTPUT(&gpu, k, ka_push(&args), "output_stats_all", sizeof *output_stats_all * DB_LEN);
 
 	workset.iterations = 1;
 	workset.local_size = 1;
 	workset.pass_size  = DB_LEN;
 	workset.total      = DB_LEN;
 
-	opencl_run(&gpu, &args, &workset);
+	opencl_run(&gpu, k, &args, &workset);
 
 	for (size_t i = 0; i < DB_LEN; ++i)
 	{
@@ -72,43 +72,44 @@ void unittest_opencl_mem()
 }
 
 
-extern void unittest_lattice_cmp_reference_linext(size_t linext_width, c_ideal_t *le_storage, c_ideal_t *r_le, size_t r_le_n);
+extern void unittest_lattice_cmp_reference_linext(size_t linext_width, ideal_t *le_storage, ideal_t *r_le, size_t r_le_n);
 
 void unittest_opencl_le()
 {
 	opencl_workset workset;
 	opencl_context gpu;
 	opencl_kernel_params args = OPENCL_KERNEL_PARAMS_INIT;
-	struct ideal_lattice lattice;
+	ideal_lattice lattice;
 	buildpath_info info;
 	int result;
 	void *output;
+	char *kfunc = "kunittest_le";
+
+	cl_kernel k = *opencl_init(&gpu, 1, &kfunc, 1, UTCL_SRC, UTCL_DEF);
 
 	result = lattice_create(reference_poset, sizeof reference_poset / sizeof *reference_poset, REFERENCE_POSET_N, &lattice);
 	assert(result == G_SUCCESS);
 	lattice_valmap(&lattice); // TODO: merge this into lattice create or something
-
-	opencl_init(&gpu, 1, "kunittest_le", UTCL_SRC, UTCL_DEF);
 
 	info.max_neighbors = lattice.max_neighbors;
 	info.linext_width  = lattice.linext_width;
 	info.linext_count  = lattice.linext_count;
 	info.linext_offset = 0;
 
-	ka_mglobal(&gpu, ka_push(&args), "ideals", A_IN, CL_MEM_READ_ONLY, lattice.ideals, lattice.vertex_count*sizeof(*lattice.ideals)*lattice.max_neighbors);
-	ka_mglobal(&gpu, ka_push(&args), "counts", A_IN, CL_MEM_READ_ONLY, lattice.counts, lattice.vertex_count*sizeof(*lattice.counts));
-	ka_mglobal(&gpu, ka_push(&args), "neighbors", A_IN, CL_MEM_READ_ONLY, lattice.neighbors, lattice.vertex_count*sizeof(*lattice.neighbors)*lattice.max_neighbors);
-	ka_value(&gpu, ka_push(&args), "max_neighbors", &info, sizeof info);
-	output = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output", sizeof (c_ideal_t)*(size_t)info.linext_count*info.linext_width);
+	ka_mglobal(&gpu, k, ka_push(&args), "ideals", A_IN, CL_MEM_READ_ONLY, lattice.ideals, lattice.vertex_count*sizeof(*lattice.ideals)*lattice.max_neighbors);
+	ka_mglobal(&gpu, k, ka_push(&args), "counts", A_IN, CL_MEM_READ_ONLY, lattice.counts, lattice.vertex_count*sizeof(*lattice.counts));
+	ka_mglobal(&gpu, k, ka_push(&args), "neighbors", A_IN, CL_MEM_READ_ONLY, lattice.neighbors, lattice.vertex_count*sizeof(*lattice.neighbors)*lattice.max_neighbors);
+	ka_value(&gpu, k, ka_push(&args), "max_neighbors", &info, sizeof info);
+	output = KA_DYN_OUTPUT(&gpu, k, ka_push(&args), "output", sizeof (ideal_t)*(size_t)info.linext_count*info.linext_width);
 
 	workset.iterations = 1;
 	workset.local_size = 1;
 	workset.pass_size  = (size_t) info.linext_count;
 	workset.total      = (size_t) info.linext_count;
 
-	opencl_run(&gpu, &args, &workset);
+	opencl_run(&gpu, k, &args, &workset);
 
-	unittest_lattice_cmp_reference_linext(info.linext_width, output, (c_ideal_t*)reference_le, (size_t)info.linext_count);
+	unittest_lattice_cmp_reference_linext(info.linext_width, output, (ideal_t*)reference_le, (size_t)info.linext_count);
 
 	lattice_free(&lattice);
 	ka_free(&args);
@@ -116,11 +117,11 @@ void unittest_opencl_le()
 }
 
 void
-PushUsualArgs(opencl_context *gpu, opencl_kernel_params *args, item_t *items, size_t item_len, size_t elem_size, void *xs, size_t xs_n, cl_uint xs_width)
+PushUsualArgs(opencl_context *gpu, cl_kernel k, opencl_kernel_params *args, item_t *items, size_t item_len, size_t elem_size, void *xs, size_t xs_n, cl_uint xs_width)
 {
-	ka_mconst(gpu, ka_push(args), "db_items", 0, items, sizeof *items * item_len);
-	ka_mconst(gpu, ka_push(args), "xs", 0, xs, elem_size * xs_width * xs_n);
-	ka_value(gpu, ka_push(args), "xs_n", &xs_width, sizeof xs_width);
+	ka_mconst(gpu, k, ka_push(args), "db_items", 0, items, sizeof *items * item_len);
+	ka_mconst(gpu, k, ka_push(args), "xs", 0, xs, elem_size * xs_width * xs_n);
+	ka_value(gpu, k, ka_push(args), "xs_n", &xs_width, sizeof xs_width);
 }
 
 void unittest_opencl_mergestats()
@@ -146,20 +147,21 @@ void unittest_opencl_mergestats()
 
 	#define BUILD_PATH_N  1
 	#define BUILD_PATH_WIDTH 3
-	c_itemid_t build_path[BUILD_PATH_N][BUILD_PATH_WIDTH] = {
+	itemid_t build_path[BUILD_PATH_N][BUILD_PATH_WIDTH] = {
 		{1,2,3}
 	};
+	char *kfunc = "kunittest_mergestats";
+	cl_kernel k = *opencl_init(&gpu, 1, &kfunc, 1, UTCL_SRC, UTCL_DEF);
 
-	opencl_init(&gpu, 1, "kunittest_mergestats", UTCL_SRC, UTCL_DEF);
-	PushUsualArgs(&gpu, &args, db, sizeof db / sizeof *db, sizeof *build_path, build_path, BUILD_PATH_N, BUILD_PATH_WIDTH);
-	output_stats = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats", sizeof *output_stats * BUILD_PATH_N);
+	PushUsualArgs(&gpu, k, &args, db, sizeof db / sizeof *db, sizeof *build_path, build_path, BUILD_PATH_N, BUILD_PATH_WIDTH);
+	output_stats = KA_DYN_OUTPUT(&gpu, k, ka_push(&args), "output_stats", sizeof *output_stats * BUILD_PATH_N);
 
 	workset.iterations = 1;
 	workset.local_size = 1;
 	workset.pass_size  = BUILD_PATH_N;
 	workset.total      = BUILD_PATH_N;
 
-	opencl_run(&gpu, &args, &workset);
+	opencl_run(&gpu, k, &args, &workset);
 
 	for (size_t i = 0; i < BUILD_PATH_N; ++i)
 	{
@@ -232,7 +234,7 @@ void unittest_opencl_clearsubcomponents()
 #undef BUILD_PATH_WIDTH
 #define BUILD_PATH_N  3
 #define BUILD_PATH_WIDTH 6
-	c_itemid_t build_path[BUILD_PATH_N][BUILD_PATH_WIDTH] = {
+	itemid_t build_path[BUILD_PATH_N][BUILD_PATH_WIDTH] = {
 		{ I_LONGSWORD, I_LONGSWORD, I_BRUTALIZER, I_BRAWLERSGLOVES, I_AVARICEBLADE, I_GHOSTBLADE },
 		{ I_LONGSWORD, I_LONGSWORD, I_LONGSWORD, I_LONGSWORD, I_BRUTALIZER, I_BRUTALIZER },
 		{ I_RECURVEBOW, I_LONGSWORD, I_LONGSWORD, I_BRAWLERSGLOVES, I_BRUTALIZER, I_RECURVEBOW },
@@ -250,20 +252,21 @@ void unittest_opencl_clearsubcomponents()
 
 	cl_int (*output_inventory)[LINEXT_WIDTH_MAX];
 	VECTOR(*output_stats);
+	char *kfunc = "kunittest_clearsubcomponents";
 
-	//////////////////////////////////////
-	//////////////////////////////////////
-	opencl_init(&gpu, 1, "kunittest_clearsubcomponents", UTCL_SRC, UTCL_DEF);
-	PushUsualArgs(&gpu, &args, test_db, TEST_DB_LEN, sizeof *build_path, build_path, BUILD_PATH_N, BUILD_PATH_WIDTH);
-	output_inventory = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_inventory", sizeof (*output_inventory) * BUILD_PATH_N);
-	output_stats = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_stats", sizeof (*output_stats) * BUILD_PATH_N);
+	cl_kernel k = *opencl_init(&gpu, 1, &kfunc, 1, UTCL_SRC, UTCL_DEF);
+
+	ka_mlocal(&gpu, k, ka_push(&args), "pasv_scratch", TEST_DB_LEN*sizeof(ideal_t)*BUILD_PATH_N);
+	PushUsualArgs(&gpu, k, &args, test_db, TEST_DB_LEN, sizeof *build_path, build_path, BUILD_PATH_N, BUILD_PATH_WIDTH);
+	output_inventory = KA_DYN_OUTPUT(&gpu, k, ka_push(&args), "output_inventory", sizeof (*output_inventory) * BUILD_PATH_N);
+	output_stats = KA_DYN_OUTPUT(&gpu, k, ka_push(&args), "output_stats", sizeof (*output_stats) * BUILD_PATH_N);
 	
 	workset.iterations = 1;
 	workset.local_size = 1;
 	workset.pass_size = BUILD_PATH_N;
 	workset.total = BUILD_PATH_N;
 
-	opencl_run(&gpu, &args, &workset);
+	opencl_run(&gpu, k, &args, &workset);
 
 	for (size_t i = 0; i < BUILD_PATH_N; ++i)
 	{
@@ -287,7 +290,7 @@ void unittest_opencl_llformulas()
 #undef BUILD_PATH_N
 #undef BUILD_PATH_WIDTH
 #define BUILD_PATH_N  4
-	c_itemid_t build_path[BUILD_PATH_N] = { I_LONGSWORD, I_BRUTALIZER, I_BRAWLERSGLOVES, I_RECURVEBOW };
+	itemid_t build_path[BUILD_PATH_N] = { I_LONGSWORD, I_BRUTALIZER, I_BRAWLERSGLOVES, I_RECURVEBOW };
 	cl_float expected[BUILD_PATH_N][7] = {
 		{ 200.89f, 40.30f, 0.5f, 80.0f, 1.0f, 1.0f,  80.0f },
 		{ 238.56f, 47.85f, 0.5f, 95.0f, 1.0f, 1.0f,  95.0f },
@@ -296,6 +299,10 @@ void unittest_opencl_llformulas()
 	};
 	cl_float (*output)[7];
 	llf_criteria cfg = { 0 };
+	char *kfunc = "kunittest_llformulas";
+	cl_kernel k = *opencl_init(&gpu, 1, &kfunc, 1, UTCL_SRC, UTCL_DEF);
+
+
 	cfg.time_frame = 3;
 	cfg.ad_ratio = 2.0f;
 	cfg.ap_ratio = 0;
@@ -305,13 +312,11 @@ void unittest_opencl_llformulas()
 	cfg.build_maxcost = 15000;
 	cfg.build_maxinventory = 6;
 
-	opencl_init(&gpu, 1, "kunittest_llformulas", UTCL_SRC, UTCL_DEF);
-	
-	ka_mconst(&gpu, ka_push(&args), "db_items", 0, test_db, sizeof test_db);
-	ka_mconst(&gpu, ka_push(&args), "build_path", 0, build_path, sizeof build_path);
-	ka_value(&gpu, ka_push(&args), "cfg_input", &cfg, sizeof cfg);
+	ka_mconst(&gpu, k, ka_push(&args), "db_items", 0, test_db, sizeof test_db);
+	ka_mconst(&gpu, k, ka_push(&args), "build_path", 0, build_path, sizeof build_path);
+	ka_value(&gpu, k, ka_push(&args), "cfg_input", &cfg, sizeof cfg);
 
-	output = KA_DYN_OUTPUT(&gpu, ka_push(&args), "output_inventory", sizeof expected);
+	output = KA_DYN_OUTPUT(&gpu, k, ka_push(&args), "output_inventory", sizeof expected);
 
 	
 	workset.iterations = 1;
@@ -319,7 +324,7 @@ void unittest_opencl_llformulas()
 	workset.pass_size = BUILD_PATH_N;
 	workset.total = BUILD_PATH_N;
 
-	opencl_run(&gpu, &args, &workset);
+	opencl_run(&gpu, k, &args, &workset);
 
 
 	for (size_t i = 0; i < BUILD_PATH_N; ++i)

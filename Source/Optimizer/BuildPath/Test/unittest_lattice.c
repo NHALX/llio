@@ -24,6 +24,8 @@
 #include "reference_lattice.h"
 
 
+#define C_MASK_MAX UINT_T_MAX
+typedef uint_t   mask_t;
 
 /*
  * MATHEMATICA code to display the tree, and lattice in two different styles.
@@ -45,7 +47,7 @@
 #endif
 
 
-static void *test_edge(struct ideal_lattice *il, struct vertex *v, struct vertex *v2, size_t child_n, void *unused)
+static void *test_edge(ideal_lattice *il, struct vertex *v, struct vertex *v2, size_t child_n, void *unused)
 {
 	t_edge edge;
 	t_ctx *ctx = (t_ctx*)unused;
@@ -65,20 +67,20 @@ static void *test_edge(struct ideal_lattice *il, struct vertex *v, struct vertex
 	return (void*)ctx;
 }
 
-static void *print_edge(struct ideal_lattice *il, struct vertex *v, struct vertex *v2, size_t child_n, void *unused)
+static void *print_edge(ideal_lattice *il, struct vertex *v, struct vertex *v2, size_t child_n, void *unused)
 {
 	size_t max_n = il->ctx.max_neighbors;
 	size_t v1i, v2i;
 	v1i = p_index(v, P_ALLOC_VERTEX);
 	v2i = p_index(v2, P_ALLOC_VERTEX);
-	c_ideal_t ideal = il->ideals[INDEX2(max_n, v1i, child_n)];
+	ideal_t ideal = il->ideals[INDEX2(max_n, v1i, child_n)];
 
 	printf(OUTPUT_FMT_EDGE, v->label, v1i, v2->label, v2i, ideal);
 	return 0;
 }
 
 
-static void show_mask(struct ctx *x, c_mask_t mask, char *buf)
+static void show_mask(struct ctx *x, mask_t mask, char *buf)
 {
 	char number[(sizeof(mask)* 8) + 1];
 	int nonempty = 0;
@@ -108,15 +110,15 @@ static void show_mask(struct ctx *x, c_mask_t mask, char *buf)
 		buf[1] = '}';
 }
 
-static void *print_edgeIS(struct ideal_lattice *il, struct vertex *v, struct vertex *v2, size_t child_n, void *state)
+static void *print_edgeIS(ideal_lattice *il, struct vertex *v, struct vertex *v2, size_t child_n, void *state)
 {
-	c_mask_t le = (c_mask_t) state;
-	c_mask_t next;
-	static char s1[(C_IDEAL_T_MAX * 2) + 3];
-	static char s2[(C_IDEAL_T_MAX * 2) + 3];
+	mask_t le = (mask_t) state;
+	mask_t next;
+	static char s1[(IDEAL_T_MAX * 2) + 3];
+	static char s2[(IDEAL_T_MAX * 2) + 3];
 
 	size_t v1i      = p_index(v, P_ALLOC_VERTEX);
-	c_ideal_t ideal = il->ideals[INDEX2(il->ctx.max_neighbors, v1i, child_n)];
+	ideal_t ideal = il->ideals[INDEX2(il->ctx.max_neighbors, v1i, child_n)];
 
 	show_mask(&il->ctx, le, s1);
 	next = le & ~(1 << (ideal - 1));
@@ -126,7 +128,7 @@ static void *print_edgeIS(struct ideal_lattice *il, struct vertex *v, struct ver
 	return (void*)next;
 }
 
-static void tree_map(struct ideal_lattice *il, struct vertex *v, int include_impred, void* (*callback)(), void *ctx)
+static void tree_map(ideal_lattice *il, struct vertex *v, int include_impred, void* (*callback)(), void *ctx)
 {
 	c_iterator i;
 
@@ -151,7 +153,7 @@ static void tree_map(struct ideal_lattice *il, struct vertex *v, int include_imp
 
 //////////////////////////////////////////////
 void
-print_extension(c_ideal_t *le, size_t n, void **unused)
+print_extension(ideal_t *le, size_t n, void **unused)
 {
 	size_t i;
 
@@ -162,21 +164,21 @@ print_extension(c_ideal_t *le, size_t n, void **unused)
 }
 
 void
-copy_extension(c_ideal_t *le, size_t n, c_ideal_t **storage)
+copy_extension(ideal_t *le, size_t n, ideal_t **storage)
 {
 	memcpy(*storage, le, n);
 	(*storage) += n;
 }
 
-typedef void(*linext_cb_t)(c_ideal_t *, size_t, void **);
+typedef void(*linext_cb_t)(ideal_t *, size_t, void **);
 
 void
-all_extensions(struct ideal_lattice *il, c_index_t index, c_ideal_t *le, size_t le_n, linext_cb_t callback, void **ctx)
+all_extensions(ideal_lattice *il, index_t index, ideal_t *le, size_t le_n, linext_cb_t callback, void **ctx)
 {
 	size_t j,i = il->max_neighbors*index;
 
-	c_index_t *neighbors = &il->neighbors[i];
-	c_ideal_t *ideals    = &il->ideals[i];
+	index_t *neighbors = &il->neighbors[i];
+	ideal_t *ideals    = &il->ideals[i];
 
 	if (le_n == 0)
 	{
@@ -201,8 +203,8 @@ size_t global_lexicographic_sort_len = 0;
 int lexicographic_cmp(const void *arg1, const void *arg2)
 {
 	size_t i;
-	c_ideal_t *a = ((c_ideal_t *)arg1);
-	c_ideal_t *b = ((c_ideal_t *)arg2);
+	ideal_t *a = ((ideal_t *)arg1);
+	ideal_t *b = ((ideal_t *)arg2);
 
 	for (i = 0; i < global_lexicographic_sort_len; ++i)
 	{
@@ -221,7 +223,7 @@ int lexicographic_cmp(const void *arg1, const void *arg2)
 } while (0)
 
 void
-unittest_lattice_cmp_reference_linext(size_t linext_width, c_ideal_t *le_storage, c_ideal_t *r_le, size_t r_le_n)
+unittest_lattice_cmp_reference_linext(size_t linext_width, ideal_t *le_storage, ideal_t *r_le, size_t r_le_n)
 {
 	size_t rle_size = r_le_n * sizeof *r_le * linext_width;
 	global_lexicographic_sort_len = linext_width;
@@ -234,22 +236,22 @@ unittest_lattice_cmp_reference_linext(size_t linext_width, c_ideal_t *le_storage
 void
 unittest_lattice_p(
 	int quiet,
-	c_ideal_t poset[][2], size_t poset_n,
+	ideal_t poset[][2], size_t poset_n,
 	size_t    lattice_n, 
 	t_edge    *r_tree,    size_t r_tree_n,
 	t_edge    *r_lattice, size_t r_lattice_n,
-	c_ideal_t *r_le,      size_t r_le_n,
-	c_count_t *r_counts,  size_t r_counts_n
+	ideal_t   *r_le,      size_t r_le_n,
+	count_t   *r_counts,  size_t r_counts_n
 	)
 {
 	t_ctx test;
 	size_t i;
-	struct ideal_lattice lattice;
+	ideal_lattice lattice;
 	int result;
 
-	c_mask_t le = C_MASK_MAX >> ((sizeof(le)* 8) - lattice_n);
-	c_ideal_t *le_ptr,*le_storage;
-	c_ideal_t *le_set = alloca(lattice_n*sizeof *le_set);
+	mask_t le = C_MASK_MAX >> ((sizeof(le)* 8) - lattice_n);
+	ideal_t *le_ptr,*le_storage;
+	ideal_t *le_set = alloca(lattice_n*sizeof *le_set);
 	size_t rle_size;
 
 
@@ -316,7 +318,7 @@ unittest_lattice(int quiet)
 		REFERENCE_POSET2_N,
 		reference_tree2, LEN(reference_tree2),
 		reference_lattice2, LEN(reference_lattice2),
-		(c_ideal_t*) reference_le2, LEN(reference_le2),
+		(ideal_t*) reference_le2, LEN(reference_le2),
 		reference_counts2, LEN(reference_counts2)
 		);
 	
@@ -325,7 +327,7 @@ unittest_lattice(int quiet)
 		REFERENCE_POSET_N,
 		reference_tree, LEN(reference_tree),
 		reference_lattice, LEN(reference_lattice),
-		(c_ideal_t*)reference_le, LEN(reference_le),
+		(ideal_t*)reference_le, LEN(reference_le),
 		reference_counts, LEN(reference_counts)
 		);
 

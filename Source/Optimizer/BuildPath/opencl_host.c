@@ -10,7 +10,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "x_types.h"
+#include "../../types.h"
 #include "lattice.h"
 #include "opencl_host.h"
 
@@ -63,61 +63,49 @@ static void CL_CALLBACK context_error(const char *errinfo, const void *private_i
 	printf("OpenCL.Error: %s\n", errinfo);
 }
 
-
+/*
 void
-opencl_memcheck(opencl_context *ctx, 	opencl_kernel_params *args,	opencl_workset *work)
+opencl_memcheck(opencl_context *ctx, cl_kernel kernel,	opencl_kernel_params *args,	opencl_workset *work)
 {
-	cl_ulong const_alloc;
 	size_t i;
 	cl_ulong cl_kernel_mem_usage = 0;
 	/////
 
-	NOFAIL(clGetKernelWorkGroupInfo(ctx->kernel_LE, ctx->device, 
+	NOFAIL(clGetKernelWorkGroupInfo(kernel, ctx->device,
 		CL_KERNEL_LOCAL_MEM_SIZE, sizeof cl_kernel_mem_usage, &cl_kernel_mem_usage, 0));
 
-	printf("OpenCL: kernel local mem usage: %llu * %d = %llu\n", 
-		cl_kernel_mem_usage, work->local_size, cl_kernel_mem_usage * work->local_size);
+    work->const_alloc = 0;
+    work->local_alloc = cl_kernel_mem_usage;
 
-	for (const_alloc = 0, i = 0; i < args->count; ++i)
+	//printf("OpenCL: kernel local mem usage: %llu * %d = %llu\n", 
+	//	cl_kernel_mem_usage, work->local_size, cl_kernel_mem_usage * work->local_size);
+
+	for (i = 0; i < args->count; ++i)
 	{
 		opencl_kernel_arg *arg = &args->args[i];
 
 		if ((arg->type & GA_CONST) == GA_CONST)
 		{
-			const_alloc += arg->buf_size;
-			printf("OpenCL: const_size(%s:%d) = %d\n",
-				arg->symbol, i, arg->buf_size);
+            work->const_alloc += arg->buf_size;
+			printf("OpenCL: const_size(%s:%d) = %d\n", arg->symbol, i, arg->buf_size);
 		}
-	}
-
-	//const_alloc += cl_kernel_mem_usage * work->local_size;
-
-	if (const_alloc > ctx->cfg_max_const_storage)
-	{
-		printf("OpenCL: max const storage exceeded (%llu, max = %llu)\n", 
-			const_alloc,ctx->cfg_max_const_storage);
-
-		exit(-1);
-	} else
-	{
-		printf("OpenCL: allocating %llu/%llu const storage.\n",
-			const_alloc, ctx->cfg_max_const_storage);
+        else if (arg->type == GA_TMP){
+            work->local_alloc += arg->buf_size;
+            printf("OpenCL: local_size(%s:%d) = %d\n", arg->symbol, i, arg->buf_size);
+        }
 	}
 
 	return;
 }
-
+*/
 
 cl_ulong
-opencl_run(opencl_context *ctx, opencl_kernel_params *args, opencl_workset *work)
+opencl_run(opencl_context *ctx, cl_kernel kernel, opencl_kernel_params *args, opencl_workset *work)
 {
 	cl_event event;
 	size_t i;
 
-	NOFAIL(clEnqueueNDRangeKernel(ctx->queue, ctx->kernel_LE, 1, NULL, 
-		&work->pass_size, 
-		&work->local_size, 0, NULL, &event));
-	
+	NOFAIL(clEnqueueNDRangeKernel(ctx->queue, kernel, 1, NULL, &work->pass_size, &work->local_size, 0, NULL, &event));
 	NOFAIL(clWaitForEvents(1, &event)); //NOFAIL(clFinish(ctx->queue));
 
 	for (i = 0; i < args->count; ++i)
@@ -131,7 +119,7 @@ opencl_run(opencl_context *ctx, opencl_kernel_params *args, opencl_workset *work
 
 		NOFAIL(clEnqueueReadBuffer(ctx->queue, arg->cl_mem, CL_TRUE, 0,
 			arg->buf_size,
-			arg->buf_data, 0, NULL, NULL));
+			arg->buf_data, 0, NULL, NULL)); // TODO: waitlist
 	}
 
 	if (ctx->profiling)
@@ -148,7 +136,7 @@ opencl_run(opencl_context *ctx, opencl_kernel_params *args, opencl_workset *work
 
 
 
-void opencl_init(opencl_context *ctx, int profiling, char *kernel_function, char *source_file, char *build_flags)
+cl_kernel* opencl_init(opencl_context *ctx, int profiling, char *kernel_function[], size_t kernel_n, char *source_file, char *build_flags)
 {
 	size_t i;
 	size_t srcsize;
@@ -216,15 +204,21 @@ void opencl_init(opencl_context *ctx, int profiling, char *kernel_function, char
 		fail(0, __LINE__, __FUNCTION__);
 	}
 
-	if ((ctx->kernel_LE = clCreateKernel(ctx->program, kernel_function, &error)) == NULL)
-		fail(0, __LINE__, __FUNCTION__);
-
+	for (size_t i = 0; i < HCL_KERNEL_MAX && i < kernel_n; ++i)
+		if ((ctx->kernel[i] = clCreateKernel(ctx->program, kernel_function[i], &error)) == NULL)
+			fail(0, __LINE__, __FUNCTION__);
+	
+	ctx->kernel_n = kernel_n;
 
 	NOFAIL(clGetDeviceInfo(ctx->device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof ctx->cfg_compute_units, &ctx->cfg_compute_units, NULL));
 	NOFAIL(clGetDeviceInfo(ctx->device, CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE, sizeof ctx->cfg_max_const_storage, &ctx->cfg_max_const_storage, NULL));
 	NOFAIL(clGetDeviceInfo(ctx->device, CL_DEVICE_ENDIAN_LITTLE, sizeof ctx->cfg_little_endian, &ctx->cfg_little_endian, NULL));
 	NOFAIL(clGetDeviceInfo(ctx->device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof ctx->cfg_max_workgroup_size, &ctx->cfg_max_workgroup_size, NULL));
 	NOFAIL(clGetDeviceInfo(ctx->device, CL_DEVICE_MAX_CONSTANT_ARGS, sizeof ctx->cfg_max_const_args, &ctx->cfg_max_const_args, NULL));
+    NOFAIL(clGetDeviceInfo(ctx->device, CL_DEVICE_LOCAL_MEM_SIZE, sizeof ctx->cfg_max_local_storage, &ctx->cfg_max_local_storage, NULL));
+    NOFAIL(clGetDeviceInfo(ctx->device, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof ctx->cfg_max_global_storage, &ctx->cfg_max_global_storage, NULL));
+
+    
 
 	printf("CL_INFO: compute_units=%d, const_size=%llu, const_vars=%u, work_group_size=%d, little_endian=%d\n",
 		ctx->cfg_compute_units,
@@ -235,7 +229,7 @@ void opencl_init(opencl_context *ctx, int profiling, char *kernel_function, char
 		);
 
 	ctx->profiling = profiling;
-	return;
+	return ctx->kernel;
 }
 
 #define WARN(X) do { \
@@ -246,7 +240,9 @@ void opencl_init(opencl_context *ctx, int profiling, char *kernel_function, char
 
 void opencl_free(opencl_context *ctx)
 {
-	WARN(clReleaseKernel(ctx->kernel_LE));
+	for (size_t i = 0; i < ctx->kernel_n; ++i)
+		WARN(clReleaseKernel(ctx->kernel[i]));
+	
 	WARN(clReleaseProgram(ctx->program));
 	WARN(clReleaseCommandQueue(ctx->queue));
 	WARN(clReleaseContext(ctx->context));
@@ -271,9 +267,11 @@ ka_free(opencl_kernel_params *kp)
 	{
 		if (kp->args[i].type == GA_MEM)
 		{
-			if (kp->args[i].io_flags & A_OUT && kp->args[i].dynamic)
+			if (kp->args[i].io_flags & A_OUT && kp->args[i].dynamic && kp->args[i].buf_data)
+			{
 				free(kp->args[i].buf_data);
-
+				kp->args[i].buf_data = 0;
+			}
 			WARN(clReleaseMemObject(kp->args[i].cl_mem));
 		}
 	}
@@ -282,8 +280,9 @@ ka_free(opencl_kernel_params *kp)
 }
 
 opencl_kernel_arg *
-ka_ignore(opencl_context *ctx, opencl_kernel_arg *x)
+ka_ignore(opencl_context *ctx, cl_kernel kernel, opencl_kernel_arg *x)
 {
+	x->kernel   = kernel;
 	x->arg      = 0;
 	x->arg_size = 0;
 	x->type     = GA_IGNORE;
@@ -291,7 +290,7 @@ ka_ignore(opencl_context *ctx, opencl_kernel_arg *x)
 }
 
 opencl_kernel_arg *
-ka_mem(opencl_context *ctx, opencl_kernel_arg *x, unsigned int type, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size)
+ka_mem(opencl_context *ctx, cl_kernel kernel, opencl_kernel_arg *x, unsigned int type, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size)
 {
 	cl_int error;
 
@@ -302,6 +301,7 @@ ka_mem(opencl_context *ctx, opencl_kernel_arg *x, unsigned int type, const char 
 	x->io_flags = io_flags;
 	x->cl_mem   = clCreateBuffer(ctx->context, cl_flags, size, NULL, &error);
 	x->dynamic  = 0;
+	x->kernel   = kernel;
 
 	if (x->cl_mem == 0)
 		fail(error, __LINE__, __FUNCTION__);
@@ -329,43 +329,61 @@ ka_mem(opencl_context *ctx, opencl_kernel_arg *x, unsigned int type, const char 
 		}
 	}
 
-	NOFAIL(clSetKernelArg(ctx->kernel_LE, x->index, x->arg_size, x->arg));
+	NOFAIL(clSetKernelArg(kernel, x->index, x->arg_size, x->arg));
 	return x;
 }; 
 
+
 opencl_kernel_arg *
-ka_mconst(opencl_context *ctx, opencl_kernel_arg *x, const char *sym, cl_mem_flags cl_flags, const void *ptr, size_t size)
+ka_mconst(opencl_context *ctx, cl_kernel kernel, opencl_kernel_arg *x, const char *sym, cl_mem_flags cl_flags, const void *ptr, size_t size)
 {
-	return ka_mem(ctx, x, GA_CONST, sym, A_IN, cl_flags | CL_MEM_READ_ONLY, (void*) ptr, size);
+	return ka_mem(ctx, kernel, x, GA_CONST, sym, A_IN, cl_flags | CL_MEM_READ_ONLY, (void*)ptr, size);
 }
 
 opencl_kernel_arg *
-ka_mglobal(opencl_context *ctx, opencl_kernel_arg *x, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size)
+ka_mglobal(opencl_context *ctx, cl_kernel kernel, opencl_kernel_arg *x, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size)
 {
-	return ka_mem(ctx, x, GA_MEM, sym, io_flags, cl_flags, ptr, size);
+	return ka_mem(ctx, kernel, x, GA_MEM, sym, io_flags, cl_flags, ptr, size);
 }
 
 opencl_kernel_arg *
-ka_mlocal(opencl_context *ctx, opencl_kernel_arg *x, const char *sym, size_t size)
+ka_mlocal(opencl_context *ctx, cl_kernel kernel, opencl_kernel_arg *x, const char *sym, size_t size)
 {
 	x->symbol   = sym;
 	x->type     = GA_TMP;
 	x->arg_size = size;
 	x->arg      = 0;
+	x->kernel   = kernel;
 
-	NOFAIL(clSetKernelArg(ctx->kernel_LE, x->index, x->arg_size, x->arg));
+	NOFAIL(clSetKernelArg(kernel, x->index, x->arg_size, x->arg));
 	return x;
 }
 
 opencl_kernel_arg *
-ka_value(opencl_context *ctx, opencl_kernel_arg *x, const char *sym, void *value, size_t size)
+ka_reuse(opencl_context *ctx, cl_kernel kernel, opencl_kernel_arg *x, opencl_kernel_arg *y)
+{
+	x->symbol   = y->symbol;
+	x->type     = y->type;
+	x->arg_size = y->arg_size;
+	x->arg      = y->arg;
+	x->kernel   = kernel;
+	x->cl_mem   = y->cl_mem;
+
+	NOFAIL(clSetKernelArg(kernel, x->index, x->arg_size, x->arg));
+	return x;
+}
+
+
+opencl_kernel_arg *
+ka_value(opencl_context *ctx, cl_kernel kernel, opencl_kernel_arg *x, const char *sym, void *value, size_t size)
 {
 	x->symbol   = sym;
 	x->type     = GA_VAL;
 	x->arg      = &x->storage;
 	x->arg_size = size;
+	x->kernel = kernel;
 
 	memcpy(x->storage, value, size);
-	NOFAIL(clSetKernelArg(ctx->kernel_LE, x->index, x->arg_size, x->arg));
+	NOFAIL(clSetKernelArg(kernel, x->index, x->arg_size, x->arg));
 	return x;
 }

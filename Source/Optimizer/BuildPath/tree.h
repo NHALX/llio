@@ -1,9 +1,23 @@
 #ifndef _TREE_H_
 #define _TREE_H_
 
-#include "x_types.h"
+#include "../../types.h"
 #include "u_list.h"
+#include "lattice_types.h"
 
+struct vertex
+{
+#ifdef DEBUG_VERTEX_INDEX
+	size_t        index; // this can be optimized out since its easy to calculate the offset from the pool start
+#endif
+	struct vertex *parent;
+	struct u_list *children;
+	ideal_t      label;
+
+	// HARD_LIMITS: these will be too small if we have 2^256 vertices in our lattice...
+	unsigned char children_len;
+	unsigned char edge_len;
+};
 
 typedef union 
 {
@@ -28,19 +42,6 @@ typedef union
 
 #define C_N(I) UL_N(I)
 
-struct vertex
-{
-#ifdef DEBUG_VERTEX_INDEX
-	size_t        index; // this can be optimized out since its easy to calculate the offset from the pool start
-#endif
-	struct vertex *parent;
-	struct u_list *children;
-	c_ideal_t      label;
-
-	// HARD_LIMITS: these will be too small if we have 2^256 vertices in our lattice...
-	unsigned char children_len;
-	unsigned char edge_len;
-};
 
 
 #define IMMEDIATE_PRED(X,I,J)	((X)->adjacency[INDEX2((X)->adjacency_dim,I,J)])

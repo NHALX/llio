@@ -7,9 +7,11 @@ void unittest_db_input()
 {
 	item_t *items;
 	#define FILTER_N 6
-	c_itemid_t filter[FILTER_N] = { 14, 14, 130, 20, 102, 137 }; // Youmou's ghostblade
+	itemid_t filter[FILTER_N] = { 14, 14, 130, 20, 102, 137 }; // Youmou's ghostblade
+	size_t db_len;
 
-	items = dbi_filter(FILTER_N, filter);
+	items = dbi_filter(FILTER_N, filter, &db_len);
+	assert(items);
 
 	assert(0 == items[0].id);
 	assert(db_items[14].id  == items[1].id);

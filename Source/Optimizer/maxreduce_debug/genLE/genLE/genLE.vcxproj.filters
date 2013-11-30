@@ -45,9 +45,6 @@
     <ClCompile Include="..\..\..\BuildPath\opencl_host.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\BuildPath\opencl_kernel.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\BuildPath\db_input.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -69,12 +66,12 @@
     <ClCompile Include="..\..\..\BuildPath\Test\unittest_db_input.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\BuildPath\kernel_LMR.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\BuildPath\le_test.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\BuildPath\le_kernel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\BuildPath\genLE_Init.h">
@@ -98,9 +95,6 @@
     <ClInclude Include="..\..\..\BuildPath\tree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\BuildPath\x_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\..\Database\database.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -119,6 +113,21 @@
     <ClInclude Include="..\..\..\..\Database\vector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\BuildPath\opencl_kernel.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\types_host.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\types_kernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\BuildPath\lattice_types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\Database\item.py">
@@ -126,6 +135,18 @@
     </None>
     <None Include="..\..\..\..\Database\ItemPassive.py">
       <Filter>Scripts</Filter>
+    </None>
+    <None Include="..\..\..\BuildPath\Test\unittest_kernel.cl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\..\..\BuildPath\kernel_LMR.cl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\..\..\BuildPath\kernel_LMR_3.cl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\..\..\BuildPath\reduce.cl">
+      <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
 </Project>

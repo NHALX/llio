@@ -1,9 +1,9 @@
 #ifndef _OCL_HOST_H_
 #define _OCL_HOST_H_
 
-#include "x_types.h"
-
+#include "../../types.h"
 #define PLATFORM_MAX    32
+#define HCL_KERNEL_MAX 256
 
 typedef struct 
 {
@@ -14,9 +14,12 @@ typedef struct
 	cl_command_queue queue;
 	cl_program program;
 
-	cl_kernel kernel_LE;
+	cl_kernel kernel[HCL_KERNEL_MAX];
+	size_t    kernel_n;
 
 	cl_int   cfg_compute_units;
+    cl_ulong cfg_max_global_storage;
+    cl_ulong cfg_max_local_storage;
 	cl_ulong cfg_max_const_storage;
 	cl_uint  cfg_max_const_args;
 	cl_bool  cfg_little_endian;
@@ -24,13 +27,6 @@ typedef struct
 	int profiling;
 } opencl_context;
 
-typedef struct
-{
-	cl_uint max_neighbors;
-	cl_uint   linext_width;
-	c_count_t linext_offset;
-	c_count_t linext_count;
-} buildpath_info;
 
 typedef struct
 {
@@ -38,6 +34,9 @@ typedef struct
 	size_t   local_size;
 	cl_ulong iterations;
 	cl_ulong total;
+
+    //cl_ulong const_alloc;
+    //cl_ulong local_alloc;
 
 }  opencl_workset;
 
@@ -52,7 +51,6 @@ typedef struct
 #define A_OUT   0x10
 #define A_INOUT 0x11
 
-// TODO: make this less stupid
 typedef struct
 {
 	size_t       index;
@@ -60,6 +58,7 @@ typedef struct
 	const char  *symbol;
 	void        *arg;
 	size_t       arg_size;
+	cl_kernel    kernel;
 
 	////////// For ka_mem //////////
 	void        *buf_data;
@@ -83,24 +82,24 @@ typedef struct
 	size_t count;
 } opencl_kernel_params;
 
-#define KA_DYN_OUTPUT(GPU,ARGS,SYM,SIZE) \
-	ka_mglobal(GPU, ARGS, SYM, A_OUT, CL_MEM_WRITE_ONLY, 0, SIZE)->buf_data
+#define KA_DYN_OUTPUT(GPU,KERN,ARGS,SYM,SIZE) \
+	ka_mglobal(GPU, KERN, ARGS, SYM, A_OUT, CL_MEM_WRITE_ONLY, 0, SIZE)->buf_data
 
 opencl_kernel_arg *ka_push(opencl_kernel_params *kp);
 void ka_free(opencl_kernel_params *kp);
 
-opencl_kernel_arg *ka_ignore(opencl_context *, opencl_kernel_arg *x);
-opencl_kernel_arg *ka_mem(opencl_context *, opencl_kernel_arg *x, unsigned int type, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size);
-opencl_kernel_arg *ka_mconst(opencl_context *, opencl_kernel_arg *x, const char *sym, cl_mem_flags cl_flags, const void *ptr, size_t size);
-opencl_kernel_arg *ka_mglobal(opencl_context *, opencl_kernel_arg *x, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size);
-opencl_kernel_arg *ka_mlocal(opencl_context *, opencl_kernel_arg *x, const char *sym, size_t size);
-opencl_kernel_arg *ka_value(opencl_context *, opencl_kernel_arg *x, const char *sym, void *value, size_t size);
+opencl_kernel_arg *ka_ignore(opencl_context *, cl_kernel, opencl_kernel_arg *x);
+opencl_kernel_arg *ka_mem(opencl_context *, cl_kernel, opencl_kernel_arg *x, unsigned int type, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size);
+opencl_kernel_arg *ka_mconst(opencl_context *, cl_kernel, opencl_kernel_arg *x, const char *sym, cl_mem_flags cl_flags, const void *ptr, size_t size);
+opencl_kernel_arg *ka_mglobal(opencl_context *, cl_kernel, opencl_kernel_arg *x, const char *sym, int io_flags, cl_mem_flags cl_flags, void *ptr, size_t size);
+opencl_kernel_arg *ka_mlocal(opencl_context *, cl_kernel, opencl_kernel_arg *x, const char *sym, size_t size);
+opencl_kernel_arg *ka_value(opencl_context *, cl_kernel, opencl_kernel_arg *x, const char *sym, void *value, size_t size);
+opencl_kernel_arg *ka_reuse(opencl_context *, cl_kernel, opencl_kernel_arg *x, opencl_kernel_arg *y);
 
+void opencl_memcheck(opencl_context *ctx, cl_kernel, opencl_kernel_params *args, opencl_workset *work);
+cl_ulong opencl_run(opencl_context *ctx, cl_kernel, opencl_kernel_params *args, opencl_workset *work);
 
-void opencl_memcheck(opencl_context *ctx, opencl_kernel_params *args, opencl_workset *work);
-cl_ulong opencl_run(opencl_context *ctx, opencl_kernel_params *args, opencl_workset *work);
-
-void opencl_init(opencl_context *, int profiling, char *kernel_function, char *source_file, char *build_flags);
+cl_kernel *opencl_init(opencl_context *ctx, int profiling, char *kernel_function[], size_t kernel_n, char *source_file, char *build_flags);
 void opencl_free(opencl_context *ctx);
 
 // TODO: real error handling

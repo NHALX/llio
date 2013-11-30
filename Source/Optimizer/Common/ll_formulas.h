@@ -3,16 +3,16 @@
 
 typedef struct
 {
-	c_uint  time_frame;
-	c_float ad_ratio;
-	c_float ap_ratio;
-	c_uint  level;
+	uint_t  time_frame;
+	float_t ad_ratio;
+	float_t ap_ratio;
+	uint_t  level;
 
-	c_uint enemy_armor;
-	c_uint enemy_mr;
+	uint_t enemy_armor;
+	uint_t enemy_mr;
 	
-	c_uint build_maxcost;
-	c_uint build_maxinventory;
+	uint_t build_maxcost;
+	uint_t build_maxinventory;
 
 }  llf_criteria;
 
@@ -46,7 +46,7 @@ static inline float llf_crit(stat_t B, stat_t C)
 {
 	return 1.0f + (1.0f + ((float)B)) * min(1.0f, ((float)C));
 }
-static inline float llf_armor_mitigation(c_uint ARMOR, stat_t APP, stat_t APF)
+static inline float llf_armor_mitigation(uint_t ARMOR, stat_t APP, stat_t APF)
 {
 	return 100 / (100 + ((((float)ARMOR)*(1 - ((float)APP))) - ((float)APF)));
 }
@@ -64,7 +64,7 @@ static inline float llf_AD(stat_t AD, stat_t HP, stat_t HPRATIO)
 	return ((float)(70 + AD)) + ((float)HP * PERCENT(HPRATIO));
 }
 
-static inline float llf_attackspeed(c_uint LV, stat_t GEAR)
+static inline float llf_attackspeed(uint_t LV, stat_t GEAR)
 {
 	float level = (float)(LV - 1);
 	float bonus = PERCENT(GEAR);
@@ -72,7 +72,7 @@ static inline float llf_attackspeed(c_uint LV, stat_t GEAR)
 	return min(2.5f, AS_BASE * (1.0f + (AS_LVPER*level) + bonus));
 }
 
-static inline float llf_autoattack_DPS(float mitigation, float ad, c_uint LV, VECTOR(*X))
+static inline float llf_autoattack_DPS(float mitigation, float ad, uint_t LV, VECTOR(*X))
 {
 	float crit = llf_crit(F_CRIT_BONUS(*X), F_CRIT_CHANCE(*X));
 	float aspd = llf_attackspeed(LV, F_ATTACK_SPEED(*X));

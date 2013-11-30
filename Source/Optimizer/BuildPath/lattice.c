@@ -9,7 +9,7 @@
 #else
 #define alloca _alloca
 #endif
-#include "x_types.h"
+#include "../../types.h"
 #include "lattice.h"
 
 #include "tree.h"
@@ -37,7 +37,7 @@ glbinit_lattice()
 STATIC int Toposort(unsigned char *graph, size_t dim, unsigned char *LE);
 
 
-int CtxInit(struct ctx *ctx, c_ideal_t edges[][2], size_t nedges, size_t n)
+int CtxInit(struct ctx *ctx, ideal_t edges[][2], size_t nedges, size_t n)
 {
 	size_t i, j;
 	unsigned char *graph;
@@ -143,12 +143,12 @@ Toposort(unsigned char *graph, size_t dim, unsigned char *LE)
 
 // #define GET_NEIGHBORS(P,S,I) (P + (I*S))
 
-STATIC c_count_t AssignCount(struct ideal_lattice *il, unsigned char *visited, c_index_t vertex_index)
+STATIC count_t AssignCount(ideal_lattice *il, unsigned char *visited, index_t vertex_index)
 {
 	unsigned int i;
-	c_count_t lef = 0;
-	c_index_t *neighbors = &il->neighbors[INDEX2(il->max_neighbors, vertex_index, 0)];
-	c_index_t next;
+	count_t lef = 0;
+	index_t *neighbors = &il->neighbors[INDEX2(il->max_neighbors, vertex_index, 0)];
+	index_t next;
 
 	visited[vertex_index] = 1;
 
@@ -175,7 +175,7 @@ STATIC c_count_t AssignCount(struct ideal_lattice *il, unsigned char *visited, c
 
 // NOTE: These counts values are different than the MATHEMATICA reference implementation
 //       because source and sink are reversed.
-int Count(struct ideal_lattice *il)
+int Count(ideal_lattice *il)
 {
 	unsigned char *visited;
 	GUARD(il->counts = calloc(il->vertex_count, sizeof *il->counts));
@@ -238,11 +238,11 @@ STATIC struct vertex * Left(struct ctx *x, int i)
 ////////////////////// hasse diagram of the lattice of ideals //////////////////////
 
 
-STATIC int Push(struct ctx *x, c_ideal_t *edges, size_t w, struct vertex *vertex, struct vertex *c, c_ideal_t ideal)
+STATIC int Push(struct ctx *x, ideal_t *edges, size_t w, struct vertex *vertex, struct vertex *c, ideal_t ideal)
 {
 	int i;
 	uintptr_t index = p_index(vertex, P_ALLOC_VERTEX);
-	c_ideal_t *neighbors = &edges[INDEX2(w, index, 0)];
+	ideal_t *neighbors = &edges[INDEX2(w, index, 0)];
 
 	assert(ideal != 0);
 	assert(vertex->edge_len < w);
@@ -259,7 +259,7 @@ STATIC int Push(struct ctx *x, c_ideal_t *edges, size_t w, struct vertex *vertex
 
 
 // OPTIMIZATION: This loop is a major hotspot. Accounts for ~2/3 of total execution time.
-STATIC int Process(struct ctx *x, c_ideal_t *edges, size_t edge_w, size_t k, struct vertex *v)
+STATIC int Process(struct ctx *x, ideal_t *edges, size_t edge_w, size_t k, struct vertex *v)
 {
 	c_iterator i;
 	
@@ -267,7 +267,7 @@ STATIC int Process(struct ctx *x, c_ideal_t *edges, size_t edge_w, size_t k, str
 	{
 		struct vertex *v2 = C_X(i);
 		struct vertex *v3;
-		c_ideal_t ideal;
+		ideal_t ideal;
 
 		if (v2 == v)
 			return G_SUCCESS;
@@ -291,7 +291,7 @@ STATIC int GroupAll(struct u_list **E)
 	FOR_X_IN_POOLS(p, P_ALLOC_VERTEX)
 	{
 		struct vertex *v = P_X(p);
-		c_ideal_t label = v->label;
+		ideal_t label = v->label;
 
 		if (label != 0)
 			GUARD(ul_push(&E[label - 1], v));
@@ -301,14 +301,14 @@ STATIC int GroupAll(struct u_list **E)
 }
 
 int
-RecordEdges(struct ctx *x, c_ideal_t *edges, size_t edge_w, struct vertex *v)
+RecordEdges(struct ctx *x, ideal_t *edges, size_t edge_w, struct vertex *v)
 {
 	c_iterator i;
 	size_t index = p_index(v, P_ALLOC_VERTEX);
 
 	FOR_X_IN_CHILDREN(x, i, v)
 	{
-		c_ideal_t ideal = C_X(i)->label;
+		ideal_t ideal = C_X(i)->label;
 		edges[INDEX2(edge_w, index, v->edge_len)] = ideal;
 		v->edge_len++;
 		RecordEdges(x, edges, edge_w, C_X(i));
@@ -318,7 +318,7 @@ RecordEdges(struct ctx *x, c_ideal_t *edges, size_t edge_w, struct vertex *v)
 }
 
 
-STATIC int BuildLattice(struct ctx *x, c_ideal_t *edges, size_t edge_w, struct vertex *root, unsigned char n)
+STATIC int BuildLattice(struct ctx *x, ideal_t *edges, size_t edge_w, struct vertex *root, unsigned char n)
 {
 	int k;
 	struct u_iterator i;
@@ -363,10 +363,10 @@ PrintMemUsage(size_t edges, size_t neighbors)
 #undef MB
 }
 
-int lattice_create(c_ideal_t p_relations[][2], size_t p_reln, size_t n, struct ideal_lattice *lattice)
+int lattice_create(ideal_t p_relations[][2], size_t p_reln, size_t n, ideal_lattice *lattice)
 {
-	c_index_t *neighbors;
-	c_ideal_t *edges;
+	index_t *neighbors;
+	ideal_t *edges;
 	size_t i, slen;
 	struct p_iterator p;
 
@@ -417,6 +417,7 @@ int lattice_create(c_ideal_t p_relations[][2], size_t p_reln, size_t n, struct i
 	lattice->sink             = n;
 	lattice->vertex_count     = lattice->ctx.vertex_count;
 	lattice->max_neighbors    = lattice->ctx.max_neighbors;
+    lattice->edge_count       = lattice->max_neighbors * lattice->ctx.vertex_count;
 	lattice->linext_width     = n;
 	
 	for (i = 0; i < lattice->ctx.max_neighbors; ++i)
@@ -429,7 +430,7 @@ int lattice_create(c_ideal_t p_relations[][2], size_t p_reln, size_t n, struct i
 
 // Map values from their internal representation to the given initial linear extension.
 // In other words: for i in {1,2..n}. i -> lattice.linear_extension[i]
-void lattice_valmap(struct ideal_lattice *lattice)
+void lattice_valmap(ideal_lattice *lattice)
 {
 	size_t i, slen = lattice->ctx.vertex_count * lattice->ctx.max_neighbors;
 
@@ -438,7 +439,7 @@ void lattice_valmap(struct ideal_lattice *lattice)
 }
 
 
-void lattice_free(struct ideal_lattice *lattice)
+void lattice_free(ideal_lattice *lattice)
 {
 	CtxFree(&lattice->ctx);
 	p_release(P_ALLOC_ULIST);

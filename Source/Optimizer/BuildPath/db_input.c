@@ -21,7 +21,7 @@ static int item_cmp_id(const void * a, const void * b)
 
 
 // TODO: verify db is actually sorted somewhere.
-size_t dbi_find(c_itemid_t item) // ASSUMES: database is sorted
+size_t dbi_find(itemid_t item) // ASSUMES: database is sorted
 {
 	item_t key;
 	uintptr_t entry;
@@ -65,7 +65,7 @@ typedef struct tree_t
 
 
 tree_t *
-Tree(size_t db_index, c_itemid_t *node2dbi, size_t *v_index)
+Tree(size_t db_index, itemid_t *node2dbi, size_t *v_index)
 {
 	size_t j;
 	tree_t *t = calloc(1, sizeof *t);
@@ -103,7 +103,7 @@ TreeFree(tree_t *t)
 
 
 void
-EdgeCopy(tree_t *t, c_ideal_t **ptr, size_t *len)
+EdgeCopy(tree_t *t, ideal_t **ptr, size_t *len)
 {
 	size_t j;
 
@@ -119,7 +119,7 @@ EdgeCopy(tree_t *t, c_ideal_t **ptr, size_t *len)
 }
 
 void
-PrintPoset(c_itemid_t *node2dbi, size_t n2d_n, c_ideal_t poset[][2], size_t poset_n)
+PrintPoset(itemid_t *node2dbi, size_t n2d_n, ideal_t poset[][2], size_t poset_n)
 {
 	size_t i;
 	printf("======= poset: =======\n");
@@ -138,11 +138,11 @@ PrintPoset(c_itemid_t *node2dbi, size_t n2d_n, c_ideal_t poset[][2], size_t pose
 }
 
 
-c_ideal_t
-dbi_poset(char **items, size_t item_len, c_itemid_t *node2dbi, c_ideal_t poset[][2], size_t *p_len)
+ideal_t
+dbi_poset(char **items, size_t item_len, itemid_t *node2dbi, ideal_t poset[][2], size_t *p_len)
 {
 	size_t i;
-	c_ideal_t *ptr = (void*)poset;
+	ideal_t *ptr = (void*)poset;
 	size_t vertex_count = 0;
 
 	for (*p_len = 0, i = 0; i < item_len; ++i)
@@ -158,9 +158,14 @@ dbi_poset(char **items, size_t item_len, c_itemid_t *node2dbi, c_ideal_t poset[]
 
 
 item_t*
-dbi_filter(size_t vertex_n, c_itemid_t *node2dbi)
+dbi_filter(size_t vertex_n, itemid_t *node2dbi, size_t *db_len)
 {
-	item_t* db_filtered = calloc(++vertex_n, sizeof *db_filtered);
+	item_t* db_filtered;
+	*db_len = ++vertex_n;
+	db_filtered = calloc(vertex_n, sizeof *db_filtered);
+	assert(db_filtered);
+	if (!db_filtered)
+		return 0;
 
 	for (size_t i = 1; i < vertex_n; ++i)
 		memcpy(&db_filtered[i], &db_items[node2dbi[i-1]], sizeof *db_filtered);
@@ -182,6 +187,35 @@ dbi_filter(size_t vertex_n, c_itemid_t *node2dbi)
 		}
 	}
 
-	// TODO: remap passive_ids and be certain they do not exceed LINEXT_MAX_WIDTH
+	size_t index = 1;
+	uchar_t *processed = calloc(*db_len, 1);
+	assert(processed);
+	if (!processed)
+		return 0;
+
+	
+	// TODO: unit test to verify this mapping
+	for (size_t i = 0; i < vertex_n; ++i)
+	{
+		if (db_filtered[i].passive_id == 0 || processed[i])
+			continue;
+
+		for (size_t j = i+1; j < vertex_n; ++j)
+		{
+			if (processed[j])
+				continue;
+
+			if (db_filtered[i].passive_id == db_filtered[j].passive_id)
+			{
+				db_filtered[j].passive_id = index;
+				processed[j] = 1;
+			}
+		}
+		
+		db_filtered[i].passive_id = index++;
+		processed[i] = 1;
+	}
+
+	free(processed);
 	return db_filtered;
 }

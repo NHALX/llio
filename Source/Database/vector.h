@@ -14,16 +14,6 @@
 // NOTE: that the db input needs to be changed for % based stats if you set this
 //#define INTEGER_STATS
 
-#ifndef __OPENCL_VERSION__
-typedef cl_ushort c_ushort; typedef cl_short c_short;
-typedef cl_uint  c_uint;    typedef cl_float c_float; typedef cl_float8 c_float8;
-typedef cl_short c_itemid_t;
-#else
-typedef ushort c_ushort; typedef short c_short; 
-typedef uint   c_uint;   typedef float c_float; typedef float8 c_float8;
-typedef short  c_itemid_t;
-#endif
-
 #ifdef ARRAY_STATS
 #define PART(X,I) ((X)[I])
 #else
@@ -54,24 +44,25 @@ typedef short  c_itemid_t;
 #ifdef ARRAY_STATS
 #ifdef INTEGER_STATS
 
-typedef c_short stat_t;
+typedef short_t stat_t;
 #else
-typedef c_float stat_t;
+typedef float_t stat_t;
 #endif
+
 #define VECTOR_SIZEOF      (sizeof(stat_t)*VECTOR_VEC_N)
 #define VECTOR(SYM)		   stat_t (SYM)[VECTOR_VEC_N]
 #define VECTOR_ZERO_INIT	{ 0,0,0,0,0,0,0,0 }
 #else
 #ifdef INTEGER_STATS
 typedef c_short stat_t;
-#define VECTOR_SIZEOF      (sizeof(c_short8))
-#define VECTOR(SYM)		   c_short8  SYM
-#define VECTOR_ZERO_INIT   (c_short8){ 0,0,0,0,0,0,0,0 }
+#define VECTOR_SIZEOF      (sizeof(cl_short8))
+#define VECTOR(SYM)		   cl_short8  SYM
+#define VECTOR_ZERO_INIT   (cl_short8){ 0,0,0,0,0,0,0,0 }
 #else
 typedef c_float stat_t;
-#define VECTOR_SIZEOF      (sizeof(c_float8))
-#define VECTOR(SYM)		   c_float8  SYM
-#define VECTOR_ZERO_INIT   (c_float8){ 0,0,0,0,0,0,0,0 }
+#define VECTOR_SIZEOF      (sizeof(cl_float8))
+#define VECTOR(SYM)		   cl_float8  SYM
+#define VECTOR_ZERO_INIT   (cl_float8){ 0,0,0,0,0,0,0,0 }
 #endif
 #endif
 #endif

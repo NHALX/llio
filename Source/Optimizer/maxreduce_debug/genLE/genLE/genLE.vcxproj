@@ -85,7 +85,7 @@
     <ClCompile Include="..\..\..\BuildPath\lattice.c" />
     <ClCompile Include="..\..\..\BuildPath\opencl_bind.c" />
     <ClCompile Include="..\..\..\BuildPath\opencl_host.c" />
-    <ClCompile Include="..\..\..\BuildPath\opencl_kernel.c" />
+    <ClCompile Include="..\..\..\BuildPath\kernel_LMR.c" />
     <ClCompile Include="..\..\..\BuildPath\p_alloc.c" />
     <ClCompile Include="..\..\..\BuildPath\Test\reference_lattice.c" />
     <ClCompile Include="..\..\..\BuildPath\Test\unittest_buildpath.c" />
@@ -101,23 +101,30 @@
     <ClInclude Include="..\..\..\..\Database\database.h" />
     <ClInclude Include="..\..\..\..\Database\db_layout.h" />
     <ClInclude Include="..\..\..\..\Database\vector.h" />
+    <ClInclude Include="..\..\..\..\types.h" />
+    <ClInclude Include="..\..\..\..\types_host.h" />
+    <ClInclude Include="..\..\..\..\types_kernel.h" />
     <ClInclude Include="..\..\..\BuildPath\db_input.h" />
     <ClInclude Include="..\..\..\BuildPath\error.h" />
     <ClInclude Include="..\..\..\BuildPath\genLE_Init.h" />
     <ClInclude Include="..\..\..\BuildPath\lattice.h" />
-    <ClInclude Include="..\..\..\BuildPath\le_kernel.h" />
+    <ClInclude Include="..\..\..\BuildPath\lattice_types.h" />
     <ClInclude Include="..\..\..\BuildPath\le_test.h" />
     <ClInclude Include="..\..\..\BuildPath\opencl_bind.h" />
     <ClInclude Include="..\..\..\BuildPath\opencl_host.h" />
+    <ClInclude Include="..\..\..\BuildPath\opencl_kernel.h" />
     <ClInclude Include="..\..\..\BuildPath\p_alloc.h" />
     <ClInclude Include="..\..\..\BuildPath\tree.h" />
     <ClInclude Include="..\..\..\BuildPath\u_list.h" />
-    <ClInclude Include="..\..\..\BuildPath\x_types.h" />
     <ClInclude Include="..\..\..\Common\ll_formulas.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\Database\item.py" />
     <None Include="..\..\..\..\Database\ItemPassive.py" />
+    <None Include="..\..\..\BuildPath\kernel_LMR.cl" />
+    <None Include="..\..\..\BuildPath\kernel_LMR_3.cl" />
+    <None Include="..\..\..\BuildPath\reduce.cl" />
+    <None Include="..\..\..\BuildPath\Test\unittest_kernel.cl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

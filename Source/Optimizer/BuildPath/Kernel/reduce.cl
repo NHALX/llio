@@ -6,9 +6,6 @@ Reduce(result_t dps, __local volatile result_t* scratch, __global result_t* resu
 {
     int offset;
     int local_index;
-    if (local_index == 0) {
-        result[get_group_id(0)] = (result_t){ -12345, 12345 };
-    }
 
     local_index = get_local_id(0);
     scratch[local_index] = dps;

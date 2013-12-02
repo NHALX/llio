@@ -4,7 +4,11 @@
 #else
 #include <CL/cl.h>
 #endif
-
+#ifndef _MSC_VER
+#include <alloca.h>
+#else
+#define alloca _alloca
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -136,17 +140,19 @@ opencl_run(opencl_context *ctx, cl_kernel kernel, opencl_kernel_params *args, op
 
 
 
-cl_kernel* opencl_init(opencl_context *ctx, int profiling, char *kernel_function[], size_t kernel_n, char *source_file, char *build_flags)
+cl_kernel* opencl_init(opencl_context *ctx, int profiling, 
+    char *kernel_function[], size_t kernel_n, 
+    char *source_file[], size_t source_n, 
+    char *build_flags)
 {
 	size_t i;
-	size_t srcsize;
 	cl_int error;
 	cl_uint devices;
 	cl_context_properties properties[] = {CL_CONTEXT_PLATFORM, 0, 0};
 	cl_command_queue_properties cqp;
 
-	const char *src;
-	const char *srcptr[1];
+    const char **srcptr = alloca(source_n * sizeof (char*));
+    size_t *srclen = alloca(source_n * sizeof (size_t));
 
 	// Fetch the Platform and Device IDs; we only want one.
 	NOFAIL(clGetPlatformIDs(PLATFORM_MAX, ctx->platform, &ctx->platform_n));
@@ -181,16 +187,17 @@ cl_kernel* opencl_init(opencl_context *ctx, int profiling, char *kernel_function
 	if ((ctx->queue = clCreateCommandQueue(ctx->context, ctx->device, cqp, &error)) == NULL)
 		fail(0, __LINE__, __FUNCTION__);
 
-	src = load(source_file, &srcsize);
-	srcptr[0] = src;
+    for (i = 0; i < source_n; ++i)
+        srcptr[i] = load(source_file[i], &srclen[i]);
 
-	if ((ctx->program = clCreateProgramWithSource(ctx->context, 1, srcptr, &srcsize, &error)) == NULL)
+    if ((ctx->program = clCreateProgramWithSource(ctx->context, source_n, srcptr, srclen, &error)) == NULL)
 	{
-		free((void*)src);
+        for (i = 0; i < source_n; ++i)
+		    free(srcptr[i]);
 		fail(0, __LINE__, __FUNCTION__);
 	}
-
-	free((void*)src);
+    for (i = 0; i < source_n; ++i)
+        free(srcptr[i]);
 
 	if (clBuildProgram(ctx->program, 0, NULL, build_flags, NULL, NULL) != CL_SUCCESS)
 	{
@@ -199,7 +206,7 @@ cl_kernel* opencl_init(opencl_context *ctx, int profiling, char *kernel_function
 		NOFAIL(clGetProgramBuildInfo(ctx->program, ctx->device, CL_PROGRAM_BUILD_LOG, 0, 0, &len));
 		msg = (char*)malloc(len);
 		NOFAIL(clGetProgramBuildInfo(ctx->program, ctx->device, CL_PROGRAM_BUILD_LOG, len, msg, NULL));
-		printf("======== Compile error: ========\n%s\n", msg);
+		printf("======== Compile error ========\n%s\n", msg);
 		free(msg);
 		fail(0, __LINE__, __FUNCTION__);
 	}

@@ -16,7 +16,7 @@
 #include "lattice.h"
 #include "opencl_host.h"
 #include "opencl_bind.h"
-
+#include "Kernel/metric_ADPS.h"
 
 
 
@@ -38,68 +38,70 @@ size_t floor_pow2(size_t x)
 
 #define GPU_SATURATION 256
 
+opencl_allocinfo
+sum_allocinfo(opencl_allocinfo *nfo, size_t nfo_n)
+{        
+    opencl_allocinfo ai = { 0 };
+
+    for (size_t i = 0; i < nfo_n; ++i)
+    {
+    #define MERGE(F) \
+        ai.F.constant += nfo[i].F.constant; \
+        ai.F.global += nfo[i].F.global; \
+        ai.F.local += nfo[i].F.local; 
+
+        MERGE(fixed)
+        MERGE(scale_pass)
+        MERGE(scale_workgroup)
+        MERGE(scale_reduce)
+    #undef MERGE
+    }
+
+    return ai;
+}
+
 opencl_workset
-ConfigureWorkload(
-    opencl_context *ctx, 
-    cl_kernel *kernel, 
-    size_t kernel_n,
-    count_t linext_count, 
-    cl_ulong alloc_global_input,
-    cl_ulong alloc_global_scratch,
-    cl_ulong alloc_local)
+ConfigureWorkload(opencl_context *ctx, count_t linext_count, opencl_allocinfo nfo)
 {
 	size_t local_size, pass_size, saturation;
     cl_ulong global_limit;
 	cl_ulong iterations;
     opencl_workset work;
-
+    //NOFAIL(clGetKernelWorkGroupInfo(kernel, ctx->device, CL_KERNEL_WORK_GROUP_SIZE, sizeof hint, &hint, 0));
+   
     {
-        cl_ulong kernel_local = 0;
-        cl_ulong wgs_globalmem, wgs_constmem;
+        const cl_ulong max_local = ctx->cfg_max_local_storage;
+        const cl_ulong max_global = ctx->cfg_max_global_storage;
+        const cl_ulong max_constant = ctx->cfg_max_const_storage;
         
-        //NOFAIL(clGetKernelWorkGroupInfo(kernel, ctx->device, CL_KERNEL_WORK_GROUP_SIZE, sizeof hint, &hint, 0));
-        for (size_t i = 0; i < kernel_n; ++i)
-        {
-            cl_ulong r;
+        #define CONSTRAINT(F,F2,DEFAULT) \
+            ((nfo.F2.F) \
+                ? floor_pow2((max_##F - nfo.fixed.F) / nfo.F2.F) \
+                : DEFAULT)
 
-            NOFAIL(clGetKernelWorkGroupInfo(kernel[i], ctx->device, 
-                CL_KERNEL_LOCAL_MEM_SIZE, sizeof r, &r, 0));
+        #define MINIMUM(CRIT,F2,D) \
+            min(CRIT(local,F2,D),min(CRIT(constant,F2,D),CRIT(global,F2,D)))
 
-            if (kernel_local < r)
-                kernel_local = r;
-        }
-
-        alloc_local += kernel_local;
-        
-        local_size = (size_t) floor_pow2(ctx->cfg_max_local_storage / alloc_local);
-        if (alloc_global_scratch == 0)
-            wgs_globalmem = floor_pow2(ctx->cfg_max_global_storage - alloc_global_input);
-        else
-            wgs_globalmem = floor_pow2((ctx->cfg_max_global_storage - alloc_global_input) / alloc_global_scratch);
-
-        wgs_constmem = wgs_globalmem; // TODO: check const mem
-        global_limit = min(wgs_globalmem, wgs_constmem);
+        local_size   = MINIMUM(CONSTRAINT, scale_workgroup, ctx->cfg_max_workgroup_size);
+        global_limit = MINIMUM(CONSTRAINT, scale_pass, linext_count);
     }
+
     saturation = min(floor_pow2(global_limit / ctx->cfg_compute_units), GPU_SATURATION);
     pass_size = (ctx->cfg_compute_units * saturation * local_size);
 
-    printf("OpenCL: local_alloc: %llu * %d = %llu\n", 
-        alloc_local, 
-        local_size, 
-        local_size * alloc_local
-        );
+#define ALLOC_SIZE(F) ( \
+        nfo.scale_workgroup.F*local_size + \
+        nfo.scale_pass.F*pass_size + \
+        nfo.fixed.F \
+        )
 
-    printf("OpenCL: global_alloc: %llu + %llu * %d = %llu\n", 
-        alloc_global_input, 
-        alloc_global_scratch, 
-        pass_size,
-        alloc_global_input + (pass_size * alloc_global_scratch)
-        );
+    printf("OpenCL: %s: %llu\n", "const_alloc", ALLOC_SIZE(constant));
+    printf("OpenCL: %s: %llu\n", "global_alloc", ALLOC_SIZE(global));
+    printf("OpenCL: %s: %llu\n", "local_alloc", ALLOC_SIZE(local));
 
-    assert(local_size * alloc_local < ctx->cfg_max_local_storage);
-    assert(alloc_global_input + (pass_size * alloc_global_scratch) < ctx->cfg_max_global_storage);
-
-
+    assert(ALLOC_SIZE(constant) < ctx->cfg_max_const_storage);
+    assert(ALLOC_SIZE(global) < ctx->cfg_max_global_storage);
+    assert(ALLOC_SIZE(local) < ctx->cfg_max_local_storage);
 	
 	if ((count_t)pass_size > linext_count)
 		pass_size = (size_t)ROUND_UP(linext_count, 2);
@@ -121,151 +123,75 @@ ConfigureWorkload(
 	work.pass_size = pass_size;
 	work.total = linext_count;
 
-    /*
-    //const_alloc += cl_kernel_mem_usage * work->local_size;
-
-    if (work.const_alloc > ctx->cfg_max_const_storage)
-    {
-        printf("OpenCL: max const storage exceeded (%llu, max = %llu)\n",
-            work.const_alloc, ctx->cfg_max_const_storage);
-
-        exit(-1);
-    }
-    else
-    {
-        printf("OpenCL: allocating %llu/%llu const storage.\n",
-            work.const_alloc, ctx->cfg_max_const_storage);
-    }
-    */
-
     return work;
 }
+#undef CONSTRAINT
+#undef MINIMUM
+#undef ALLOC_SIZE
 
-/*
-	
-// CPU version calls this function directly
-__kernel void kernel_reduce(
-	__global result_t  *metric,
-	__local result_t   *scratch,
-	__global result_t  *result)
-
-// CPU version calls this function directly
-__kernel void kernel_metric(DB,
-	llf_criteria       cfg,
-	__local  ideal_t   *pasv_scratch,
-	__global ideal_t   *linext,
-	ideal_t             linext_width,
-	__global result_t  *output)
-
-__kernel void kernel_linext(
-	__global ideal_t *ideals,
-	__global count_t *counts,
-	__global index_t *adjacency,
-	struct buildpath_info info,
-	__global ideal_t *output)
-{
-*/
 
 opencl_workset
-clbp_bind(clbp_context *bp,
-	ideal_lattice *g,
-	item_t *items,
-	size_t  items_len,
-	llf_criteria *cfg_input,
-	opencl_kernel_arg **output,
-	opencl_kernel_arg **bpinfo)
+clbp_bind(clbp_context *bp,	ideal_lattice *l, item_t *items, size_t  items_len,	llf_criteria *cfg_input)
 {
-#ifdef SEPARATE_KERNELS
 	opencl_kernel_arg *linext;
-	opencl_kernel_arg *metric;
-#endif
-	size_t outlen;
-	opencl_workset work;
-	opencl_kernel_params *a;
-	cl_kernel k;
-	opencl_context *ctx = &bp->ctx;
-    const size_t tmpN_pasv   = items_len * sizeof (ideal_t);
-    const size_t tmpN_reduce = sizeof (result_t); 
-#ifdef SEPARATE_KERNELS
-    const size_t glblN_metric = sizeof (result_t); 
-    const size_t glblN_linext = g->linext_width * sizeof(*g->ideals);
-#else
-    const size_t glblN_linext = 0;
-    const size_t glblN_metric = 0;
-#endif
-    cl_ulong alloc_local = tmpN_reduce + tmpN_pasv;
-    cl_ulong alloc_global_scratch = 0, alloc_global_input = 0;
-    cl_ulong alloc_db = sizeof *items * items_len;
-    cl_ulong alloc_lattice;
+	opencl_context *x = &bp->ctx;
+    opencl_allocinfo nfo[2] = { 0 };
+    opencl_workset wset[2];
+    opencl_workset work;
 
-    alloc_lattice = g->edge_count * (sizeof *g->ideals + sizeof *g->neighbors);
-    alloc_lattice += g->vertex_count * sizeof *g->counts;
-    alloc_global_input   = alloc_lattice + alloc_db;
-    alloc_global_scratch = glblN_metric + glblN_linext; // scales off pass_size
+    nfo[0] = linext__allocnfo__(x, x->kernel[0], l);
+    nfo[1] = metric_ADPS__allocnfo__(x, x->kernel[1], items_len);
 
-    // TODO: get this working with SEPRATE_KERNELS
-    work = ConfigureWorkload(ctx, ctx->kernel, ctx->kernel_n, g->linext_count, 
-        alloc_global_input, 
-        alloc_global_scratch, 
-        alloc_local);
+    wset[0] = ConfigureWorkload(x, l->linext_count, nfo[0]); 
+    wset[1] = ConfigureWorkload(x, l->linext_count, nfo[1]);
 
-    
+    // TODO: this doesn't really handle the minimum resource requirement right
+    work = (wset[0].local_size < wset[1].local_size)
+         ? wset[0]
+         : wset[1];
 
-    k = ctx->kernel[0]; a = &bp->args[0];
-	ka_mglobal(ctx, k, ka_push(a), "ideals", A_IN, CL_MEM_READ_ONLY, g->ideals, g->edge_count*sizeof(*g->ideals));
-	ka_mglobal(ctx, k, ka_push(a), "counts", A_IN, CL_MEM_READ_ONLY, g->counts, g->vertex_count*sizeof(*g->counts));
-    ka_mglobal(ctx, k, ka_push(a), "neighbors", A_IN, CL_MEM_READ_ONLY, g->neighbors, g->edge_count*sizeof(*g->neighbors));
-	*bpinfo = ka_ignore(ctx, k, ka_push(a));
-
-	
-#ifdef SEPARATE_KERNELS
-	linext = ka_mem(ctx, k, ka_push(a), GA_MEM, "linexts", 0, CL_MEM_READ_WRITE, 0, glblN_linext*work.pass_size);
-
-	k = ctx->kernel[1]; a = &bp->args[1];
-#endif
-    ka_mconst(ctx, k, ka_push(a), "db_items", 0, items, alloc_db);
-	ka_value(ctx, k, ka_push(a), "cfg_input", cfg_input, sizeof(*cfg_input));
-	ka_mlocal(ctx, k, ka_push(a), "pasv_scratch", tmpN_pasv*work.local_size);
-#ifdef SEPARATE_KERNELS
-	ka_reuse(ctx, k, ka_push(a), linext);
-	ka_value(ctx, k, ka_push(a), "linext_width", &g->linext_width, sizeof g->linext_width);
-    metric = ka_mem(ctx, k, ka_push(a), GA_MEM, "results_1", 0, CL_MEM_READ_WRITE, 0, glblN_metric*work.pass_size);
-
-	k = ctx->kernel[2]; a = &bp->args[2];
-	ka_reuse(ctx, k, ka_push(a), metric);
-#endif
-	ka_mlocal(ctx, k, ka_push(a), "scratch", tmpN_reduce*work.local_size);
-	outlen = work.pass_size / work.local_size;
-	*output = ka_mglobal(ctx, k, ka_push(a), "output", A_OUT, CL_MEM_WRITE_ONLY, 0, sizeof(result_t)* outlen);
+    linext = linext__bind__(x, x->kernel[0], &bp->args[0], l, &bp->lattice_info[0], work.pass_size);
+    bp->lattice_info[1] = metric_ADPS__bind__(x, x->kernel[1], &bp->args[1], 
+        linext, items, items_len, cfg_input, 
+        &bp->output, 
+        work.pass_size, 
+        work.local_size);
 
     return work;
 }
 
+
 cl_ulong
-clbp_run(clbp_context *bp, opencl_kernel_arg *bpi, buildpath_info info, opencl_kernel_arg *output, opencl_workset *work)
+clbp_run(clbp_context *bp, lattice_info info, opencl_workset *work)
 {
-	cl_event ev[4];
-	cl_event ev_last;
+    cl_event ev[CLBP_KERNEL_N];
+    cl_event ev_read;
+	cl_event *ev_last;
 	cl_ulong sum = 0;
 	opencl_context *ctx = &bp->ctx;
 
-	NOFAIL(clSetKernelArg(bpi->kernel, bpi->index, sizeof info, &info));
-#ifdef SEPARATE_KERNELS
-	NOFAIL(clEnqueueNDRangeKernel(ctx->queue, ctx->kernel[0], 1, NULL, &work->pass_size, &work->local_size, 0, NULL, &ev[0]));
-	NOFAIL(clEnqueueNDRangeKernel(ctx->queue, ctx->kernel[1], 1, NULL, &work->pass_size, &work->local_size, 1, &ev[0], &ev[1]));
-	NOFAIL(clEnqueueNDRangeKernel(ctx->queue, ctx->kernel[2], 1, NULL, &work->pass_size, &work->local_size, 1, &ev[1], &ev[2]));
-	ev_last = ev[2];
-#else
-	NOFAIL(clEnqueueNDRangeKernel(ctx->queue, ctx->kernel[0], 1, NULL, &work->pass_size, &work->local_size, 0, NULL, &ev[0]));
-	ev_last = ev[0];
-#endif
+    NOFAIL(clSetKernelArg(bp->lattice_info[0]->kernel, bp->lattice_info[0]->index, sizeof info, &info));
+    NOFAIL(clSetKernelArg(bp->lattice_info[1]->kernel, bp->lattice_info[1]->index, sizeof info, &info));
 
-	NOFAIL(clEnqueueReadBuffer(ctx->queue, output->cl_mem, CL_TRUE, 0,
-		output->buf_size,
-		output->buf_data, 1, &ev_last, &ev[3]));
+    ev_last = 0;
+    for (size_t i = 0; i < ctx->kernel_n; ++i)
+    {
+        NOFAIL(clEnqueueNDRangeKernel(ctx->queue, ctx->kernel[i], 1, NULL, 
+            &work->pass_size, 
+            &work->local_size, (ev_last) ? 1 : 0, 
+            ev_last, 
+            &ev[i]));
 
-	NOFAIL(clWaitForEvents(1, &ev[3]));
-	
+        ev_last = &ev[i];
+       // NOFAIL(clFinish(ctx->queue));
+    }
+
+    NOFAIL(clEnqueueReadBuffer(ctx->queue, bp->output->cl_mem, CL_TRUE, 0,
+        bp->output->buf_size,
+        bp->output->buf_data, 1, ev_last, &ev_read));
+
+    NOFAIL(clWaitForEvents(1, &ev_read));
+    
 	if (ctx->profiling)
 	{
 		for (size_t i = 0; i < ctx->kernel_n; ++i)
@@ -277,7 +203,7 @@ clbp_run(clbp_context *bp, opencl_kernel_arg *bpi, buildpath_info info, opencl_k
 		}
 	}
 
-	clReleaseEvent(ev[3]);
+    clReleaseEvent(ev_read);
 	
 	for (size_t i = 0; i < ctx->kernel_n; ++i)
 		clReleaseEvent(ev[i]);
@@ -285,28 +211,18 @@ clbp_run(clbp_context *bp, opencl_kernel_arg *bpi, buildpath_info info, opencl_k
 	return sum;
 }
 
+
 cl_kernel *
 clbp_init(clbp_context *ctx)
 {
-    #define C_DEFINES "-DUSE_OPENCL -ID:/GitRoot/llio/Source/Optimizer/BuildPath -ID:/GitRoot/llio/Source/Optimizer/Libs/Random123-1.08/include/"
+    #define C_DEFINES "-DUSE_OPENCL -ID:/GitRoot/llio/Source/Optimizer/BuildPath -ID:/GitRoot/llio/Source/Optimizer/BuildPath/Kernel/"
 
-#ifdef SEPARATE_KERNELS
-
-	char *kernels[CLBP_KERNEL_N] = { "kernel_linext", "kernel_metric", "kernel_reduce" };
-    return opencl_init(&ctx->ctx, 1, kernels, CLBP_KERNEL_N,
-        "D:/GitRoot/llio/Source/Optimizer/BuildPath/kernel_LMR_3.cl",
-        C_DEFINES);
-
-#else
-
-	char *kernels[CLBP_KERNEL_N] = { "kernel_LMR" };
-
-    return opencl_init(&ctx->ctx, 1, kernels, CLBP_KERNEL_N,
-        "D:/GitRoot/llio/Source/Optimizer/BuildPath/kernel_LMR.cl",
-        C_DEFINES);
-
-#endif
-
+	char *kernels[CLBP_KERNEL_N] = { "linext", "metric_ADPS" };
+    char *files[CLBP_KERNEL_N] = {
+        "D:/GitRoot/llio/Source/Optimizer/BuildPath/lattice_kernel.c",
+        "D:/GitRoot/llio/Source/Optimizer/BuildPath/Kernel/metric_ADPS.c",
+    };
+    return opencl_init(&ctx->ctx, 1, kernels, CLBP_KERNEL_N, files, CLBP_KERNEL_N, C_DEFINES);
 }
 
 void

@@ -20,8 +20,8 @@
 #include "../opencl_host.h"
 #include "../opencl_bind.h"
 
-#include "../opencl_kernel.h"
-
+#include "../Kernel/metric_ADPS.h"
+#include "../lattice_kernel.h"
 
 //////////////////////////////////////////////////////////////////
 
@@ -50,10 +50,8 @@ result_t unittest_buildpathGPU(ideal_lattice *lattice, item_t *db_filtered, size
 	cl_ulong i;
 
 	opencl_workset workset;
-
-	opencl_kernel_arg *output, *bpinfo;
 	clbp_context gpu = CLBP_CONTEXT_INIT;
-	buildpath_info info;
+	lattice_info info;
 	result_t max;
 	size_t result_n;
 	
@@ -64,20 +62,21 @@ result_t unittest_buildpathGPU(ideal_lattice *lattice, item_t *db_filtered, size
 
 	clbp_init(&gpu);
 
-	workset = clbp_bind(&gpu, lattice, db_filtered, db_len, cfg, &output, &bpinfo);
+	workset = clbp_bind(&gpu, lattice, db_filtered, db_len, cfg);
 	
 	
-	result_n = output->buf_size / sizeof (result_t);
+	result_n = gpu.output->buf_size / sizeof (result_t);
 	max = (result_t){ 0, 0 };
 	
 	for (i = 0, time = 0; i < workset.iterations; ++i)
 	{
 		result_t local_max;
 		
-		time += clbp_run(&gpu, bpinfo, info, output, &workset);
+		time += clbp_run(&gpu, info, &workset);
 		info.linext_offset += workset.pass_size;
 
-		local_max = FindMax(output->buf_data, result_n);
+		local_max = FindMax(gpu.output->buf_data, result_n);
+
 		if (max.metric < local_max.metric)
 			max = local_max;
 
@@ -99,49 +98,49 @@ result_t unittest_buildpathGPU(ideal_lattice *lattice, item_t *db_filtered, size
 	//time=63382346  processed=1966080
 	//time=72518895  processed=1966080
     //time=26234248  processed=1966080
+    //time=57284564  processed=1966080
+    //time=42149902  processed=1966080 (const db)
 	return max;
 }
 
 
 result_t unittest_buildpathCPU(ideal_lattice *lattice, item_t *db_filtered, size_t db_len, llf_criteria *cfg)
 {
-	count_t j, pass_size, iterations;
+	size_t pass_size;
+    count_t j,iterations;
 	result_t result = (result_t){0,0};
-	buildpath_info info;
-	ideal_t *pasv_scratch;
+	lattice_info info;
 	info.max_neighbors = lattice->max_neighbors;
 	info.linext_width  = lattice->linext_width;
 	info.linext_offset = 0;
 	info.linext_count  = lattice->linext_count;
 
 
-	pass_size   = 1000000;//67108864;
+	pass_size = 1000000; // TODO: is this suffeciently large to 
 
 	if (pass_size > lattice->linext_count)
-		pass_size = lattice->linext_count;
+		pass_size = (size_t) lattice->linext_count;
 
 	iterations = lattice->linext_count / pass_size;
 
 	printf("CPU: n=%llu, pass_size=%u\n", lattice->linext_count, pass_size);
-	pasv_scratch = malloc(db_len*sizeof(*pasv_scratch)*pass_size);
 
 	for (j = 0; j < iterations; ++j)
 	{
 		int i;
 		result_t local_best;
+        ideal_t le_buf[LINEXT_WIDTH_MAX];
+        result_t r;
 
-		#pragma omp parallel default(shared) private(i,local_best)
+		#pragma omp parallel default(shared) private(i,r,local_best,le_buf)
 		{
 			local_best = (result_t){ 0, 0 };
 
 			#pragma omp for schedule(static) nowait
 			for (i = 0; i < pass_size; ++i)
 			{
-				result_t r = k_buildpath(db_filtered, cfg, pasv_scratch,
-					lattice->ideals,
-					lattice->counts,
-					lattice->neighbors,
-					&info, i, i);
+                linext_nth(lattice, le_buf, info.linext_offset + i);
+                r = metric_ADPS(le_buf, db_filtered, cfg, &info, info.linext_offset + i);
 
 				if (local_best.metric < r.metric)
 					local_best = r;
@@ -161,11 +160,11 @@ result_t unittest_buildpathCPU(ideal_lattice *lattice, item_t *db_filtered, size
 	return result;
 }
 
+
 static void
 PrintExtension(ideal_lattice *il, item_t *db_filtered, itemid_t *idmap, result_t max)
 {
 	size_t i;
-	linext_t le;
 	itemid_t expected[] = { 14, 14, 130, 20, 102, 137 };
 
 	if (max.metric == 0)
@@ -173,17 +172,16 @@ PrintExtension(ideal_lattice *il, item_t *db_filtered, itemid_t *idmap, result_t
 	
 	else
 	{
-		le.le_index = il->linext_width;
-		le.le_len = il->linext_width;
-		k_linext_nth(il->ideals, il->counts, il->neighbors, il->max_neighbors, max.index, &le);
-		k_linext_print(&le);
+        ideal_t le_buf[LINEXT_WIDTH_MAX];
+        linext_nth(il, le_buf, max.index);
+        linext_print(le_buf, il->linext_width);
 
 		for (i = 0; i < il->linext_width; ++i)
 		{
-			itemid_t index = db_filtered[le.le_buf[i]].id;
+			itemid_t index = db_filtered[le_buf[i]].id;
 			//assert(index == expected[i]);
-			assert(dbi_find(index) == idmap[le.le_buf[i]-1]);
-			printf("%s, ", db_names[idmap[le.le_buf[i] - 1]]);
+			assert(dbi_find(index) == idmap[le_buf[i]-1]);
+			printf("%s, ", db_names[idmap[le_buf[i] - 1]]);
 		}
 
 		printf("\n");

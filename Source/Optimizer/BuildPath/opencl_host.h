@@ -35,11 +35,23 @@ typedef struct
 	cl_ulong iterations;
 	cl_ulong total;
 
-    //cl_ulong const_alloc;
-    //cl_ulong local_alloc;
-
 }  opencl_workset;
 
+typedef struct
+{
+    struct opencl_allocinfo_mem
+    {
+        cl_ulong local;
+        cl_ulong global;
+        cl_ulong constant;
+    };
+
+    struct opencl_allocinfo_mem fixed;
+    struct opencl_allocinfo_mem scale_workgroup;
+    struct opencl_allocinfo_mem scale_pass;
+    struct opencl_allocinfo_mem scale_reduce;
+
+} opencl_allocinfo;
 
 #define GA_IGNORE 0x0000
 #define GA_MEM    0x0001
@@ -98,8 +110,8 @@ opencl_kernel_arg *ka_reuse(opencl_context *, cl_kernel, opencl_kernel_arg *x, o
 
 void opencl_memcheck(opencl_context *ctx, cl_kernel, opencl_kernel_params *args, opencl_workset *work);
 cl_ulong opencl_run(opencl_context *ctx, cl_kernel, opencl_kernel_params *args, opencl_workset *work);
+cl_kernel* opencl_init(opencl_context *ctx, int profiling, char *kernel_function[], size_t kernel_n, char *source_file[], size_t source_n, char *build_flags);
 
-cl_kernel *opencl_init(opencl_context *ctx, int profiling, char *kernel_function[], size_t kernel_n, char *source_file, char *build_flags);
 void opencl_free(opencl_context *ctx);
 
 // TODO: real error handling

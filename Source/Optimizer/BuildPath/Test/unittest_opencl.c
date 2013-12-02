@@ -10,10 +10,12 @@
 #include "../opencl_bind.h"
 
 #include "../lattice.h"
+#include "../lattice_kernel.h"
 #include "reference_lattice.h"
 
 #define UTCL_DEF "-DUNIT_TEST -DUSE_OPENCL -ID:/GitRoot/llio/Source/Optimizer/BuildPath -ID:/GitRoot/llio/Source/Optimizer/Libs/Random123-1.08/include/"
-#define UTCL_SRC "D:/GitRoot/llio/Source/Optimizer/BuildPath/Test/unittest_kernel.cl"
+const char *UTCL_SRC_LATTICE[1] = { "D:/GitRoot/llio/Source/Optimizer/BuildPath/lattice_kernel.c" };
+const char *UTCL_SRC[1] = {"D:/GitRoot/llio/Source/Optimizer/BuildPath/Test/unittest_kernel.cl"};
 
 static int VECTOR_CMP(VECTOR(a), VECTOR(b))
 {
@@ -41,7 +43,7 @@ void unittest_opencl_mem()
 	VECTOR(*output_stats_all);
 	//stat_t (*output_stats_all)[STATS_T_VEC_N];
 	char *kernel_func = "kunittest_mem";
-	cl_kernel k = *opencl_init(&gpu, 1, &kernel_func, 1, UTCL_SRC, UTCL_DEF);
+	cl_kernel k = *opencl_init(&gpu, 1, &kernel_func, 1, UTCL_SRC, 1, UTCL_DEF);
 
 	ka_mconst(&gpu, k, ka_push(&args), "db_items", 0, db_items, sizeof db_items);
 
@@ -74,18 +76,19 @@ void unittest_opencl_mem()
 
 extern void unittest_lattice_cmp_reference_linext(size_t linext_width, ideal_t *le_storage, ideal_t *r_le, size_t r_le_n);
 
+
 void unittest_opencl_le()
 {
 	opencl_workset workset;
 	opencl_context gpu;
 	opencl_kernel_params args = OPENCL_KERNEL_PARAMS_INIT;
 	ideal_lattice lattice;
-	buildpath_info info;
+	lattice_info info;
 	int result;
 	void *output;
-	char *kfunc = "kunittest_le";
+	char *kfunc = "linext";
 
-	cl_kernel k = *opencl_init(&gpu, 1, &kfunc, 1, UTCL_SRC, UTCL_DEF);
+    cl_kernel k = *opencl_init(&gpu, 1, &kfunc, 1, UTCL_SRC_LATTICE, 1, UTCL_DEF);
 
 	result = lattice_create(reference_poset, sizeof reference_poset / sizeof *reference_poset, REFERENCE_POSET_N, &lattice);
 	assert(result == G_SUCCESS);
@@ -151,7 +154,7 @@ void unittest_opencl_mergestats()
 		{1,2,3}
 	};
 	char *kfunc = "kunittest_mergestats";
-	cl_kernel k = *opencl_init(&gpu, 1, &kfunc, 1, UTCL_SRC, UTCL_DEF);
+	cl_kernel k = *opencl_init(&gpu, 1, &kfunc, 1, UTCL_SRC, 1, UTCL_DEF);
 
 	PushUsualArgs(&gpu, k, &args, db, sizeof db / sizeof *db, sizeof *build_path, build_path, BUILD_PATH_N, BUILD_PATH_WIDTH);
 	output_stats = KA_DYN_OUTPUT(&gpu, k, ka_push(&args), "output_stats", sizeof *output_stats * BUILD_PATH_N);
@@ -254,7 +257,7 @@ void unittest_opencl_clearsubcomponents()
 	VECTOR(*output_stats);
 	char *kfunc = "kunittest_clearsubcomponents";
 
-	cl_kernel k = *opencl_init(&gpu, 1, &kfunc, 1, UTCL_SRC, UTCL_DEF);
+	cl_kernel k = *opencl_init(&gpu, 1, &kfunc, 1, UTCL_SRC, 1, UTCL_DEF);
 
 	ka_mlocal(&gpu, k, ka_push(&args), "pasv_scratch", TEST_DB_LEN*sizeof(ideal_t)*BUILD_PATH_N);
 	PushUsualArgs(&gpu, k, &args, test_db, TEST_DB_LEN, sizeof *build_path, build_path, BUILD_PATH_N, BUILD_PATH_WIDTH);
@@ -300,7 +303,7 @@ void unittest_opencl_llformulas()
 	cl_float (*output)[7];
 	llf_criteria cfg = { 0 };
 	char *kfunc = "kunittest_llformulas";
-	cl_kernel k = *opencl_init(&gpu, 1, &kfunc, 1, UTCL_SRC, UTCL_DEF);
+	cl_kernel k = *opencl_init(&gpu, 1, &kfunc, 1, UTCL_SRC, 1, UTCL_DEF);
 
 
 	cfg.time_frame = 3;

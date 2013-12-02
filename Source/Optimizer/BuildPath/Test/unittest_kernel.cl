@@ -18,29 +18,6 @@ __kernel void kunittest_mem(DB,
 }
   
 
-__kernel void kunittest_le(
-	__global ideal_t *ideals,
-	__global count_t *counts,
-	__global index_t *adjacency,
-	buildpath_info info,
-
-	__global ideal_t* result)
-{
-	linext_t le;
-	size_t i;
-	size_t nth = get_global_id(0);
-
-	le.le_index = info.linext_width;
-	le.le_len = info.linext_width;
-
-	k_linext_nth(ideals, counts, adjacency, info.max_neighbors, nth, &le);
-
-	result += nth * info.linext_width;
-
-	for (i = 0; i < info.linext_width; ++i)
-		result[i] = le.le_buf[i];
-}
-
 
 __kernel void kunittest_mergestats(DB,
 	__global itemid_t *xs,

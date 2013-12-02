@@ -66,7 +66,10 @@
     <ClCompile Include="..\..\..\BuildPath\Test\unittest_db_input.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\BuildPath\kernel_LMR.c">
+    <ClCompile Include="..\..\..\BuildPath\lattice_kernel.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\BuildPath\Kernel\metric_ADPS.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -86,9 +89,6 @@
     <ClInclude Include="..\..\..\BuildPath\lattice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\BuildPath\opencl_host.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\BuildPath\p_alloc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -101,9 +101,6 @@
     <ClInclude Include="..\..\..\BuildPath\db_input.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\BuildPath\opencl_bind.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\..\Database\db_layout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -112,9 +109,6 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\Database\vector.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\BuildPath\opencl_kernel.h">
-      <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\types.h">
       <Filter>Header Files</Filter>
@@ -128,6 +122,18 @@
     <ClInclude Include="..\..\..\BuildPath\lattice_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\BuildPath\opencl_host.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\BuildPath\lattice_kernel.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\BuildPath\Kernel\metric_ADPS.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\BuildPath\opencl_bind.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\Database\item.py">
@@ -137,12 +143,6 @@
       <Filter>Scripts</Filter>
     </None>
     <None Include="..\..\..\BuildPath\Test\unittest_kernel.cl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="..\..\..\BuildPath\kernel_LMR.cl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="..\..\..\BuildPath\kernel_LMR_3.cl">
       <Filter>Source Files</Filter>
     </None>
     <None Include="..\..\..\BuildPath\reduce.cl">

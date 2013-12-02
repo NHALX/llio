@@ -48,7 +48,7 @@
       <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\include;$(ProjectDir)\..\..\..\Libs\Random123-1.08\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <EnablePREfast>false</EnablePREfast>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
-      <PreprocessorDefinitions>LITTLE_ENDIAN;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>LITTLE_ENDIAN;WITH_OPENCL;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <OpenMPSupport>false</OpenMPSupport>
     </ClCompile>
     <Link>
@@ -67,7 +67,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\include;$(ProjectDir)\..\..\..\Libs\Random123-1.08\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>LITTLE_ENDIAN;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>LITTLE_ENDIAN;WITH_OPENCL;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
@@ -82,10 +82,11 @@
     <ClCompile Include="..\..\..\..\Database\db_items.c" />
     <ClCompile Include="..\..\..\..\Database\db_names.c" />
     <ClCompile Include="..\..\..\BuildPath\db_input.c" />
+    <ClCompile Include="..\..\..\BuildPath\Kernel\metric_ADPS.c" />
     <ClCompile Include="..\..\..\BuildPath\lattice.c" />
+    <ClCompile Include="..\..\..\BuildPath\lattice_kernel.c" />
     <ClCompile Include="..\..\..\BuildPath\opencl_bind.c" />
     <ClCompile Include="..\..\..\BuildPath\opencl_host.c" />
-    <ClCompile Include="..\..\..\BuildPath\kernel_LMR.c" />
     <ClCompile Include="..\..\..\BuildPath\p_alloc.c" />
     <ClCompile Include="..\..\..\BuildPath\Test\reference_lattice.c" />
     <ClCompile Include="..\..\..\BuildPath\Test\unittest_buildpath.c" />
@@ -107,12 +108,13 @@
     <ClInclude Include="..\..\..\BuildPath\db_input.h" />
     <ClInclude Include="..\..\..\BuildPath\error.h" />
     <ClInclude Include="..\..\..\BuildPath\genLE_Init.h" />
+    <ClInclude Include="..\..\..\BuildPath\Kernel\metric_ADPS.h" />
+    <ClInclude Include="..\..\..\BuildPath\lattice_kernel.h" />
     <ClInclude Include="..\..\..\BuildPath\lattice.h" />
     <ClInclude Include="..\..\..\BuildPath\lattice_types.h" />
     <ClInclude Include="..\..\..\BuildPath\le_test.h" />
     <ClInclude Include="..\..\..\BuildPath\opencl_bind.h" />
     <ClInclude Include="..\..\..\BuildPath\opencl_host.h" />
-    <ClInclude Include="..\..\..\BuildPath\opencl_kernel.h" />
     <ClInclude Include="..\..\..\BuildPath\p_alloc.h" />
     <ClInclude Include="..\..\..\BuildPath\tree.h" />
     <ClInclude Include="..\..\..\BuildPath\u_list.h" />
@@ -121,8 +123,6 @@
   <ItemGroup>
     <None Include="..\..\..\..\Database\item.py" />
     <None Include="..\..\..\..\Database\ItemPassive.py" />
-    <None Include="..\..\..\BuildPath\kernel_LMR.cl" />
-    <None Include="..\..\..\BuildPath\kernel_LMR_3.cl" />
     <None Include="..\..\..\BuildPath\reduce.cl" />
     <None Include="..\..\..\BuildPath\Test\unittest_kernel.cl" />
   </ItemGroup>

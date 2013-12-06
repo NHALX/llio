@@ -9,7 +9,7 @@
 #endif
 #endif
 
-// Use arrays since __constant c_short8 is bugged on my nvidia card
+// Use arrays since __constant c_short16 is bugged on my nvidia card
 #define ARRAY_STATS 
 // NOTE: that the db input needs to be changed for % based stats if you set this
 //#define INTEGER_STATS
@@ -25,7 +25,7 @@
 #endif
 
 #if defined (ARRAY_STATS) || !defined (__OPENCL_VERSION__)
-#define VECTOR_VEC_N 8
+#define VECTOR_VEC_N 16
 
 #define VECTOR_ADD(A,B) do { for (size_t I = 0; I < VECTOR_VEC_N; ++I) \
 	{ PART(A, I) += PART(B, I); }  } while (0)
@@ -51,18 +51,18 @@ typedef float_t stat_t;
 
 #define VECTOR_SIZEOF      (sizeof(stat_t)*VECTOR_VEC_N)
 #define VECTOR(SYM)		   stat_t (SYM)[VECTOR_VEC_N]
-#define VECTOR_ZERO_INIT	{ 0,0,0,0,0,0,0,0 }
+#define VECTOR_ZERO_INIT	{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
 #else
 #ifdef INTEGER_STATS
 typedef c_short stat_t;
-#define VECTOR_SIZEOF      (sizeof(cl_short8))
-#define VECTOR(SYM)		   cl_short8  SYM
-#define VECTOR_ZERO_INIT   (cl_short8){ 0,0,0,0,0,0,0,0 }
+#define VECTOR_SIZEOF      (sizeof(cl_short16))
+#define VECTOR(SYM)		   cl_short16  SYM
+#define VECTOR_ZERO_INIT   (cl_short16){ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
 #else
 typedef c_float stat_t;
-#define VECTOR_SIZEOF      (sizeof(cl_float8))
-#define VECTOR(SYM)		   cl_float8  SYM
-#define VECTOR_ZERO_INIT   (cl_float8){ 0,0,0,0,0,0,0,0 }
+#define VECTOR_SIZEOF      (sizeof(cl_float16))
+#define VECTOR(SYM)		   cl_float16  SYM
+#define VECTOR_ZERO_INIT   (cl_float16){ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
 #endif
 #endif
 #endif

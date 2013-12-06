@@ -91,7 +91,21 @@ static inline float llf_dmgtotal(llf_criteria *CFG, VECTOR(*X))
 }
 
 
+static inline float llf_sustain(llf_criteria *cfg, VECTOR(*X))
+{
+    float mit = llf_armor_mitigation(cfg->enemy_armor, F_ARMORPEN_PERCENT(*X), F_ARMORPEN_FLAT(*X));
+    float ad = llf_AD(F_AD(*X), F_HP(*X), F_HP2AD(*X));
+    float crit = llf_crit(F_CRIT_BONUS(*X), F_CRIT_CHANCE(*X));
+    float hit = mit * ad * crit;
+    float hit_rate = 10.0f / 60.0f;
+    float cast_dmg = 0;
+    float cast_rate = 0;
 
+    return F_HPRegen(*X) +
+        (F_LIFESTEAL_FLAT(*X) * hit_rate) +
+        (F_LIFESTEAL_PERCENT(*X) * hit_rate * hit) +
+        (F_SPELLVAMP(*X) * cast_rate * cast_dmg);
+}
 
 
 

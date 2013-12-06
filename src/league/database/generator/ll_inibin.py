@@ -240,13 +240,14 @@ def _setItemStats(item, fileid, strings, output):
     #self.SplashDamage=SplashDamage
     #self.FlatLifeSteal=FlatLifeSteal
     #self.BounceDamage=BounceDamage
-        
+    item.HPRegen       = get_f("HealthRegenPerSecond", 100) # TODO: check that this is right field
+    item.LifeSteal     = get_f("PercentLifeSteal", 100)
+    item.FlatLifeSteal = 0 #TODO: key is unknown
+    item.SpellVamp     = 0 #TODO: key is unknown
+    
     item.HP            = get_i("Health")
-    #item.HP_5          = get_f("HealthRegenPerSecond")
     item.AD            = get_i("Damage")
     #item.RuneArmorPen      = get_f("ArmorPenetration")
-    
-    item.Lifesteal     = get_f("PercentLifeSteal", 100)
     item.AttackSpeed   = get_f("PercentAttackSpeed", 100)
     item.CritChance    = get_f("PercentCriticalStrikeChance", 100)
     item.CritDamage    = get_f("PercentCriticalDamage", 100)
@@ -255,7 +256,6 @@ def _setItemStats(item, fileid, strings, output):
     #item.MP_5          = get_f("ManaRegenPerSecond")
     item.AbilityPower  = get_i("AbilityPower")
     #item.MagicPen      = get_f("MagicPenetration")
-    #item.SpellVamp     = get()
     #item.CDR           = get_f("PercentCooldownReduction")
     item.Armor         = get_i("Armor")
     item.MagicRest     = get_i("MagicResist")

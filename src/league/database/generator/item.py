@@ -4,7 +4,7 @@ import sys
 import traceback
 import copy
 
-import inibin
+import ll_inibin
 
     
 class Stats:
@@ -15,8 +15,10 @@ class Stats:
     def boost_magicdmg(self):
         return self.AbilityPower > 0 
         
-    def __init__(self,AD=0,HP=0,HPtoAD=0,MaxHP=0,ArmorPen=0,ArmorPenPercent=0,LifeSteal=0,FlatLifeSteal=0,CritDamage=0,
-                 CritChance=0,AttackSpeed=0,Movement=0,MovementBonus=0,CDR=0,OnHit=0,OnHitNeutral=0,DamageBonusNeutral=0,SplashDamageInner=0,SplashDamageOuter=0,BounceDamage=0):
+    def __init__(self,AD=0,HP=0,HPRegen=0,HPtoAD=0,MaxHP=0,ArmorPen=0,ArmorPenPercent=0,LifeSteal=0,FlatLifeSteal=0,CritDamage=0,
+                 CritChance=0,AttackSpeed=0,
+                 SpellVamp=0,
+                 Movement=0,MovementBonus=0,CDR=0,OnHit=0,OnHitNeutral=0,DamageBonusNeutral=0,SplashDamageInner=0,SplashDamageOuter=0,BounceDamage=0):
 
         self.AD=AD
         self.HP=HP
@@ -38,6 +40,8 @@ class Stats:
         self.SplashDamageOuter=SplashDamageOuter
         self.FlatLifeSteal=FlatLifeSteal
         self.BounceDamage=BounceDamage
+        self.HPRegen=HPRegen
+        self.SpellVamp=SpellVamp
     
     def __radd__(self,value):
         return __add(self,value)
@@ -116,7 +120,7 @@ def gen_itemdb(strings, itemdir):
 
         try:
             item = Item(id=None)
-            inibin.getFields(strings, int(fname[0]), itemdir + file, item);
+            ll_inibin.getFields(strings, int(fname[0]), itemdir + file, item);
             
             if item.RuneValid == False and item.Name:
                 itemdb[item.id] = item

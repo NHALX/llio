@@ -363,7 +363,8 @@ PrintMemUsage(size_t edges, size_t neighbors)
 #undef MB
 }
 
-int lattice_create(ideal_t p_relations[][2], size_t p_reln, size_t n, ideal_lattice *lattice)
+
+int CreateLattice(ideal_t p_relations[][2], size_t p_reln, size_t n, ideal_lattice *lattice)
 {
 	index_t *neighbors;
 	ideal_t *edges;
@@ -430,7 +431,7 @@ int lattice_create(ideal_t p_relations[][2], size_t p_reln, size_t n, ideal_latt
 
 // Map values from their internal representation to the given initial linear extension.
 // In other words: for i in {1,2..n}. i -> lattice.linear_extension[i]
-void lattice_valmap(ideal_lattice *lattice)
+void MapToLinext(ideal_lattice *lattice)
 {
 	size_t i, slen = lattice->ctx.vertex_count * lattice->ctx.max_neighbors;
 
@@ -438,6 +439,12 @@ void lattice_valmap(ideal_lattice *lattice)
 		lattice->ideals[i] = lattice->ctx.linear_extension[lattice->ideals[i] - 1];
 }
 
+int lattice_create(ideal_t p_relations[][2], size_t p_reln, size_t n, ideal_lattice *lattice)
+{
+    GUARD(CreateLattice(p_relations, p_reln, n, lattice));
+    MapToLinext(lattice);
+    return G_SUCCESS;
+}
 
 void lattice_free(ideal_lattice *lattice)
 {

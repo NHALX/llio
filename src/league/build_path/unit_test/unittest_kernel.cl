@@ -15,7 +15,7 @@ __kernel void kunittest_mem(DB,
 
 	VECTOR_COPY(stat_all[i], db_items[i].stats);
 }
-  
+    
 
 
 __kernel void kunittest_mergestats(DB,

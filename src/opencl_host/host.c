@@ -153,7 +153,7 @@ opencl_buildv(opencl_context *ctx, char *kernel_function[], size_t kernel_n, cha
         fail(0, __LINE__, __FUNCTION__);
         return -1;
     }
-
+    // TODO: see build options for optimization
     if (clBuildProgram(ctx->program, 0, NULL, build_flags, NULL, NULL) != CL_SUCCESS)
     {
         PrintBuildLog(ctx);

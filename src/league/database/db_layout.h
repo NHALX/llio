@@ -7,7 +7,7 @@
 
 #define PASSIVE_NULL                 0
 #define BUILDTREE_WIDTH              4
-#define ITEM_T_SIZE 128
+#define ITEM_T_SIZE                  256
 
 typedef ushort_t itemid_t;
 
@@ -35,6 +35,9 @@ typedef struct {
 #define F_ARMORPEN_PERCENT(X)           PART(X,5)
 #define F_HP(X)                         PART(X,6)
 #define F_HP2AD(X)                      PART(X,7)
-
+#define F_HPRegen(X)                    PART(X,8)
+#define F_LIFESTEAL_PERCENT(X)          PART(X,9)
+#define F_LIFESTEAL_FLAT(X)             PART(X,10)
+#define F_SPELLVAMP(X)                  PART(X,11)
 
 #endif

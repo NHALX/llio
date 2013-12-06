@@ -16,8 +16,10 @@ Reduce(result_t dps, __local volatile result_t* scratch, __global result_t* resu
         offset > 0;
         offset >>= 1) //offset = offset / 2) 
     {
-        if (local_index < offset) {
-            result_t other = scratch[local_index + offset];
+        if (local_index < offset) 
+        {
+            result_t other       = scratch[local_index + offset];
+            dps                  = scratch[local_index];
             scratch[local_index] = (dps.metric > other.metric) ? dps : other;
         }
         barrier(CLK_LOCAL_MEM_FENCE);

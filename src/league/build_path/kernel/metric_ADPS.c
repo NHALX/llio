@@ -82,10 +82,10 @@ MetricAreaDPS(DB,
 	uint inventory_slots;
 	float result   = 0;
 	float prev_dps = 0;
+    //uint total_cost = 0; 
 
 	VECTOR(stats) = VECTOR_ZERO_INIT;
-
-
+  
 	for (bs = 0, inventory_slots = 0; bs < dbi_n; ++bs) 
 	{	
 		size_t item = dbi[bs];
@@ -96,10 +96,16 @@ MetricAreaDPS(DB,
 			{ *output = 0; return ERROR_INVENTORY; }
 
 		result += (prev_dps * ((float)db_items[dbi[bs]].upgrade_cost));
+        //total_cost += db_items[dbi[bs]].upgrade_cost;
+
+#ifdef METRIC_ADPS
 		prev_dps = llf_dmgtotal(cfg, &stats); 
+#else
+        prev_dps = llf_sustain(cfg, &stats);
+#endif
 	}
-	 
-	*output = result;
+    *output = result;
+    //*output = (total_cost) ? result / total_cost : 0;
 	return ERROR_NONE;
 }
 
@@ -119,7 +125,7 @@ __kernel void metric_ADPS(
     count_t nth_extension = info.linext_offset + get_global_id(0);
 
     linext       += info.linext_width * get_global_id(0);
-    pasv_scratch += PASV_SCRATCH_LEN(info.linext_width) * get_local_id(0); // TODO: move this to caller so the space usage of this on CPU isnt linear
+    pasv_scratch += PASV_SCRATCH_LEN(info.linext_width) * get_local_id(0);
 
     ZERO_INIT(pasv_scratch, PASV_SCRATCH_LEN(info.linext_width));
 

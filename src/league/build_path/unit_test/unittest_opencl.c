@@ -98,8 +98,7 @@ void unittest_opencl_le()
     k = gpu.kernel[0];
 	result = lattice_create(reference_poset, sizeof reference_poset / sizeof *reference_poset, REFERENCE_POSET_N, &lattice);
 	assert(result == G_SUCCESS);
-	lattice_valmap(&lattice); // TODO: merge this into lattice create or something
-
+ 
 	info.max_neighbors = lattice.max_neighbors;
 	info.linext_width  = lattice.linext_width;
 	info.linext_count  = lattice.linext_count;

@@ -25,7 +25,6 @@ typedef struct
 
 void lattice_free(ideal_lattice *lattice);
 int lattice_create(ideal_t p_relations[][2], size_t p_reln, size_t n, ideal_lattice *lattice);
-void lattice_valmap(ideal_lattice *lattice);
 void glbinit_lattice();
 
 #endif

@@ -201,12 +201,12 @@ void unittest_buildpath()
 	ideal_lattice lattice;
 	size_t i; 
 	test_func tests[] = {
-		//&unittest_buildpathCPU,
+		&unittest_buildpathCPU,
 		&unittest_buildpathGPU
 	};
 	#define ITEM_LEN (sizeof(items)/sizeof(*items))
     //char *items[] = { "Youmuu's Ghostblade", "The Bloodthirster"};
-	char *items[] = { "Last Whisper", "The Bloodthirster", "Blade of the Ruined King" }; 
+    char *items[] = { "The Bloodthirster", "Warmog's Armor" };
 	//char *items[] = { "Youmuu's Ghostblade" };
 	itemid_t global_idx[IDMAP_MAX_WIDTH*ITEM_LEN];
 	
@@ -219,7 +219,6 @@ void unittest_buildpath()
 	vertex_n = dbi_poset(items, ITEM_LEN, global_idx, poset, &poset_n);
 	result = lattice_create(poset, poset_n, vertex_n, &lattice);
 	assert(result == G_SUCCESS);
-	lattice_valmap(&lattice); // TODO: merge this into lattice create or something
 
 	db_filtered = dbi_filter(vertex_n, global_idx, &db_len);
 	assert(db_filtered);

@@ -232,6 +232,8 @@ unittest_lattice_cmp_reference_linext(size_t linext_width, ideal_t *le_storage, 
 	assert(memcmp(r_le, le_storage, rle_size) == 0);
 }
 
+extern int CreateLattice(ideal_t p_relations[][2], size_t p_reln, size_t n, ideal_lattice *lattice);
+extern void MapToLinext(ideal_lattice *lattice);
 
 void
 unittest_lattice_p(
@@ -255,7 +257,7 @@ unittest_lattice_p(
 	size_t rle_size;
 
 
-	result = lattice_create(poset, poset_n, lattice_n, &lattice);
+    result = CreateLattice(poset, poset_n, lattice_n, &lattice);
 	assert(result == G_SUCCESS);
 
 	if (!quiet)
@@ -273,7 +275,7 @@ unittest_lattice_p(
 	INIT_T_CTX(test, r_lattice, r_lattice_n);
 	tree_map(&lattice, lattice.ctx.root, 1, &test_edge, &test);
 
-	lattice_valmap(&lattice);
+    MapToLinext(&lattice);
 
 	if (!quiet)
 	{

@@ -8,7 +8,6 @@ typedef struct
 {
     uint_t max_neighbors;
     uint_t linext_width;
-    count_t linext_offset;
     count_t linext_count;
 } lattice_info;
 
@@ -16,11 +15,11 @@ typedef struct
 
 #ifndef __OPENCL_VERSION__
 #include "poset/lattice.h"
-#include "opencl_host/host.h"
+#include "opencl_host/function.h"
 void linext_print(ideal_t *le_buf, size_t le_len);
-void linext_nth(ideal_lattice *il, ideal_t *le_buf, count_t index);
-opencl_kernel_arg *linext__bind__(opencl_context *ctx, cl_kernel k, opencl_kernel_params *a, ideal_lattice *g, opencl_kernel_arg **bpinfo, size_t pass_size);
-opencl_allocinfo linext__allocnfo__(opencl_context *ctx, cl_kernel k, ideal_lattice *g);
+void linext_nth(ideal_lattice *il, ideal_t *le_buf, count_t offset, size_t index);
+opencl_kernel_arg *linext__bind__(opencl_function *func, bool_t copy_output, ideal_lattice *g, size_t pass_size);
+opencl_allocinfo linext__allocnfo__(opencl_function *func, ideal_lattice *g);
 #endif
 
 #endif

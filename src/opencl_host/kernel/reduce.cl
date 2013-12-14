@@ -1,6 +1,6 @@
 
 // Find maximum, NOTE: this requires a power of 2 local size
-static
+
 void
 Reduce(result_t dps, __local volatile result_t* scratch, __global result_t* result)
 {

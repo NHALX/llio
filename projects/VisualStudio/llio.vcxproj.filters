@@ -1,0 +1,197 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="opencl_host">
+      <UniqueIdentifier>{4c429d33-39f6-451e-b9cb-477e4fe456c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="league">
+      <UniqueIdentifier>{f3b5800a-f3b8-48e2-93a8-bb23ce9db74f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="league\database">
+      <UniqueIdentifier>{928827d8-af59-4e8a-8d3a-f5e41677f882}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="poset">
+      <UniqueIdentifier>{d7e34266-a0c8-4c68-9232-61c0c7494360}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="league\build_path">
+      <UniqueIdentifier>{ce58e369-4672-4440-a477-ab4332686562}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="combinatorics">
+      <UniqueIdentifier>{d1b6e165-c25c-4f8d-ac12-339899f2fd74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="league\build_combo">
+      <UniqueIdentifier>{b9d6ab3b-1361-458c-b895-f9b5d6ecd7bf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\league\database\db_items.c">
+      <Filter>league\database</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\database\db_names.c">
+      <Filter>league\database</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poset\lattice.c">
+      <Filter>poset</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poset\p_alloc.c">
+      <Filter>poset</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poset\tree.c">
+      <Filter>poset</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poset\u_list.c">
+      <Filter>poset</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poset\kernel\lattice_kernel.c">
+      <Filter>poset</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\opencl_host\host.c">
+      <Filter>opencl_host</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poset\unit_test\unittest_lattice.c">
+      <Filter>poset</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poset\unit_test\unittest_tree.c">
+      <Filter>poset</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poset\unit_test\unittest_u_list.c">
+      <Filter>poset</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poset\unit_test\reference_lattice.c">
+      <Filter>poset</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\build_path\unit_test\unittest_opencl.c">
+      <Filter>league\build_path</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\build_path\db_input.c">
+      <Filter>league\build_path</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\build_path\kernel\metric_ADPS.c">
+      <Filter>league\build_path</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\build_path\opencl_bind.c">
+      <Filter>league\build_path</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\build_path\unit_test\unittest_buildpath.c">
+      <Filter>league\build_path</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\build_path\unit_test\unittest_db_input.c">
+      <Filter>league\build_path</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\combinatorics\combination.c">
+      <Filter>combinatorics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\build_combo\build_combo.c">
+      <Filter>league\build_combo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\combinatorics\unit_test\unittest_combination.c">
+      <Filter>combinatorics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\combinatorics\factorial.c">
+      <Filter>combinatorics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\opencl_host\function.c">
+      <Filter>opencl_host</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\opencl_host\kernel_arg.c">
+      <Filter>opencl_host</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\build_combo\unit_test\unittest_buildcombo.c">
+      <Filter>league\build_combo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\unit_test\unittest_league.c">
+      <Filter>league</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\league\database\database.h">
+      <Filter>league\database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\league\database\db_info.h">
+      <Filter>league\database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\league\database\db_layout.h">
+      <Filter>league\database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\poset\error.h">
+      <Filter>poset</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\poset\lattice.h">
+      <Filter>poset</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\poset\lattice_types.h">
+      <Filter>poset</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\poset\p_alloc.h">
+      <Filter>poset</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\poset\tree.h">
+      <Filter>poset</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\poset\u_list.h">
+      <Filter>poset</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\poset\kernel\lattice_kernel.h">
+      <Filter>poset</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\opencl_host\dummy.h">
+      <Filter>opencl_host</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\opencl_host\host.h">
+      <Filter>opencl_host</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\poset\unit_test\reference_lattice.h">
+      <Filter>poset</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\league\build_path\db_input.h">
+      <Filter>league\build_path</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\league\build_path\kernel\metric_ADPS.h">
+      <Filter>league\build_path</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\league\build_path\opencl_bind.h">
+      <Filter>league\build_path</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\types.h" />
+    <ClInclude Include="..\..\src\types_host.h" />
+    <ClInclude Include="..\..\src\types_kernel.h" />
+    <ClInclude Include="..\..\src\league\ll_formulas.h">
+      <Filter>league</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\league\database\vector.h">
+      <Filter>league\database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\league\common.h">
+      <Filter>league</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\combinatorics\combination.h">
+      <Filter>combinatorics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\combinatorics\factorial.h">
+      <Filter>combinatorics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\opencl_host\kernel_arg.h">
+      <Filter>opencl_host</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\opencl_host\function.h">
+      <Filter>opencl_host</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\league\build_combo\build_combo.h">
+      <Filter>league\build_combo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\league\unit_test\find_max.h">
+      <Filter>league</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\league\build_path\kernel\reduce.cl">
+      <Filter>league\build_path</Filter>
+    </None>
+    <None Include="..\..\src\league\build_path\unit_test\unittest_kernel.cl">
+      <Filter>league\build_path</Filter>
+    </None>
+    <None Include="..\..\src\opencl_host\kernel\reduce.cl">
+      <Filter>opencl_host</Filter>
+    </None>
+  </ItemGroup>
+</Project>

@@ -7,4 +7,8 @@
 #include "types_host.h"
 #endif
 
+typedef uint_t bool_t;
+#define TRUE   ((bool_t)1)
+#define FALSE  ((bool_t)0)
+
 #endif

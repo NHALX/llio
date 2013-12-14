@@ -19,25 +19,6 @@ for (size_t zi = 0; zi < N; ++zi)\
 
 
 
-// TODO: handle stats that are merged multiplicatively 
-inline void
-MergeStats(DB, VECTOR(*stats), size_t item_id, bool copy_passive)
-{
-	if (copy_passive)
-		VECTOR_ADD(*stats, db_items[item_id].passive);
-
-	VECTOR_ADD(*stats, db_items[item_id].stats);
-}
-
-inline void
-RemoveStats(DB, VECTOR(*stats), size_t item_id, bool copy_passive)
-{
-	if (copy_passive)
-		VECTOR_SUB(*stats, db_items[item_id].passive);
-
-	VECTOR_SUB(*stats, db_items[item_id].stats);
-}
-
 
 inline int
 AddItem(DB, __local ideal_t *unique, VECTOR(*stats), size_t item)
@@ -56,12 +37,12 @@ AddItem(DB, __local ideal_t *unique, VECTOR(*stats), size_t item)
 			continue;
 
 		passive_id = db_items[id].passive_id;
-		RemoveStats(db_items, stats, id, --unique[passive_id] == 0);
+        stats_remove(db_items, stats, id, --unique[passive_id] == 0);
 		++removed_n;
 	}
 
 	passive_id = db_items[item].passive_id;
-	MergeStats(db_items, stats, item, ++unique[passive_id] == 1);
+	stats_add(db_items, stats, item, ++unique[passive_id] == 1);
 	return 1 - removed_n;
 }
 
@@ -74,14 +55,14 @@ int
 MetricAreaDPS(DB,
 	llf_criteria *cfg,
 	itemid_t *dbi,
-	uint dbi_n,
+	uint_t dbi_n,
 	__local ideal_t *unique,
 	float *output)
 {
 	size_t bs;
-	uint inventory_slots;
-	float result   = 0;
-	float prev_dps = 0;
+	uint_t inventory_slots;
+	float_t result   = 0;
+	float_t prev_dps = 0;
     //uint total_cost = 0; 
 
 	VECTOR(stats) = VECTOR_ZERO_INIT;
@@ -110,9 +91,10 @@ MetricAreaDPS(DB,
 }
 
 #ifdef __OPENCL_VERSION__
-#include "league/build_path/kernel/reduce.cl"
+#include "opencl_host/kernel/reduce.cl"
 
 __kernel void metric_ADPS(
+    ulong_t linext_offset,
     lattice_info info,
     __global ideal_t *linext,
     DB,
@@ -122,7 +104,7 @@ __kernel void metric_ADPS(
     __global result_t* result)
 {
     result_t metric = { 0, 0 };
-    count_t nth_extension = info.linext_offset + get_global_id(0);
+    count_t nth_extension = linext_offset + get_global_id(0);
 
     linext       += info.linext_width * get_global_id(0);
     pasv_scratch += PASV_SCRATCH_LEN(info.linext_width) * get_local_id(0);
@@ -142,12 +124,12 @@ __kernel void metric_ADPS(
 #endif
 
 opencl_allocinfo
-metric_ADPS__allocnfo__(opencl_context *ctx, cl_kernel k, size_t items_n)
+metric_ADPS__allocnfo__(opencl_function *func, size_t items_n)
 {
     cl_ulong klmem;
     opencl_allocinfo nfo = { 0 };
 
-    NOFAIL(clGetKernelWorkGroupInfo(k, ctx->device,
+    NOFAIL(clGetKernelWorkGroupInfo(func->kernel, func->ctx->device,
         CL_KERNEL_LOCAL_MEM_SIZE, sizeof klmem, &klmem, 0));
 
     nfo.fixed.constant += sizeof (item_t) * items_n;
@@ -161,21 +143,18 @@ metric_ADPS__allocnfo__(opencl_context *ctx, cl_kernel k, size_t items_n)
 }
 
 opencl_kernel_arg *
-metric_ADPS__bind__(opencl_context *x, cl_kernel k, opencl_kernel_params *a, 
-
+metric_ADPS__bind__(opencl_function *X, bool_t copy_output,
+    lattice_info *info,
     opencl_kernel_arg *linext,
     item_t *items, size_t items_n,
-    llf_criteria *cfg,
-    opencl_kernel_arg **output, 
-    
+    llf_criteria *cfg,    
     size_t pass_size, 
     size_t local_size)
 {
     size_t outlen;
-    opencl_kernel_arg *latticenfo;
-    #define X x, k, ka_push(a)
 
-    latticenfo = ka_ignore(X);
+    ka_ignore(X);
+    ka_value(X, "lattice_info", info, sizeof *info);
     ka_reuse(X, linext);
     ka_mconst(X, "db_items", 0, items, sizeof *items * items_n);
     ka_value(X,  "cfg_input", cfg, sizeof *cfg);
@@ -183,8 +162,8 @@ metric_ADPS__bind__(opencl_context *x, cl_kernel k, opencl_kernel_params *a,
     ka_mlocal(X, "scratch", sizeof (result_t) * local_size);
 
     outlen = pass_size / local_size;
-    *output = ka_mglobal(X, "output", A_OUT, CL_MEM_WRITE_ONLY, 0, sizeof(result_t) * outlen);
-    return latticenfo;
+    // NOTE: this CL_MEM_WRITE_ONLY hint should be changed if this function is composed with another after it
+    return ka_mglobal(X, "output", copy_output ? A_OUT : 0, CL_MEM_WRITE_ONLY, 0, sizeof(result_t)* outlen);
 }
 
 #undef X

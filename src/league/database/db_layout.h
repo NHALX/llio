@@ -40,4 +40,29 @@ typedef struct {
 #define F_LIFESTEAL_FLAT(X)             PART(X,10)
 #define F_SPELLVAMP(X)                  PART(X,11)
 
+// TODO: rename this file db_stat or something
+// TODO: handle stats that are merged multiplicatively 
+#ifndef __OPENCL_VERSION__
+#define __constant const
+#endif
+
+__inline void
+stats_add(__constant item_t db_items[], VECTOR(*stats), size_t item_id, bool_t copy_passive)
+{
+    if (copy_passive)
+        VECTOR_ADD(*stats, db_items[item_id].passive);
+
+    VECTOR_ADD(*stats, db_items[item_id].stats);
+}
+
+__inline void
+stats_remove(__constant item_t db_items[], VECTOR(*stats), size_t item_id, bool_t copy_passive)
+{
+    if (copy_passive)
+        VECTOR_SUB(*stats, db_items[item_id].passive);
+
+    VECTOR_SUB(*stats, db_items[item_id].stats);
+}
+
+
 #endif

@@ -1,0 +1,147 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\combinatorics\combination.h" />
+    <ClInclude Include="..\..\src\combinatorics\factorial.h" />
+    <ClInclude Include="..\..\src\league\build_combo\build_combo.h" />
+    <ClInclude Include="..\..\src\league\build_path\db_input.h" />
+    <ClInclude Include="..\..\src\league\build_path\kernel\metric_ADPS.h" />
+    <ClInclude Include="..\..\src\league\build_path\opencl_bind.h" />
+    <ClInclude Include="..\..\src\league\common.h" />
+    <ClInclude Include="..\..\src\league\database\database.h" />
+    <ClInclude Include="..\..\src\league\database\db_info.h" />
+    <ClInclude Include="..\..\src\league\database\db_layout.h" />
+    <ClInclude Include="..\..\src\league\database\vector.h" />
+    <ClInclude Include="..\..\src\league\ll_formulas.h" />
+    <ClInclude Include="..\..\src\league\unit_test\find_max.h" />
+    <ClInclude Include="..\..\src\opencl_host\dummy.h" />
+    <ClInclude Include="..\..\src\opencl_host\function.h" />
+    <ClInclude Include="..\..\src\opencl_host\host.h" />
+    <ClInclude Include="..\..\src\opencl_host\kernel_arg.h" />
+    <ClInclude Include="..\..\src\poset\error.h" />
+    <ClInclude Include="..\..\src\poset\kernel\lattice_kernel.h" />
+    <ClInclude Include="..\..\src\poset\lattice.h" />
+    <ClInclude Include="..\..\src\poset\lattice_types.h" />
+    <ClInclude Include="..\..\src\poset\p_alloc.h" />
+    <ClInclude Include="..\..\src\poset\tree.h" />
+    <ClInclude Include="..\..\src\poset\unit_test\reference_lattice.h" />
+    <ClInclude Include="..\..\src\poset\u_list.h" />
+    <ClInclude Include="..\..\src\types.h" />
+    <ClInclude Include="..\..\src\types_host.h" />
+    <ClInclude Include="..\..\src\types_kernel.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\combinatorics\combination.c" />
+    <ClCompile Include="..\..\src\combinatorics\factorial.c" />
+    <ClCompile Include="..\..\src\combinatorics\unit_test\unittest_combination.c" />
+    <ClCompile Include="..\..\src\league\build_combo\build_combo.c" />
+    <ClCompile Include="..\..\src\league\build_combo\unit_test\unittest_buildcombo.c" />
+    <ClCompile Include="..\..\src\league\build_path\db_input.c" />
+    <ClCompile Include="..\..\src\league\build_path\kernel\metric_ADPS.c" />
+    <ClCompile Include="..\..\src\league\build_path\opencl_bind.c" />
+    <ClCompile Include="..\..\src\league\build_path\unit_test\unittest_buildpath.c" />
+    <ClCompile Include="..\..\src\league\build_path\unit_test\unittest_db_input.c" />
+    <ClCompile Include="..\..\src\league\build_path\unit_test\unittest_opencl.c" />
+    <ClCompile Include="..\..\src\league\database\db_items.c" />
+    <ClCompile Include="..\..\src\league\database\db_names.c" />
+    <ClCompile Include="..\..\src\league\unit_test\unittest_league.c" />
+    <ClCompile Include="..\..\src\opencl_host\function.c" />
+    <ClCompile Include="..\..\src\opencl_host\host.c" />
+    <ClCompile Include="..\..\src\opencl_host\kernel_arg.c" />
+    <ClCompile Include="..\..\src\poset\kernel\lattice_kernel.c" />
+    <ClCompile Include="..\..\src\poset\lattice.c" />
+    <ClCompile Include="..\..\src\poset\p_alloc.c" />
+    <ClCompile Include="..\..\src\poset\tree.c" />
+    <ClCompile Include="..\..\src\poset\unit_test\reference_lattice.c" />
+    <ClCompile Include="..\..\src\poset\unit_test\unittest_lattice.c" />
+    <ClCompile Include="..\..\src\poset\unit_test\unittest_tree.c" />
+    <ClCompile Include="..\..\src\poset\unit_test\unittest_u_list.c" />
+    <ClCompile Include="..\..\src\poset\u_list.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\league\build_path\kernel\reduce.cl" />
+    <None Include="..\..\src\league\build_path\unit_test\unittest_kernel.cl" />
+    <None Include="..\..\src\opencl_host\kernel\reduce.cl" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{53B6F113-E34C-4DEA-8E8B-0B4A2145BBB4}</ProjectGuid>
+    <RootNamespace>genLE</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\include;$(ProjectDir)\..\..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <EnablePREfast>false</EnablePREfast>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <PreprocessorDefinitions>LITTLE_ENDIAN;WITH_OPENCL;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <OpenMPSupport>false</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <ExceptionHandling>false</ExceptionHandling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\include;$(ProjectDir)\..\..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>LITTLE_ENDIAN;WITH_OPENCL;_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

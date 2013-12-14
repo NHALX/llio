@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>8FDE2883-4292-426E-893E-67E5747D2923</string>
+	<key>IDESourceControlProjectName</key>
+	<string>GenLEGPU</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>D676CFA3-AD85-4940-BE43-AF55212E5B09</key>
+		<string>https://github.com/NHALX/llio.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>Source/Optimizer/xcode/GenLEGPU.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>D676CFA3-AD85-4940-BE43-AF55212E5B09</key>
+		<string>../../../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/NHALX/llio.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>D676CFA3-AD85-4940-BE43-AF55212E5B09</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>D676CFA3-AD85-4940-BE43-AF55212E5B09</string>
+			<key>IDESourceControlWCCName</key>
+			<string>llio</string>
+		</dict>
+	</array>
+</dict>
+</plist>

@@ -1,6 +1,10 @@
 #ifndef _LL_FORMULAS_H_
 #define _LL_FORMULAS_H_
 
+#ifndef __OPENCL_VERSION__
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+#endif
+
 typedef struct
 {
 	uint_t  time_frame;

@@ -21,61 +21,42 @@
 #include "../kernel/metric_ADPS.h"
 #include "../db_input.h"
 #include "../opencl_bind.h"
-
+#include "league/unit_test/find_max.h"
 
 //////////////////////////////////////////////////////////////////
 
-static result_t
-FindMax(result_t *rs, size_t result_n)
-{
-	result_t max = { 0, 0 };
-	size_t i;
-
-	for (i = 0; i < result_n; ++i)
-	{
-		//if (rs[i].metric <= 0 && (int)rs[i].index != ERROR_INVENTORY && (int)rs[i].index != ERROR_IGNORED)
-		//	printf("warning: %f:%d\n", rs[i].metric, rs[i].index);
-
-		if (max.metric < rs[i].metric)
-			max = rs[i];
-	}
-
-	return max;
-}
 
 
-result_t unittest_buildpathGPU(ideal_lattice *lattice, item_t *db_filtered, size_t db_len, llf_criteria *cfg)
+
+static result_t TestBuildPathGPU(ideal_lattice *lattice, item_t *db_filtered, size_t db_len, llf_criteria *cfg)
 {
 	cl_ulong time;
 	cl_ulong i;
 
 	opencl_workset workset;
-	clbp_context gpu = CLBP_CONTEXT_INIT;
-	lattice_info info;
+	opencl_context gpu;
+    opencl_function *function;
+    opencl_kernel_arg *output;
 	result_t max;
 	size_t result_n;
-	
-	info.max_neighbors = lattice->max_neighbors;
-	info.linext_width = lattice->linext_width;
-	info.linext_offset = 0;
-	info.linext_count = lattice->linext_count;
+    count_t linext_offset = 0;
 
-	clbp_init(&gpu);
-
-	workset = clbp_bind(&gpu, lattice, db_filtered, db_len, cfg);
+    opencl_init(&gpu, 1);
+	function = clbp_init(&gpu);
+	workset = clbp_bind(function, lattice, db_filtered, db_len, cfg, &output);
 	
 	
-	result_n = gpu.output->buf_size / sizeof (result_t);
+    result_n = output->buf_size / sizeof (result_t);
 	max = (result_t){ 0, 0 };
 	
 	for (i = 0, time = 0; i < workset.iterations; ++i)
 	{
 		result_t local_max;
 		
-		time += clbp_run(&gpu, info, &workset);
-		info.linext_offset += workset.pass_size;
+        time += opencl_run(function, CLBP_KERNEL_N, TRUE, linext_offset, &workset);
+		linext_offset += workset.pass_size;
 
-		local_max = FindMax(gpu.output->buf_data, result_n);
+        local_max = FindMax(output->buf_data, result_n);
 
 		if (max.metric < local_max.metric)
 			max = local_max;
@@ -100,19 +81,23 @@ result_t unittest_buildpathGPU(ideal_lattice *lattice, item_t *db_filtered, size
     //time=26234248  processed=1966080
     //time=57284564  processed=1966080
     //time=42149902  processed=1966080 (const db)
+
+    opencl_function_free(function, CLBP_KERNEL_N);
+    opencl_free(&gpu);
 	return max;
 }
 
 
-result_t unittest_buildpathCPU(ideal_lattice *lattice, item_t *db_filtered, size_t db_len, llf_criteria *cfg)
+static result_t TestBuildPathCPU(ideal_lattice *lattice, item_t *db_filtered, size_t db_len, llf_criteria *cfg)
 {
 	size_t pass_size;
     count_t j,iterations;
 	result_t result = (result_t){0,0};
 	lattice_info info;
+    count_t linext_offset = 0;
+
 	info.max_neighbors = lattice->max_neighbors;
 	info.linext_width  = lattice->linext_width;
-	info.linext_offset = 0;
 	info.linext_count  = lattice->linext_count;
 
 
@@ -139,8 +124,8 @@ result_t unittest_buildpathCPU(ideal_lattice *lattice, item_t *db_filtered, size
 			#pragma omp for schedule(static) nowait
 			for (i = 0; i < pass_size; ++i)
 			{
-                linext_nth(lattice, le_buf, info.linext_offset + i);
-                r = metric_ADPS(le_buf, db_filtered, cfg, &info, info.linext_offset + i);
+                linext_nth(lattice, le_buf, linext_offset + i, 0);
+                r = metric_ADPS(le_buf, db_filtered, cfg, &info, linext_offset + i);
 
 				if (local_best.metric < r.metric)
 					local_best = r;
@@ -153,7 +138,7 @@ result_t unittest_buildpathCPU(ideal_lattice *lattice, item_t *db_filtered, size
 			}
 		}
 
-		info.linext_offset += pass_size;
+		linext_offset += pass_size;
 		printf("CPU: progress: %llu/%llu (%f)\n", j+1, iterations, (float)(j+1) / (float)iterations);
 	}
 
@@ -173,7 +158,7 @@ PrintExtension(ideal_lattice *il, item_t *db_filtered, itemid_t *idmap, result_t
 	else
 	{
         ideal_t le_buf[LINEXT_WIDTH_MAX];
-        linext_nth(il, le_buf, max.index);
+        linext_nth(il, le_buf, max.index, 0);
         linext_print(le_buf, il->linext_width);
 
 		for (i = 0; i < il->linext_width; ++i)
@@ -195,14 +180,14 @@ PrintExtension(ideal_lattice *il, item_t *db_filtered, itemid_t *idmap, result_t
 typedef result_t(*test_func)(ideal_lattice *, item_t *, size_t, llf_criteria *);
 
 
-void unittest_buildpath()
+static void TestBuildpathALL()
 {
 	int result;
 	ideal_lattice lattice;
 	size_t i; 
 	test_func tests[] = {
-		&unittest_buildpathCPU,
-		&unittest_buildpathGPU
+		&TestBuildPathCPU,
+        &TestBuildPathGPU
 	};
 	#define ITEM_LEN (sizeof(items)/sizeof(*items))
     //char *items[] = { "Youmuu's Ghostblade", "The Bloodthirster"};
@@ -246,20 +231,17 @@ void unittest_buildpath()
 }
 
 
-
 extern void unittest_lattice(int quiet);
 extern void unittest_opencl();
 extern void unittest_db_input();
 
-
-int main()
+void unittest_buildpath()
 {
-	glbinit_lattice();
-	unittest_lattice(1);
-	unittest_db_input();
-	unittest_opencl();
-	unittest_buildpath();
-	return 0;
+    glbinit_lattice();
+    unittest_lattice(1);
+    unittest_db_input();
+    unittest_opencl();
+    TestBuildpathALL();
 }
 
 

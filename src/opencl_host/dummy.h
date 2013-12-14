@@ -23,6 +23,7 @@ static __inline int get_group_id(int x)  { return __group_id; }
 static __inline int get_global_size(int x){ return __global_size; }
 static __inline int get_local_size(int x) { return __local_size; }
 */
+/*
 typedef struct { int x; int y; } int2;
 typedef struct { unsigned int x; unsigned int y; } uint2;
 typedef struct { unsigned short x; unsigned short y; } ushort2;
@@ -33,7 +34,7 @@ typedef unsigned int uint;
 typedef unsigned short ushort;
 typedef unsigned char uchar;
 typedef unsigned int bool;
-
+*/
 
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define round(X) ((int)X)

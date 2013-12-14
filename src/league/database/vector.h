@@ -65,5 +65,8 @@ typedef c_float stat_t;
 #define VECTOR_ZERO_INIT   (cl_float16){ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
 #endif
 #endif
+
+
+
 #endif
 

@@ -131,16 +131,21 @@ ConfigureWorkload(opencl_context *ctx, count_t linext_count, opencl_allocinfo nf
 
 
 opencl_workset
-clbp_bind(clbp_context *bp,	ideal_lattice *l, item_t *items, size_t  items_len,	llf_criteria *cfg_input)
+clbp_bind(opencl_function *f, ideal_lattice *l, item_t *items, size_t  items_len, llf_criteria *cfg_input, opencl_kernel_arg **output_ptr)
 {
-	opencl_kernel_arg *linext;
-	opencl_context *x = &bp->ctx;
+	opencl_kernel_arg *linext, *output;
+	opencl_context *x = f->ctx;
     opencl_allocinfo nfo[2] = { 0 };
     opencl_workset wset[2];
     opencl_workset work;
+    lattice_info info;
 
-    nfo[0] = linext__allocnfo__(x, x->kernel[0], l);
-    nfo[1] = metric_ADPS__allocnfo__(x, x->kernel[1], items_len);
+    info.linext_width  = l->linext_width;
+    info.max_neighbors = l->max_neighbors;
+    info.linext_count  = l->linext_count;
+
+    nfo[0] = linext__allocnfo__(&f[0], l);
+    nfo[1] = metric_ADPS__allocnfo__(&f[1], items_len);
 
     wset[0] = ConfigureWorkload(x, l->linext_count, nfo[0]); 
     wset[1] = ConfigureWorkload(x, l->linext_count, nfo[1]);
@@ -150,87 +155,29 @@ clbp_bind(clbp_context *bp,	ideal_lattice *l, item_t *items, size_t  items_len,	
          ? wset[0]
          : wset[1];
 
-    linext = linext__bind__(x, x->kernel[0], &bp->args[0], l, &bp->lattice_info[0], work.pass_size);
-    bp->lattice_info[1] = metric_ADPS__bind__(x, x->kernel[1], &bp->args[1], 
+    linext = linext__bind__(&f[0], FALSE, l, work.pass_size);
+    output = metric_ADPS__bind__(&f[1], TRUE, 
+        &info,
         linext, items, items_len, cfg_input, 
-        &bp->output, 
         work.pass_size, 
         work.local_size);
 
+    //output->io_flags |= A_OUT;
+    *output_ptr = output;
     return work;
 }
 
-
-cl_ulong
-clbp_run(clbp_context *bp, lattice_info info, opencl_workset *work)
+opencl_function *
+clbp_init(opencl_context *ctx)
 {
-    cl_event ev[CLBP_KERNEL_N];
-    cl_event ev_read;
-	cl_event *ev_last;
-	cl_ulong sum = 0;
-	opencl_context *ctx = &bp->ctx;
+#define C_DEFINES "-ID:/GitRoot/llio/src/"
 
-    NOFAIL(clSetKernelArg(bp->lattice_info[0]->kernel, bp->lattice_info[0]->index, sizeof info, &info));
-    NOFAIL(clSetKernelArg(bp->lattice_info[1]->kernel, bp->lattice_info[1]->index, sizeof info, &info));
-
-    ev_last = 0;
-    for (size_t i = 0; i < ctx->kernel_n; ++i)
-    {
-        NOFAIL(clEnqueueNDRangeKernel(ctx->queue, ctx->kernel[i], 1, NULL, 
-            &work->pass_size, 
-            &work->local_size, (ev_last) ? 1 : 0, 
-            ev_last, 
-            &ev[i]));
-
-        ev_last = &ev[i];
-       // NOFAIL(clFinish(ctx->queue));
-    }
-
-    NOFAIL(clEnqueueReadBuffer(ctx->queue, bp->output->cl_mem, CL_TRUE, 0,
-        bp->output->buf_size,
-        bp->output->buf_data, 1, ev_last, &ev_read));
-
-    NOFAIL(clWaitForEvents(1, &ev_read));
-    
-	if (ctx->profiling)
-	{
-		for (size_t i = 0; i < ctx->kernel_n; ++i)
-		{
-			cl_ulong start = 0, end = 0;
-			clGetEventProfilingInfo(ev[i], CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, NULL);
-			clGetEventProfilingInfo(ev[i], CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, NULL);
-			sum += end - start;
-		}
-	}
-
-    clReleaseEvent(ev_read);
-	
-	for (size_t i = 0; i < ctx->kernel_n; ++i)
-		clReleaseEvent(ev[i]);
-
-	return sum;
-}
-
-
-void
-clbp_init(clbp_context *ctx)
-{
-    #define C_DEFINES "-ID:/GitRoot/llio/src/"
-
-	char *kernels[CLBP_KERNEL_N] = { "linext", "metric_ADPS" };
+    char *kernels[CLBP_KERNEL_N] = { "linext", "metric_ADPS" };
     char *files[CLBP_KERNEL_N] = {
         "D:/GitRoot/llio/src/poset/kernel/lattice_kernel.c",
         "D:/GitRoot/llio/src/league/build_path/kernel/metric_ADPS.c",
     };
-    opencl_init(&ctx->ctx, 1);
-    opencl_buildfilev(&ctx->ctx, kernels, CLBP_KERNEL_N, files, CLBP_KERNEL_N, C_DEFINES);
+    
+    return opencl_buildfilev(ctx, kernels, CLBP_KERNEL_N, files, CLBP_KERNEL_N, C_DEFINES);
 }
 
-void
-clbp_free(clbp_context *ctx)
-{
-	for (size_t i = 0; i < CLBP_KERNEL_N; ++i)
-		ka_free(&ctx->args[i]);
-	
-	opencl_free(&ctx->ctx);
-}

@@ -1,5 +1,5 @@
 #include "league/build_path/kernel/metric_ADPS.c"
-	   
+
 __kernel void kunittest_mem(DB,
 	__global itemid_t id[],
 	__global stat_t  stat_s0[],
@@ -17,10 +17,9 @@ __kernel void kunittest_mem(DB,
 }
     
 
-
 __kernel void kunittest_mergestats(DB,
 	__global itemid_t *xs,
-	uint xs_n,
+	uint_t xs_n,
 	__global VECTOR(*output))
 {
 	VECTOR(stats) = VECTOR_ZERO_INIT;
@@ -30,7 +29,7 @@ __kernel void kunittest_mergestats(DB,
 	xs += id * xs_n;
 
 	for (i = 0; i < xs_n; ++i)
-		MergeStats(db_items, &stats, xs[i], true);
+        stats_add(db_items, &stats, xs[i], true);
 
 	VECTOR_COPY(output[id], stats);
 }
@@ -39,7 +38,7 @@ __kernel void kunittest_clearsubcomponents(
 	__local ideal_t *pasv_scratch,
 	DB,
 	__global itemid_t *xs_in,
-	uint xs_n,
+	uint_t xs_n,
 	__global int(*output_inventory)[LINEXT_WIDTH_MAX],
 	__global VECTOR(*output_stats))
 {

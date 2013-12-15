@@ -1,128 +1,89 @@
-#ifndef __OPENCL_VERSION__ 
-#include "../../opencl_host/dummy.h"
-#include <stdlib.h>
-#undef DEBUG_PRINTF
-#define DEBUG_PRINTF
+#ifndef _MSC_VER
+#include <alloca.h>
 #else
-#define DEBUG_PRINTF 
+#define alloca _alloca
 #endif
+#include <stdio.h>
 
-#include "types.h"
-#include "league/database/db_layout.h"
-#include "league/ll_formulas.h"
-#include "league/common.h"
+#include "league/build_combo/build_combo.h"
 #include "combinatorics/combination.h"
+#include "combinatorics/factorial.h"
 
+#include "league/unit_test/find_max.h" // TODO: remove this
+#include "league/build_combo/kernel/k_build_combo.h"
 
-static
-int
-metric(__constant item_t db_items[],
-	llf_criteria *cfg,
-    setmax_t *combo,
-	uint_t combo_n,
-    __local setmax_t *unique,
-	float *output)
+void build_comboGPU(opencl_function *func, llf_criteria *cfg, const item_t *items, size_t item_n, size_t inventory_n, setmax_t *combo)
 {
-	size_t i;
+    ulong_t ncombo = NK_MULTISET(item_n, inventory_n);
 
-	VECTOR(stats) = VECTOR_ZERO_INIT;
-  
-    for (i = 0; i < combo_n; ++i)
+    opencl_workset workset;
+    opencl_kernel_arg *output;
+    result_t *results, local_best, best = { 0, 0 };
+
+    workset = opencl_workcfg(func->ctx, ncombo, build_combo__allocnfo__(func, item_n));
+    output = build_combo__bind__(func, inventory_n, items, item_n, cfg, workset.pass_size, workset.local_size);
+    results = output->buf_data;
+
+    for (ulong_t i = 0, offset = 0; i < workset.iterations; ++i)
     {
-        itemid_t item = combo[i];
-        itemid_t passive = db_items[item].passive_id;
+        opencl_run(func, 1, TRUE, offset, &workset);
+        local_best = FindMax(results, output->buf_size / sizeof *results);
+        
+        if (best.metric < local_best.metric)
+            best = local_best;
 
-        stats_add(db_items, &stats, item, ++unique[passive] == 1);
+        offset += workset.pass_size;
     }
-
-    *output = llf_dmgtotal(cfg, &stats);
-    return 0;
-}
-
-
-//////////////////////////////////////////////////////////////
-
-
-result_t
-BuildCombo(__constant item_t db_items[],
-    llf_criteria *cfg,
-    ulong_t rank,
-    uint_t db_len,
-    uint_t combo_len,
-    __local setmax_t *unique)
-{
-    setmax_t combo[NK_MULTISET_MAX_K];
-    result_t dps;
-
-    combo_unrank(rank, db_len, combo_len, combo);
-    dps.index = rank;
-    metric(db_items, cfg, combo, combo_len, unique, &dps.metric);
-    return dps;
-}
-
-
-#ifndef __OPENCL_VERSION__ 
-#include "opencl_host/function.h"
-opencl_allocinfo
-build_combo__allocnfo__(opencl_function *func, size_t items_n)
-{
-    cl_ulong klmem;
-    opencl_allocinfo nfo = { 0 };
-
-    NOFAIL(clGetKernelWorkGroupInfo(func->kernel, func->ctx->device,
-        CL_KERNEL_LOCAL_MEM_SIZE, sizeof klmem, &klmem, 0));
-    /*TODO: fill these out
-    nfo.fixed.constant += sizeof (item_t)* items_n;
-
-    nfo.scale_workgroup.local += sizeof (ideal_t)* items_n;
-    nfo.scale_workgroup.local += sizeof (result_t);
-    nfo.scale_workgroup.local += klmem;
-
-    nfo.scale_reduce.global = sizeof (result_t);*/
-    return nfo;
-}
-
-opencl_kernel_arg *
-build_combo__bind__(opencl_function *X,
-    uint_t combo_n,
-    item_t *items, uint_t items_n,
-    llf_criteria *cfg,
     
-    size_t pass_size, 
-    size_t local_size)
-{
-    size_t outlen;
-    
-    ka_ignore(X);
-    ka_mconst(X, "db_items", 0, items, sizeof *items * items_n);
-    ka_value(X,  "cfg_input", cfg, sizeof *cfg);
-    ka_value(X, "db_len", &items_n, sizeof items_n);
-    ka_value(X, "combo_len", &combo_n, sizeof combo_n);
-    ka_mlocal(X, "pasv_scratch", sizeof (setmax_t) * items_n * local_size);
-    ka_mlocal(X, "scratch", sizeof (result_t) * local_size);
-
-    outlen = pass_size / local_size;
-    return ka_mglobal(X, "output", A_OUT, CL_MEM_WRITE_ONLY, 0, sizeof(result_t)* outlen);
+    combo_unrank(best.index, item_n, inventory_n, combo);
 }
 
-#else
-#include "opencl_host/kernel/reduce.cl"
-#include "combinatorics/combination.c"
-#include "combinatorics/factorial.c"
 
-__kernel void
-build_combo(
-    ulong_t start_offset, 
-    __constant item_t db_items[], 
-    llf_criteria cfg,
-    uint_t db_len, 
-    uint_t combo_len,
-    __local setmax_t *unique,
-    __local result_t *scratch,
-    __global result_t *result)
+void build_comboCPU(opencl_function *func, llf_criteria *cfg, const item_t *items, size_t item_n, size_t inventory_n, setmax_t *combo)
 {
-    result_t dps = BuildCombo(db_items, &cfg, start_offset + get_global_id(0), db_len, combo_len, unique);
-    Reduce(dps, scratch, result);
-}    
+    ulong_t ncombo = NK_MULTISET(item_n, inventory_n);
+    ulong_t pass_size;
+    ulong_t iterations;
+    ulong_t offset = 0;
+    result_t result = { 0,0 };
 
-#endif
+    pass_size = 1000000; // TODO: is this suffeciently large to 
+
+    if (pass_size > ncombo)
+        pass_size = (size_t)ncombo;
+
+    iterations = ncombo / pass_size;
+
+	for (ulong_t j = 0; j < iterations; ++j)
+	{
+		int i;
+		result_t local_best;
+        setmax_t *scratch;
+        result_t r;
+
+		#pragma omp parallel default(shared) private(i,r,local_best,scratch)
+		{
+			local_best = (result_t){ 0, 0 };
+            scratch = alloca(sizeof *scratch * item_n);
+
+			#pragma omp for schedule(static) nowait
+			for (i = 0; i < pass_size; ++i)
+			{
+                r = build_combo_m(items, cfg, offset + i, item_n, inventory_n, scratch);
+				if (local_best.metric < r.metric)
+					local_best = r;
+			}
+			
+			#pragma omp critical 
+			{
+				if (result.metric < local_best.metric)
+					result = local_best;
+			}
+		}
+
+		offset += pass_size;
+		printf("CPU: progress: %llu/%llu (%f)\n", j+1, iterations, (float)(j+1) / (float)iterations);
+	}
+
+    combo_unrank(result.index, item_n, inventory_n, combo);
+}

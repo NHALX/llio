@@ -66,9 +66,6 @@
     <ClCompile Include="..\..\src\league\build_path\db_input.c">
       <Filter>league\build_path</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\league\build_path\kernel\metric_ADPS.c">
-      <Filter>league\build_path</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\league\build_path\opencl_bind.c">
       <Filter>league\build_path</Filter>
     </ClCompile>
@@ -80,9 +77,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\combinatorics\combination.c">
       <Filter>combinatorics</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\league\build_combo\build_combo.c">
-      <Filter>league\build_combo</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\combinatorics\unit_test\unittest_combination.c">
       <Filter>combinatorics</Filter>
@@ -101,6 +95,24 @@
     </ClCompile>
     <ClCompile Include="..\..\src\league\unit_test\unittest_league.c">
       <Filter>league</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\build_combo\item_filter.c">
+      <Filter>league\build_combo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\main.c">
+      <Filter>league</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\build_combo\build_combo.c">
+      <Filter>league\build_combo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\database\db_search.c">
+      <Filter>league\database</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\build_combo\kernel\k_build_combo.c">
+      <Filter>league\build_combo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\league\build_path\kernel\metric_area.c">
+      <Filter>league\build_path</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -146,9 +158,6 @@
     <ClInclude Include="..\..\src\league\build_path\db_input.h">
       <Filter>league\build_path</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\league\build_path\kernel\metric_ADPS.h">
-      <Filter>league\build_path</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\league\build_path\opencl_bind.h">
       <Filter>league\build_path</Filter>
     </ClInclude>
@@ -176,11 +185,23 @@
     <ClInclude Include="..\..\src\opencl_host\function.h">
       <Filter>opencl_host</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\league\unit_test\find_max.h">
+      <Filter>league</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\league\build_combo\item_filter.h">
+      <Filter>league\build_combo</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\league\build_combo\build_combo.h">
       <Filter>league\build_combo</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\league\unit_test\find_max.h">
-      <Filter>league</Filter>
+    <ClInclude Include="..\..\src\league\database\db_search.h">
+      <Filter>league\database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\league\build_combo\kernel\k_build_combo.h">
+      <Filter>league\build_combo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\league\build_path\kernel\metric_area.h">
+      <Filter>league\build_path</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

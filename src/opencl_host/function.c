@@ -221,3 +221,117 @@ opencl_buildv(opencl_context *ctx, const char *kernel_function[], size_t kernel_
 
     return func;
 }
+
+
+
+#define ROUND_UP(N,M) ((N + M - 1) / M * M)
+
+static bool_t IsPow2(ulong_t x)
+{
+    return (x != 0) && ((x & (x - 1)) == 0);
+}
+
+static size_t FloorPow2(size_t x)
+{
+    size_t y;
+
+    do {
+        y = x;
+        x = x & (x - 1);
+    } while (x != 0);
+
+    return y;
+}
+
+#define GPU_SATURATION 256
+
+opencl_allocinfo
+sum_allocinfo(opencl_allocinfo *nfo, size_t nfo_n)
+{
+    opencl_allocinfo ai = { 0 };
+
+    for (size_t i = 0; i < nfo_n; ++i)
+    {
+#define MERGE(F) \
+    ai.F.constant += nfo[i].F.constant; \
+    ai.F.global += nfo[i].F.global; \
+    ai.F.local += nfo[i].F.local;
+
+        MERGE(fixed)
+            MERGE(scale_pass)
+            MERGE(scale_workgroup)
+            MERGE(scale_reduce)
+#undef MERGE
+    }
+
+    return ai;
+}
+
+opencl_workset
+opencl_workcfg(opencl_context *ctx, ulong_t total_work, opencl_allocinfo nfo)
+{
+    size_t local_size, pass_size, saturation;
+    cl_ulong global_limit;
+    cl_ulong iterations;
+    opencl_workset work;
+    //NOFAIL(clGetKernelWorkGroupInfo(kernel, ctx->device, CL_KERNEL_WORK_GROUP_SIZE, sizeof hint, &hint, 0));
+
+    {
+        const cl_ulong max_local = ctx->cfg_max_local_storage;
+        const cl_ulong max_global = ctx->cfg_max_global_storage;
+        const cl_ulong max_constant = ctx->cfg_max_const_storage;
+
+        #define CONSTRAINT(F,F2,DEFAULT) \
+            ((nfo.F2.F) \
+            ? FloorPow2((max_##F - nfo.fixed.F) / nfo.F2.F) \
+            : DEFAULT)
+
+        #define MINIMUM(CRIT,F2,D) \
+            min(CRIT(local, F2, D), min(CRIT(constant, F2, D), CRIT(global, F2, D)))
+
+        local_size = MINIMUM(CONSTRAINT, scale_workgroup, ctx->cfg_max_workgroup_size);
+        global_limit = MINIMUM(CONSTRAINT, scale_pass, total_work);
+    }
+
+    saturation = min(max(1, FloorPow2(global_limit / ctx->cfg_compute_units)), GPU_SATURATION);
+    pass_size = (ctx->cfg_compute_units * saturation * local_size);
+
+    #define ALLOC_SIZE(F) ( \
+        nfo.scale_workgroup.F*local_size + \
+        nfo.scale_pass.F*pass_size + \
+        nfo.fixed.F \
+        )
+
+    printf("OpenCL: %s: %llu\n", "const_alloc", ALLOC_SIZE(constant));
+    printf("OpenCL: %s: %llu\n", "global_alloc", ALLOC_SIZE(global));
+    printf("OpenCL: %s: %llu\n", "local_alloc", ALLOC_SIZE(local));
+
+    assert(ALLOC_SIZE(constant) < ctx->cfg_max_const_storage);
+    assert(ALLOC_SIZE(global) < ctx->cfg_max_global_storage);
+    assert(ALLOC_SIZE(local) < ctx->cfg_max_local_storage);
+
+    if ((ulong_t)pass_size > total_work)
+        pass_size = (size_t)ROUND_UP(total_work, 2);
+
+    if (local_size > pass_size)
+        local_size = FloorPow2(pass_size);
+
+    total_work = ROUND_UP(total_work, local_size);
+    pass_size = ROUND_UP(pass_size, local_size);
+    iterations = (cl_ulong)ceil((double)total_work / (double)pass_size);
+
+    printf("OpenCL: n=%llu, pass_size=%u, local_size=%u, iterations=%llu\n", total_work, pass_size, local_size, iterations);
+
+    assert(iterations * (cl_ulong)pass_size >= total_work);
+    assert(IsPow2(local_size)); // NOTE: the reduction algorithm in the kernel needs a power of 2 local size
+
+    work.iterations = iterations;
+    work.local_size = local_size;
+    work.pass_size = pass_size;
+    work.total = total_work;
+
+    return work;
+}
+#undef CONSTRAINT
+#undef MINIMUM
+#undef ALLOC_SIZE

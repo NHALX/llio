@@ -1,5 +1,5 @@
 #include "opencl_host/host.h"
-#include "kernel/metric_ADPS.h"
+#include "kernel/metric_area.h"
 #include "poset/kernel/lattice_kernel.h"
 #include "poset/lattice.h"
 

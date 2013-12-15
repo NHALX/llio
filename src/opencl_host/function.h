@@ -14,15 +14,15 @@ typedef struct
 
 }  opencl_workset;
 
+struct opencl_allocinfo_mem
+{
+    cl_ulong local;
+    cl_ulong global;
+    cl_ulong constant;
+};
+
 typedef struct
 {
-    struct opencl_allocinfo_mem
-    {
-        cl_ulong local;
-        cl_ulong global;
-        cl_ulong constant;
-    };
-
     struct opencl_allocinfo_mem fixed;
     struct opencl_allocinfo_mem scale_workgroup;
     struct opencl_allocinfo_mem scale_pass;
@@ -35,6 +35,8 @@ typedef struct
 void opencl_memcheck(opencl_context *ctx, cl_kernel, opencl_kernel_params *args, opencl_workset *work);
 cl_ulong opencl_run(opencl_function *function, size_t func_n, bool_t multipass, ulong_t offset, opencl_workset *work);
 void opencl_function_free(opencl_function *func, size_t func_n);
+opencl_workset opencl_workcfg(opencl_context *ctx, ulong_t total_work, opencl_allocinfo nfo);
+opencl_allocinfo sum_allocinfo(opencl_allocinfo *nfo, size_t nfo_n);
 
 opencl_function * opencl_buildfile(opencl_context *ctx, const char *kernel_function, const char *source_file, const char *build_flags);
 opencl_function * opencl_buildfilev(opencl_context *ctx, const char *kernel_function[], size_t kernel_n, const char *source_file[], size_t source_n, const char *build_flags);

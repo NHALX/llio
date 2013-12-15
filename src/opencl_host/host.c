@@ -68,6 +68,9 @@ opencl_run(opencl_context *ctx, cl_kernel kernel, opencl_kernel_params *args, op
 }
 */
 
+
+
+
 void opencl_init(opencl_context *ctx, int profiling)
 {
 	size_t i;

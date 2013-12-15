@@ -6,7 +6,7 @@
 #include "types.h"
 #include "league/database/db_layout.h"
 #include "league/ll_formulas.h"
-#include "league/build_path/kernel/metric_ADPS.h"
+#include "league/build_path/kernel/metric_area.h"
 
 result_t RateBuildpath(__global ideal_t *linext, DB, llf_criteria *cfg, __local ideal_t *pasv_scratch, lattice_info *info, count_t nth_extension);
 ////////////////////////////////////////////////////////
@@ -52,7 +52,7 @@ AddItem(DB, __local ideal_t *unique, VECTOR(*stats), size_t item)
 
 static
 int
-MetricAreaDPS(DB,
+MetricArea(DB,
 	llf_criteria *cfg,
 	itemid_t *dbi,
 	uint_t dbi_n,
@@ -78,12 +78,7 @@ MetricAreaDPS(DB,
 
 		result += (prev_dps * ((float)db_items[dbi[bs]].upgrade_cost));
         //total_cost += db_items[dbi[bs]].upgrade_cost;
-
-#ifdef METRIC_ADPS
-		prev_dps = llf_dmgtotal(cfg, &stats); 
-#else
-        prev_dps = llf_sustain(cfg, &stats);
-#endif
+        prev_dps = llf_metric(cfg, &stats);
 	}
     *output = result;
     //*output = (total_cost) ? result / total_cost : 0;
@@ -93,7 +88,7 @@ MetricAreaDPS(DB,
 #ifdef __OPENCL_VERSION__
 #include "opencl_host/kernel/reduce.cl"
 
-__kernel void metric_ADPS(
+__kernel void metric_area(
     ulong_t linext_offset,
     lattice_info info,
     __global ideal_t *linext,
@@ -124,7 +119,7 @@ __kernel void metric_ADPS(
 #endif
 
 opencl_allocinfo
-metric_ADPS__allocnfo__(opencl_function *func, size_t items_n)
+metric_area__allocnfo__(opencl_function *func, size_t items_n)
 {
     cl_ulong klmem;
     opencl_allocinfo nfo = { 0 };
@@ -143,7 +138,7 @@ metric_ADPS__allocnfo__(opencl_function *func, size_t items_n)
 }
 
 opencl_kernel_arg *
-metric_ADPS__bind__(opencl_function *X, bool_t copy_output,
+metric_area__bind__(opencl_function *X, bool_t copy_output,
     lattice_info *info,
     opencl_kernel_arg *linext,
     item_t *items, size_t items_n,
@@ -168,7 +163,7 @@ metric_ADPS__bind__(opencl_function *X, bool_t copy_output,
 
 #undef X
  
-result_t metric_ADPS(__global ideal_t *linext, DB, llf_criteria *cfg, lattice_info *info, count_t nth_extension)
+result_t metric_area(__global ideal_t *linext, DB, llf_criteria *cfg, lattice_info *info, count_t nth_extension)
 {
     const size_t size = sizeof (ideal_t) * PASV_SCRATCH_LEN(info->linext_width);
     ideal_t *pasv_scratch = alloca(size);
@@ -201,7 +196,7 @@ RateBuildpath(__global ideal_t *linext, DB, llf_criteria *cfg, __local ideal_t *
 		for (i = 0; i < info->linext_width; i++)
             ids[i] = linext[i];
 		
-		error = MetricAreaDPS(db_items, cfg, ids, info->linext_width, pasv_scratch, &metric.metric);	
+		error = MetricArea(db_items, cfg, ids, info->linext_width, pasv_scratch, &metric.metric);	
 		metric.index = (error != ERROR_NONE) ? error : nth_extension;
 	}
 

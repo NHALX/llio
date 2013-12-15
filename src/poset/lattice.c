@@ -436,7 +436,8 @@ void MapToLinext(ideal_lattice *lattice)
 	size_t i, slen = lattice->ctx.vertex_count * lattice->ctx.max_neighbors;
 
 	for (i = 0; i < slen; ++i)
-		lattice->ideals[i] = lattice->ctx.linear_extension[lattice->ideals[i] - 1];
+        if (lattice->neighbors[i] != INVALID_NEIGHBOR)
+		    lattice->ideals[i] = lattice->ctx.linear_extension[lattice->ideals[i] - 1];
 }
 
 int lattice_create(ideal_t p_relations[][2], size_t p_reln, size_t n, ideal_lattice *lattice)

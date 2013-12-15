@@ -324,6 +324,7 @@ void unittest_opencl_llformulas()
 	cfg.enemy_mr = 100;
 	cfg.build_maxcost = 15000;
 	cfg.build_maxinventory = 6;
+    cfg.metric_type = METRIC_ALL_IN;
 
 	ka_mconst(func, "db_items", 0, test_db, sizeof test_db);
 	ka_mconst(func, "build_path", 0, build_path, sizeof build_path);

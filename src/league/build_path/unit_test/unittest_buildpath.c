@@ -14,11 +14,12 @@
 #include "opencl_host/dummy.h"
 #include "opencl_host/host.h"
 #include "league/database/database.h"
+#include "league/database/db_search.h"
 #include "league/ll_formulas.h"
 #include "poset/lattice.h"
 #include "poset/kernel/lattice_kernel.h"
 
-#include "../kernel/metric_ADPS.h"
+#include "../kernel/metric_area.h"
 #include "../db_input.h"
 #include "../opencl_bind.h"
 #include "league/unit_test/find_max.h"
@@ -125,7 +126,7 @@ static result_t TestBuildPathCPU(ideal_lattice *lattice, item_t *db_filtered, si
 			for (i = 0; i < pass_size; ++i)
 			{
                 linext_nth(lattice, le_buf, linext_offset + i, 0);
-                r = metric_ADPS(le_buf, db_filtered, cfg, &info, linext_offset + i);
+                r = metric_area(le_buf, db_filtered, cfg, &info, linext_offset + i);
 
 				if (local_best.metric < r.metric)
 					local_best = r;
@@ -165,7 +166,7 @@ PrintExtension(ideal_lattice *il, item_t *db_filtered, itemid_t *idmap, result_t
 		{
 			itemid_t index = db_filtered[le_buf[i]].id;
 			//assert(index == expected[i]);
-			assert(dbi_find(index) == idmap[le_buf[i]-1]);
+			assert(db_find(index) == idmap[le_buf[i]-1]);
 			printf("%s, ", db_names[idmap[le_buf[i] - 1]]);
 		}
 
@@ -220,7 +221,7 @@ static void TestBuildpathALL()
 		cfg.enemy_mr      = 100;
 		cfg.build_maxcost = 15000;
 		cfg.build_maxinventory = 6;
-
+        cfg.metric_type   = METRIC_SUSTAIN;
 		max = tests[i](&lattice, db_filtered, db_len, &cfg);
 		printf("max=%f,i=%d\n", max.metric, max.index);
 		PrintExtension(&lattice, db_filtered, global_idx, max);
@@ -237,7 +238,7 @@ extern void unittest_db_input();
 
 void unittest_buildpath()
 {
-    glbinit_lattice();
+    //glbinit_lattice();
     unittest_lattice(1);
     unittest_db_input();
     unittest_opencl();

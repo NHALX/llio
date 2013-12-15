@@ -1,13 +1,15 @@
 #include <assert.h>
-#include "league/build_combo/build_combo.h"
+#include "league/build_combo/kernel/k_build_combo.h"
 #include "combinatorics/combination.h"
 #include "combinatorics/factorial.h"
 #include "league/unit_test/find_max.h"
+#include "league/build_combo/build_combo.h"
 
 #define UTBC_DEF "-DUNIT_TEST -ID:/GitRoot/llio/src/"
-#define UTBC_SRC  "#include \"league/build_combo/build_combo.c\""
+#define UTBC_SRC  "#include \"league/build_combo/kernel/k_build_combo.c\""
 
 #define ITEM_COUNT 3
+#define INVENTORY 2
 
 const item_t db_test[ITEM_COUNT] = 
 {
@@ -30,17 +32,15 @@ const item_t db_test[ITEM_COUNT] =
       {0}} /*B. F. Sword*/,
 };
 
+
 void
 unittest_buildcombo()
 {
-#define K 2
-    setmax_t combo[K];
-    opencl_workset workset;
+    setmax_t combo[INVENTORY];
+
     opencl_context gpu;
     opencl_function *func;
-    opencl_kernel_arg *output;
-    ulong_t ncombo;
-    result_t *results, best;
+   
     llf_criteria cfg = { 0 };
     cfg.time_frame = 3;
     cfg.ad_ratio = 3.4f;
@@ -50,24 +50,22 @@ unittest_buildcombo()
     cfg.enemy_mr = 100;
     cfg.build_maxcost = 15000;
     cfg.build_maxinventory = 6;
+    cfg.metric_type = METRIC_ALL_IN;
 
     opencl_init(&gpu, 1);
 
     func = opencl_build(&gpu, "build_combo", UTBC_SRC, UTBC_DEF);
-    ncombo = NK_MULTISET(ITEM_COUNT, K);
-    workset.iterations = 1;
-    workset.local_size = 1;
-    workset.pass_size  = (size_t)ncombo;
-    workset.total      = ncombo;
-    
-    output = build_combo__bind__(func, K, db_test, ITEM_COUNT, &cfg, workset.pass_size, workset.local_size);
-    results = output->buf_data;
-    opencl_run(func, 1, TRUE, 0, &workset);
-    best = FindMax(results, output->buf_size / sizeof *results);
-    combo_unrank(best.index, ITEM_COUNT, K, combo);
+    build_comboGPU(func, &cfg, db_test, ITEM_COUNT, INVENTORY, combo);
 
     assert(combo[0] == 2 && combo[1] == 2);
 
     opencl_function_free(func, 1);
     opencl_free(&gpu);
+
+    combo[0] = 0;
+    combo[1] = 0;
+
+    build_comboCPU(func, &cfg, db_test, ITEM_COUNT, INVENTORY, combo);
+
+    assert(combo[0] == 2 && combo[1] == 2);
 }

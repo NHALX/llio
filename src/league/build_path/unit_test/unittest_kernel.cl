@@ -1,4 +1,4 @@
-#include "league/build_path/kernel/metric_ADPS.c"
+#include "league/build_path/kernel/metric_area.c"
 
 __kernel void kunittest_mem(DB,
 	__global itemid_t id[],

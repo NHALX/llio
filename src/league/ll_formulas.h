@@ -1,6 +1,8 @@
 #ifndef _LL_FORMULAS_H_
 #define _LL_FORMULAS_H_
 
+#include "league/database/db_layout.h"
+
 #ifndef __OPENCL_VERSION__
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
@@ -17,7 +19,7 @@ typedef struct
 	
 	uint_t build_maxcost;
 	uint_t build_maxinventory;
-
+    enum llf_metric { METRIC_SUSTAIN, METRIC_ALL_IN } metric_type;
 }  llf_criteria;
 
 
@@ -111,7 +113,14 @@ static inline float llf_sustain(llf_criteria *cfg, VECTOR(*X))
         (F_SPELLVAMP(*X) * cast_rate * cast_dmg);
 }
 
-
+static float llf_metric(llf_criteria *cfg, VECTOR(*X))
+{
+    switch (cfg->metric_type){
+    case METRIC_ALL_IN  : return llf_dmgtotal(cfg, X);
+    case METRIC_SUSTAIN : return llf_sustain(cfg, X);
+    default             : return 0;
+    }
+}
 
 #endif
 

@@ -73,6 +73,8 @@ MetricArea(DB,
 
 		inventory_slots += AddItem(db_items, unique, (&stats), item);
 		
+        // TODO: change this. Invalid build paths dont exist, but paths that temporarily use more than INVENTORY slots have no
+        //       extra dps until the gold accumulates enough to merge items
 		if (inventory_slots > cfg->build_maxinventory) // invalid build path
 			{ *output = 0; return ERROR_INVENTORY; }
 

@@ -146,4 +146,112 @@ def static_output():
                     database_h.write("extern const item_t db_items[DB_LEN];\n")
                     database_h.write("extern const char *db_names[DB_LEN];\n")
   
-static_output()
+#static_output()
+
+def txt_output():
+    item_format = """%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%d,%d,%s,0,\"%s\""""
+      
+    with open(outdir+"db_items.txt", "w") as db_items:
+
+                items = []
+                names = []
+                max_width = 0
+                
+                def fmt_item(db, item, passive_key, passive_index):
+                    nonlocal max_width
+                    edges = item.BuildFrom
+                    max_width = max(len(edges), max_width)
+                    build = []
+                    if edges:
+                        s = ["%d" % list(db.keys()).index(e) for e in edges]
+                        build = "{%s}" % "|".join(s)
+                    else:
+                        build = "{}"
+                        
+                    #if passive_key != None:
+                    #    passv = Stats(0)
+                    passv = item_passive.passive_unique[passive_key]  
+                    items.append(item_format % 
+                      (stats_fields(item) + 
+                       stats_fields(passv) + 
+                       item_fields(item, passive_index) +
+                       (build,) +
+                       (item.Name,))
+                    )
+                   
+                fmt_name = lambda n: names.append("\"%s\"" % n)
+
+                    
+                #viable, item_passive.passive_unique, passive_index, v
+                print_items(fmt_name,fmt_item,itemdb,lambda x: x[1].valid)
+                         
+                db_items.write(",\n".join(items))
+                    
+
+
+def v2str(obj):
+    s = []
+    for k,v in obj.__dict__.items():
+        if k != "Name" and k != "id" and k != "Cost" and k != "BuildFrom" and k != "BuildInto" and k != "valid" and k != "Passive": #TODO: fix this hack
+            s.append("\t\t\t%s:%s" % (str(k),str(v)))
+        
+    return "{\n" + ",\n".join(s) + "\n\t\t}"
+    
+    
+import sys
+def js_output(file):
+    item_format = """
+    "%s": { 
+        stats: %s,
+        passiv_stats: %s,
+        id: %d,
+        passiv_index: %d,
+        total_cost: %d,
+        cost: %d,
+        build_len: %d,
+        build_tree: %s
+    }"""
+    
+    with open(file, "w") as db_items:
+                items = []
+                names = []
+                max_width = 0
+                
+                def fmt_item(db, item, passive_key, passive_index):
+                    nonlocal max_width
+                    edges = item.BuildFrom
+                    max_width = max(len(edges), max_width)
+                    build = []
+                    if edges:
+                        s = ["%d" % list(db.keys()).index(e) for e in edges]
+                        build = "[%s]" % ",".join(s)
+                    else:
+                        build = "[]"
+                        
+                    #if passive_key != None:
+                    #    passv = Stats(0)
+                    passv = item_passive.passive_unique[passive_key]  
+                    items.append(item_format % 
+                      ((item.Name, v2str(item), v2str(passv)) + item_fields(item, passive_index) + (build,))
+                    )
+                   
+                fmt_name = lambda n: names.append("\"%s\"" % n)
+
+                    
+                #viable, item_passive.passive_unique, passive_index, v
+                print_items(fmt_name,fmt_item,itemdb,lambda x: x[1].valid)
+                db_items.write("var False = 0;\nvar True = 1;\nvar db_items = {")
+                db_items.write(",\n".join(items))
+                db_items.write("};")
+                db_items.write("""
+ function get_item_names(){ 
+    var names = [];  
+    for(var i in db_items)
+    { 
+        names.push(i);
+    }
+    return names;
+}
+""")
+
+js_output("C:\\Users\\Media Markt\\Downloads\\graph-1.3.2\\data\\db_items.js")                

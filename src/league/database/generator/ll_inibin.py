@@ -10,8 +10,7 @@ import math
 
 import traceback
 import ll_hashkeys
-#import networkx as nx
-#import matplotlib.pyplot as plt
+
 from collections import namedtuple
 
 
@@ -144,14 +143,17 @@ def parse(filename):
                 (vals,size2) = fmt_val[1]((mm,symbase,offset), len(keys))
                 offset += size2
                 output += list(zip(keys,[fmt_key]*len(keys),vals))
-                
-        return (header_info, output)
+
+        index = lambda i, xs: [x[i] for x in xs]
+        db = dict(zip(index(0, output), index(2, output))) 
+                        
+        return (header_info, output, db)
         
     
 def dump_keys(output):
       
     print("| %-10s | %-40s | %-20s" % ("KEY", "VALUE", "TYPE"))
-    
+    output.sort()
     for (key,type,value) in output:
         s_val = str(value)
 
@@ -164,7 +166,7 @@ def dump_keys(output):
         
 def dump(file):
     
-    ((filename, version, format, symtabsz, filesz), output) = parse(file)
+    ((filename, version, format, symtabsz, filesz), output, db) = parse(file)
     
     print("< file: %s >\n"
               "< format-ver: %d >\n"
@@ -177,15 +179,14 @@ def dump(file):
 #TODO: all the fields we are using arent even being loaded (like armor pen percent)
 def getFields(strings, id, file, item):
     data = parse(file)
-    _setItemStats(item, id, strings, data[1])
+    _setItemStats(item, id, strings, data[2], data[1])
     return item
     
-def _setItemStats(item, fileid, strings, output):
+def _setItemStats(item, fileid, strings, db, output):
 
-    index = lambda i, xs: [x[i] for x in xs]
     query = lambda d, xs: [d[x] for x in xs]
-
-    db = dict(zip(index(0, output), index(2, output))) 
+    index = lambda i, xs: [x[i] for x in xs]
+    
     def get_i(str):
         x = get(str)
         if x:
@@ -213,7 +214,7 @@ def _setItemStats(item, fileid, strings, output):
         else:
             return None
 
-    item.id = fileid
+    item.id = fileid # TODO: move this to an encapsulating object
     
     #item.id    = get_i("Id") #int(item.db[ll_hashkeys.table["Id"]])
     #if item.id != fileid:
@@ -225,10 +226,11 @@ def _setItemStats(item, fileid, strings, output):
     
     nkey = get("Name")
     if nkey in strings:
-        item.Name  = strings[nkey]
+        item.Name  = strings[nkey] # TODO: move this to an encapsulating object
     else:
         item.Name  = None
-        
+    item.Cost          = get_i("GoldCost") # TODO: move this to an encapsulating object
+  
     #TODO: sync these
     #self.ArmorPenPercent=ArmorPenPercent
     #self.Movement=Movement
@@ -260,7 +262,7 @@ def _setItemStats(item, fileid, strings, output):
     item.Armor         = get_i("Armor")
     item.MagicRest     = get_i("MagicResist")
     #item.Tenacity      = get()
-    item.Cost          = get_i("GoldCost")
+  
     #item.ResellValue   = get_f("ResellValue")
     item.Passive       = get("UniqueEffect")
     
@@ -269,8 +271,8 @@ def _setItemStats(item, fileid, strings, output):
     kto       = set(index(1, ll_hashkeys.BuildTo))
     process   = lambda x: list(filter(lambda y: y != 0, map(int, query(db, keys.intersection(x)))))
     
-    item.BuildFrom = process(kfrom)
-    item.BuildInto = process(kto)
+    item.BuildFrom = process(kfrom) # TODO: move this to an encapsulating object
+    item.BuildInto = process(kto)   # TODO: move this to an encapsulating object
     
     
 if __name__ == "__main__":

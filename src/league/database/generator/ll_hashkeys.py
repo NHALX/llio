@@ -35,8 +35,11 @@ champion = [("Id",2921476548),
             ("HealthRegen",4128291318),
             ("HealthRegenPerLevel",3062102972),
             ("ManaRegen",619143803),
-            ("ManaRegenPerLevel",1248483905)]
-
+            ("ManaRegenPerLevel",1248483905),
+            #("AttackSpeedOffset", 0x1ed6b674),
+            ("AttackSpeedDelay", 0x829c7b37),
+            ("AttackSpeedPerLevel", 0x2de86566)]
+            
 abilities = [# AbilityMapping
             ("Name",1805538005),
             ("FlavorText",3431853604),
@@ -44,20 +47,58 @@ abilities = [# AbilityMapping
             ("Range",3806805222),
             ("ImageFileName",2059614685),
 
-            ("Effect1AmountLevel1",466816973),
-            ("Effect1AmountLevel2",4059954766),
-            ("Effect1AmountLevel3",3358125263),
-            ("Effect1AmountLevel4",2656295760),
-            ("Effect1AmountLevel5",1954466257),
+            ("Effect1AmountLV1",466816973),
+            ("Effect1AmountLV2",4059954766),
+            ("Effect1AmountLV3",3358125263),
+            ("Effect1AmountLV4",2656295760),
+            ("Effect1AmountLV5",1954466257),
 
-            ("Effect2AmountLevel1",3898289358),
-            ("Effect2AmountLevel2",3196459855),
-            ("Effect2AmountLevel3",2494630352),
-            ("Effect2AmountLevel4",1792800849),
-            ("Effect2AmountLevel5",1090971346),
+            ("Effect2AmountLV1",3898289358),
+            ("Effect2AmountLV2",3196459855),
+            ("Effect2AmountLV3",2494630352),
+            ("Effect2AmountLV4",1792800849),
+            ("Effect2AmountLV5",1090971346),
+            
+            ("Effect3AmountLV1", -1260172849),
+            ("Effect3AmountLV2", -1962002352),
+            ("Effect3AmountLV3", 1631135441),
+            ("Effect3AmountLV4", 929305938),
+            ("Effect3AmountLV5", 227476435),
+            
+            ("Effect4AmountLV1", -2123667760),
+            ("Effect4AmountLV2", 1469470033),
+            ("Effect4AmountLV3", 767640530),
+            ("Effect4AmountLV4", 65811027),
+            ("Effect4AmountLV5", -636018476),
+            
+            ("Effect5AmountLV1", 1307804625),
+            ("Effect5AmountLV2", 605975122),
+            ("Effect5AmountLV3", -95854381),
+            ("Effect5AmountLV4", -797683884),
+            ("Effect5AmountLV5", -1499513387),
 
-            ("StartManaCost",3771724453),
-            ("EndManaCost",3771724457) ]
+            ("ManaLV1",3771724453),
+            ("ManaLV2",3771724454),
+            ("ManaLV3",3771724455),
+            ("ManaLV4",3771724456),
+            ("ManaLV5",3771724457),
+
+            ("CooldownLV1", 0x9cb7f6ce),
+            ("CooldownLV2", 0x9cb7f6cf),
+            ("CooldownLV3", 0x9cb7f6d0),
+            ("CooldownLV4", 0x9cb7f6d1),
+            ("CooldownLV5", 0x9cb7f6d2),
+            
+            ("FlatCooldown", 0x494f9223),
+            ("Target", 0x9a34c4ef),
+            ("TargetFlags", 0x6d0a0522),
+            ("SpellSlot", 0x681c7297),
+            
+            ("Scaling1", 844968125),
+            ("Scaling2", -1783890251),
+            
+            #("AppliesOnHit", 0x20004c61)
+            ]
 
 items = BuildTo + BuildFrom + [
 # ItemMapping
@@ -142,6 +183,8 @@ runes = [# RuneMapping
 
 item_table = dict(items)
 rune_table = dict(runes)
+champion_table = dict(champion)
+abilities_table = dict(abilities)
 
 value_key = dict([(v,k) for (k,v) in champion + abilities + items + runes])
 

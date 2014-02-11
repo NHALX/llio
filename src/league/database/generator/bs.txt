@@ -1,0 +1,109 @@
+< file: D:\Dargon\output_dump\DATA\Spells\IreliaGatotsu.inibin >
+< format-ver: 2 >
+< types-mask: 0x1033 >
+< sizes: (symtab=511, total=1096) >
+
+| KEY        | VALUE                                    | TYPE                
+| 0x036ea71d Unknown              | True                                     | FMT_BITFIELD        
+| 0x05791117 Unknown              |                                          | FMT_OFFSET          
+| 0x08930877 Unknown              | 0.0000 0.0000 0.0000                     | FMT_OFFSET          
+| 0x0e284e9b Unknown              | 0                                        | FMT_OFFSET          
+| 0x12500410 Unknown              | 0                                        | FMT_OFFSET          
+| 0x13cdfccb Unknown              | 650.0000                                 | FMT_OFFSET          
+| 0x13cdfccc Unknown              | 650.0000                                 | FMT_OFFSET          
+| 0x13cdfccd Unknown              | 650.0000                                 | FMT_OFFSET          
+| 0x13cdfcce Unknown              | 650.0000                                 | FMT_OFFSET          
+| 0x13cdfccf Unknown              | 650.0000                                 | FMT_OFFSET          
+| 0x15e8fb50 Unknown              | 0                                        | FMT_OFFSET          
+| 0x1802665f Unknown              | False                                    | FMT_BITFIELD        
+| 0x18026660 Unknown              | False                                    | FMT_BITFIELD        
+| 0x18026661 Unknown              | False                                    | FMT_BITFIELD        
+| 0x18026662 Unknown              | False                                    | FMT_BITFIELD        
+| 0x18026663 Unknown              | False                                    | FMT_BITFIELD        
+| 0x1b535f81 Unknown              | 0                                        | FMT_OFFSET          
+| 0x1bd30fcd Effect1AmountLV1     | 20.0000                                  | FMT_OFFSET          
+| 0x20004c61 AppliesOnHit         | True                                     | FMT_BITFIELD        
+| 0x2950e937 Unknown              | Level 2                                  | FMT_OFFSET          
+| 0x2c1c7d1c Unknown              | 0                                        | FMT_OFFSET          
+| 0x325d30bd Scaling1             | 1.0000                                   | FMT_OFFSET          
+| 0x3852c5e3 Unknown              | 0                                        | FMT_OFFSET          
+| 0x426dde0a Unknown              |                                          | FMT_OFFSET          
+| 0x4395f889 Unknown              | 300.0000                                 | FMT_OFFSET          
+| 0x4690dedf Unknown              | 2                                        | FMT_U8              
+| 0x4690dee0 Unknown              | 2                                        | FMT_U8              
+| 0x4690dee1 Unknown              | 2                                        | FMT_U8              
+| 0x479a1b20 Unknown              | missing_instant.troy                     | FMT_OFFSET          
+| 0x494f9223 FlatCooldown         | 14.0000                                  | FMT_OFFSET          
+| 0x56cff119 Unknown              | 2200.0000                                | FMT_OFFSET          
+| 0x681c7297 SpellSlot            | Attack1                                  | FMT_OFFSET          
+| 0x6a07de97 Unknown              | True                                     | FMT_BITFIELD        
+| 0x6b9e52d5 Name                 | game_spell_displayname_IreliaGatotsu     | FMT_OFFSET          
+| 0x6d0a0522 TargetFlags          | Instacast | AffectEnemies | AffectNeutral | AffectMinions | AffectHeroes | FMT_OFFSET          
+| 0x6d3d4838 Unknown              | Level 3                                  | FMT_OFFSET          
+| 0x70176eac Unknown              | False                                    | FMT_BITFIELD        
+| 0x73204756 Unknown              | 0                                        | FMT_OFFSET          
+| 0x747ec9d1 Effect1AmountLV5     | 140.0000                                 | FMT_OFFSET          
+| 0x7ac339dd ImageFileName        | Irelia_Bladesurge.dds                    | FMT_OFFSET          
+| 0x804cd25a Unknown              | 0                                        | FMT_OFFSET          
+| 0x828e83ba Unknown              | 0                                        | FMT_OFFSET          
+| 0x82f1f008 Unknown              | False                                    | FMT_BITFIELD        
+| 0x831ef894 Unknown              |                                          | FMT_OFFSET          
+| 0x8345eb92 Unknown              | False                                    | FMT_BITFIELD        
+| 0x86788e0d Unknown              | 0                                        | FMT_OFFSET          
+| 0x88cc033d Unknown              | root                                     | FMT_OFFSET          
+| 0x88dde704 Unknown              | 0                                        | FMT_OFFSET          
+| 0x8a05f8b9 Unknown              | 45.0000                                  | FMT_OFFSET          
+| 0x8a32df02 Unknown              | 0                                        | FMT_OFFSET          
+| 0x8b4cdd97 Unknown              | True                                     | FMT_BITFIELD        
+| 0x8e7f2751 Unknown              | 0                                        | FMT_OFFSET          
+| 0x95cb76f7 Unknown              | False                                    | FMT_BITFIELD        
+| 0x95cb76f8 Unknown              | False                                    | FMT_BITFIELD        
+| 0x95cb76f9 Unknown              | False                                    | FMT_BITFIELD        
+| 0x95cb76fa Unknown              | False                                    | FMT_BITFIELD        
+| 0x95cb76fb Unknown              | False                                    | FMT_BITFIELD        
+| 0x96da0628 Unknown              | False                                    | FMT_BITFIELD        
+| 0x9a34c4ef Target               | foe                                      | FMT_OFFSET          
+| 0x9cb7f6ce CooldownLV1          | 14.0000                                  | FMT_OFFSET          
+| 0x9cb7f6cf CooldownLV2          | 12.0000                                  | FMT_OFFSET          
+| 0x9cb7f6d0 CooldownLV3          | 10.0000                                  | FMT_OFFSET          
+| 0x9cb7f6d1 CooldownLV4          | 8.0000                                   | FMT_OFFSET          
+| 0x9cb7f6d2 CooldownLV5          | 6.0000                                   | FMT_OFFSET          
+| 0x9d0dacfc Description          | game_spell_tooltip_IreliaGatotsu         | FMT_OFFSET          
+| 0x9d2e66f1 Unknown              | True                                     | FMT_BITFIELD        
+| 0x9e53db50 Effect1AmountLV4     | 110.0000                                 | FMT_OFFSET          
+| 0x9f221e9f Unknown              |                                          | FMT_OFFSET          
+| 0xa09c5a07 Unknown              | 6                                        | FMT_U8              
+| 0xa3a954ef Unknown              | 100.0000                                 | FMT_OFFSET          
+| 0xaee0e6da Unknown              | False                                    | FMT_BITFIELD        
+| 0xb0c69808 Unknown              | False                                    | FMT_BITFIELD        
+| 0xb129a739 Unknown              | Level 4                                  | FMT_OFFSET          
+| 0xb4fc974f Unknown              | 115716                                   | FMT_U32             
+| 0xb8429e6d Unknown              | IreliaGatotsu                            | FMT_OFFSET          
+| 0xb877a631 Unknown              | False                                    | FMT_BITFIELD        
+| 0xb95c8c5a Unknown              | True                                     | FMT_BITFIELD        
+| 0xbb71873f Unknown              | False                                    | FMT_BITFIELD        
+| 0xc465dd76 Unknown              | 7.934999942779541                        | FMT_FLOAT           
+| 0xc4b95440 Unknown              | False                                    | FMT_BITFIELD        
+| 0xc68fa340 Unknown              | game_spell_levelup_IreliaGatotsu         | FMT_OFFSET          
+| 0xc828eccf Effect1AmountLV3     | 80.0000                                  | FMT_OFFSET          
+| 0xca91ecd2 Unknown              | 0                                        | FMT_OFFSET          
+| 0xcc8dee24 FlavorText           | game_spell_description_IreliaGatotsu     | FMT_OFFSET          
+| 0xd08392f7 Unknown              | 0                                        | FMT_OFFSET          
+| 0xd4aba7db Unknown              |                                          | FMT_OFFSET          
+| 0xdb41b812 Unknown              | 0                                        | FMT_OFFSET          
+| 0xdbfb668d Unknown              | 0                                        | FMT_OFFSET          
+| 0xe0cff2a5 ManaLV1              | 60.0000                                  | FMT_OFFSET          
+| 0xe0cff2a6 ManaLV2              | 65.0000                                  | FMT_OFFSET          
+| 0xe0cff2a7 ManaLV3              | 70.0000                                  | FMT_OFFSET          
+| 0xe0cff2a8 ManaLV4              | 75.0000                                  | FMT_OFFSET          
+| 0xe0cff2a9 ManaLV5              | 80.0000                                  | FMT_OFFSET          
+| 0xe2e73ce6 Range                | 650.0000                                 | FMT_OFFSET          
+| 0xe3cf25d5 Unknown              | False                                    | FMT_BITFIELD        
+| 0xe5648a36 Unknown              | Level 1                                  | FMT_OFFSET          
+| 0xefbaaa01 Unknown              |                                          | FMT_OFFSET          
+| 0xf1244d92 Unknown              | 600.0000                                 | FMT_OFFSET          
+| 0xf1e4103f Unknown              | 1.0000                                   | FMT_OFFSET          
+| 0xf1fdfe4e Effect1AmountLV2     | 50.0000                                  | FMT_OFFSET          
+| 0xf516063a Unknown              | Level 5                                  | FMT_OFFSET          
+| 0xf85da951 Unknown              | 0                                        | FMT_OFFSET          
+| 0xff12449e Unknown              | 0                                        | FMT_OFFSET          

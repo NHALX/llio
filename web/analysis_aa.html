@@ -1,0 +1,359 @@
+<!DOCTYPE HTML>
+
+<html>
+<head>
+<link href="http://fonts.googleapis.com/css?family=Ubuntu+Mono:400|Quicksand:400|Anonymous+Pro:400|Josefin+Sans:400|Roboto:400,100italic,100,300italic,300,400italic,500italic,500,700italic,700,900italic,900" rel="stylesheet" type="text/css">
+
+    <title>Graph demo</title>
+
+<link rel="stylesheet" href="llio.css" type="text/css" />
+ 
+    <script type="text/javascript" src="data/db_items.js"></script>
+    <script type="text/javascript" src="lib/misc.js"></script>
+    <script type="text/javascript" src="league.js"></script>
+    <script type="text/javascript" src="llio.js"></script>
+    <script type="text/javascript" src="llio_html.js"></script>
+    
+    <script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+
+<script type="text/javascript"
+  src="lib/MathJax/MathJax.js?config=TeX-AMS_HTML">
+</script>
+
+<style type="text/css">
+
+    #inventory_list ol {list-style: none; margin: 0 auto; width: 400px;}
+	#inventory_list li {float: left; display: inline; margin: 0; padding-right:20px}
+</style>
+
+</head>
+
+<!---------------- top ----------------->
+<header id="banner" class="body">
+    <strong><a href="index.html">GTheory</a> | <a href="league.html">League of Legends</a></strong>
+	<nav>
+         <ul>
+         <li><a href="llio.html">optimizer</a></li>
+         <li><a href="analysis.html">analysis</a></li></ul>
+         <li><a href="data.html">data</a></li>
+
+    </nav>
+</header>
+<!---------------- middle -----------------	
+
+<body id="index">
+<div class="logo" style="margin-left: 60px">
+    <h1>[G]Theory <br> <strong>Theorycraft and analysis</strong></h1>
+</div>
+<div id="middle" class="gradient" style="width:100%; ">
+
+</div>
+
+<br>
+
+<!---------------- bottom ----------------->
+<body id="index" class="gradient_horizontal_reverse" style="background:#111111;">
+<div id="bottom" class="gradient_horizontal" style="width:100%; height:100%; position: relative"> <!--height:372px;-->
+
+        <div id="featured2" class="analysis_page">
+        <h1> Stat Analysis </h1>
+        <h2> Auto-attack Damage </h2>
+
+            Pro: <ul>
+                <li>Exponential damage scaling (mid-late game)</li>
+                <li>No mana/resource/cooldown constraints</li>
+                <li>High sustained DPS as well as late game burst</li>
+                <li>Health regeneration via lifesteal</li>
+                </ul>
+            Con: <ul>
+                 <li>High gold cost per stat??</li>
+                 <li>Early game damage scaling is, at best, linear</li>
+                 </ul>
+
+         
+        </div>
+		<div class='analysis_page'>
+		<h3> Optimal gold allocation </h3>
+
+		
+        <img src='images/llio_dps_contour.png'>
+
+		<ul>
+		<li> If AD < 91.6667: all gold should be spent to increase AD. </li>
+		<li> If 91.6667 < AD < 138.889: all gold should be evenly divided between AS and AD. </li>
+		<li> If 138.889 < AD: all gold should be evenly divided between AD/AS/CC until AS and CC reach their hard limits </li>
+		</ul>
+		Assuming:
+		<ul type='square'>
+        <li> Gold cost per stat: {AD,AS,CC}={36, 33 / %, 50 / %}  </li>
+		<li> Critical hit damage bonus: 200% </li>
+		</ul>
+		
+		
+		<br>
+        </div>
+
+        <div class='analysis_page'>
+		<h1> Proof </h1>
+		<p>
+		Assuming that DPS is calculated as:
+        $$ DPS_N = \text{AS}_n \left(\text{AD}_n+\text{bonus}_{\text{AD}}\right) \left(1+\text{bonus}_{\text{AS}}\right) \left(1+\text{bonus}_{\text{CC}}\right) $$
+        $$AD_n = {base}_{AD} + (n-1) \cdot {perLV}_{AD}$$
+        $$AS_n = {base}_{AS} + (n-1) \cdot {perLV}_{AS}$$
+        $$AD = \text{attack damage}, AS = \text{attack speed}, CC = \text{critical hit chance.}$$
+        <br>
+        <br>
+        Assuming that a unit increase of each stat costs: 
+        $$cost_{\{AD,AS,CC\}} = \left\{36,33/\%,50/\%\right\} $$
+        <br>  
+        We have dps as a function of gold spent:
+        $$DPS_{gold} = \text{AS}_n \left(\text{AD}_n+\frac{\text{gold}_{\text{AD}}}{36}\right) \left(1+\frac{\text{gold}_{\text{AS}}}{3300}\right) \left(1+\frac{\text{gold}_{\text{CC}}}{5000}\right) $$
+        <br>
+        Note that the DPS function increases monotonically, so it does not have any extrema.
+        </p>
+        
+        <h3> Optimal gold allocation </h3>
+		<p>
+       
+        Since we are interested in maximizing our DPS per gold spent, i.e. finding the greatest rate of change, 
+		and our DPS function is differentiable, the relationship between the input variables and output DPS
+		can be found by taking the gradient of the function, using vector calculus.
+        $$ g = \nabla dps_{gold} = \{dps'_{{gold}_{(gold_{AS})}},dps'_{{gold}_{(gold_{CC})}},dps'_{{gold}_{(gold_{AD})}} \}$$
+        $$ g_1 = \frac{\text{AS}_n \left(\text{AD}_n+\frac{\text{gold}_{\text{AD}}}{36}\right) \left(1+\frac{\text{gold}_{\text{CC}}}{5000}\right)}{3300} $$
+        $$ g_2 = \frac{\text{AS}_n \left(\text{AD}_n+\frac{\text{gold}_{\text{AD}}}{36}\right) \left(1+\frac{\text{gold}_{\text{AS}}}{3300}\right)}{5000} $$
+        $$ g_3 = \frac{1}{36} \text{AS}_n \left(1+\frac{\text{gold}_{\text{AS}}}{3300}\right) \left(1+\frac{\text{gold}_{\text{CC}}}{5000}\right) $$
+        <br>
+
+		Since 'the gradient points in the direction of the greatest rate of increase of the function and its magnitude is the slope of the graph in that direction', 
+		the set of points, corresponding to the optimal distributions of gold, is equivalent to the path of steepest ascent on the surface defined by our function. 
+		Consequently we find the optimal amount of gold spent on CC and AS, <strong>relative to AD</strong>, by solving the differential system (where /. indicates pattern substitution):
+        $$ \text{dist}_{\text{CC}}'\left[\text{gold}_{\text{AD}}\right]==\left(\frac{g_3}{g_2}\text{/.}\, \left\{\text{gold}_{\text{CC}}\to \text{dist}_{\text{CC}}\left[\text{gold}_{\text{AD}}\right]\right\}\right) $$
+$$ \text{dist}_{\text{AS}}'\left[\text{gold}_{\text{AD}}\right]==\left(\frac{g_3}{g_1}\text{/.}\, \left\{\text{gold}_{\text{AS}}\to \text{dist}_{\text{AS}}\left[\text{gold}_{\text{AD}}\right]\right\}\right) $$
+
+        yields: 
+		$$ \text{dist}_{\text{CC}}\left[\text{gold}_{\text{AD}}\right]\to -5000+C[1] \left(36 \text{AD}_n+\text{gold}_{\text{AD}}\right) $$ 
+		$$ \text{dist}_{\text{AS}}\left[\text{gold}_{\text{AD}}\right]\to -3300+C[2] \left(36 \text{AD}_n+\text{gold}_{\text{AD}}\right) $$ 
+		</p>
+
+        <h4>Piecewise intervals</h4>
+		<p>
+		Clearly, attack speed and crit chance have negative utility when AD levels are low, 
+		and since our value of gold spent can't be negative, we need to find the points where they cross zero,
+		using them to define seperate intervals.
+		<br>
+        <br>
+		For attack speed we reduce: 
+		$$ -3300+36 \text{AD}_n+\text{gold}_{\text{AD}}==\text{gold}_{\text{AS}} $$
+$$ \text{gold}_{\text{AS}}==0 $$
+$$ \text{AD}_n==0 $$
+$$ \text{gold}_{\text{AD}} \gt 0 $$
+
+		yielding:
+		$$ \left\{\text{gold}_{\text{AD}}\to 3300,\text{gold}_{\text{AS}}\to 0,\text{AD}_n\to 0\right\} $$
+        <br>
+
+		And for critical hit chance we reduce: 
+		$$ -5000+36 \text{AD}_n+\text{gold}_{\text{AD}}==\text{gold}_{\text{CC}} $$
+$$ \text{gold}_{\text{CC}}==0 $$
+$$ \text{AD}_n==0 $$
+$$ \text{gold}_{\text{AD}} \gt 0 $$
+
+		yielding:
+		$$ \left\{\text{gold}_{\text{AD}}\to 5000,\text{gold}_{\text{CC}}\to 0,\text{AD}_n\to 0\right\} $$
+        <br>
+		Note that we've seen these values before in our algebraic analysis.
+		$$ \{3300==91.6667 \text{AD},5000==138.889 \text{AD}\} $$
+		</p>
+
+        <h4>Conclusions</h4>
+        <p>
+		At this point we can draw our initially stated conclusions, simply by looking at the functions, 
+		but to further clarify our point we define a new function: 
+		$$ f(u)=\left\{\text{gold}_{\text{AD}}[u],\text{dist}_{\text{AS}}\left[\text{gold}_{\text{AD}}[u]\right],\text{dist}_{\text{CC}}\left[\text{gold}_{\text{AD}}[u]\right]\right\} $$
+        <br>
+		by solving for gold_AD(u) in:
+		$$ \text{Max}\left[0,\text{dist}_{\text{AS}}\left[\text{gold}_{\text{AD}}\right]\right]+\text{Max}\left[0,\text{dist}_{\text{CC}}\left[\text{gold}_{\text{AD}}\right]\right]+\text{gold}_{\text{AD}}==u $$
+		resulting in:
+		<br><br>
+		$$ gold_{AD}(u)=\begin{array}{cc}
+ \{ & 
+\begin{array}{cc}
+ u & 0\leq u\leq 3300 \\
+ \frac{3300+u}{2} & 3300 \lt u\leq 6700 \\
+ \frac{8300+u}{3} & u \gt 6700 \\
+ 0 & \text{True} \\
+\end{array}
+ \\
+\end{array}$$
+        <br><br>
+		substituting it back into f(u) yields:
+		<br><br>
+		$$ f(u)=\begin{array}{cc}
+ \{ & 
+\begin{array}{cc}
+ \{u,0,0\} & 0\leq u\leq 3300 \\
+ \left\{\frac{3300+u}{2},\frac{1}{2} (-3300+u),0\right\} & 3300 \lt u\leq 6700 \\
+ \left\{\frac{8300+u}{3},\frac{1}{3} (-1600+u),\frac{1}{3} (-6700+u)\right\} & u \gt 6700 \\
+ \{\} & \text{True} \\
+\end{array}
+ \\
+\end{array}$$
+        <br><br>
+		taking the first derivative, we see how gold is best divided during each interval:
+		<br><br>
+		$$ f'(u)=\begin{array}{cc}
+ \{ & 
+\begin{array}{cc}
+ \{1,0,0\} & 0\leq u\leq 3300 \\
+ \left\{\frac{1}{2},\frac{1}{2},0\right\} & 3300 \lt u\leq 6700 \\
+ \left\{\frac{1}{3},\frac{1}{3},\frac{1}{3}\right\} & u \gt 6700 \\
+ \{\} & \text{True} \\
+\end{array}
+ \\
+\end{array}$$
+		</p>
+	
+<!--
+        <div style="z-index:0; height:80%; width:60%; right: 0; position: absolute; margin-left:auto; margin-right:auto;">
+        <img src="images/llio_dps_contour.png" width=100% height=100% alt=""/ >
+        </div>
+        
+        
+        </div>
+        <div class=" " style="width: 50%; height:100%; right:5%; position: absolute;">
+        <img src="images/llio_dps_contour.png" width=100% height=100% alt=""/ >
+        </div>
+        -->
+        
+            <!--
+    <div id="mygraph" style="width: 60%; right:0; height: 100%; z-index:0; position: absolute"></div>
+    <div id="sidebar_container" style="float: left; position: relative; z-index: 2;"> 
+
+        <div id="featured2" class="gradient sidebox" style="">
+            <form>
+              Item: <select id="item_selector">
+                <script type="text/javascript">
+                    var sel = document.getElementById("item_selector"); 
+                    var	item_names = get_item_names();
+                    
+                    for(var i = 0; i < item_names.length; i++) 
+                    {
+                        var opt = item_names[i];
+                        var el = document.createElement("option");
+                        el.textContent = opt;
+                        el.value = opt;
+                        sel.appendChild(el);
+                    }
+                </script>
+            </select>
+              <input type="button" value="Add" onClick="formAddItem()">
+            </form>
+        </div>
+
+        
+
+    </div> 
+        <div id="inventory_list" class="gradient" style="bottom: 0; left:0; position: absolute;">
+      
+                Inventory:
+
+                <ol>
+                  <li id="item_1"></li>
+                  <li id="item_2"></li>
+                  <li id="item_3"></li>
+                  <li id="item_4"></li>
+                  <li id="item_5"></li>
+                  <li id="item_6"></li>
+                </ol>
+                   
+
+        </div>
+        
+        <div id="featured3" class="gradient" style="z-index:2; right: 0; bottom: 0; position: absolute;">
+    	
+        <table width="100%" border="0" class="dpstab">
+          <tr>
+            <td width="50%">Metrics:</td>
+            <td width="50%">Combined stats:</td>
+          </tr>
+          <tr>
+            <td width="50%" align="left" valign="top" scope="row">
+            	<pre id="metrics">
+                </pre>
+            </td>
+            <td width="50%" align="left" valign="top">
+            	<pre id="combined_stats">
+            	</pre>
+            </td>
+          </tr>
+        </table>
+       
+        </div>
+    -->
+</div>
+
+    <!--
+       <div class="content" style="width: 100%; z-index: 1; margin-right: 0px; padding-top: 0px; padding-right: 40%; padding-left: 20%; padding-bottom: 0px; float: left;"> 
+blah
+    </div>-->
+
+    <!--
+<section id="content" class="content body">
+	<aside id="featured" class="content body">
+        <h2>Inventory configuration</h2>
+        </aside>
+<aside id="featured" class="content body">
+
+
+
+</aside>
+ <div id="mygraph" style="width: 100%; height: 300px;"></div>
+ <div id="mygraph_ehp" style="width: 80%; height: 300px;  margin-left: auto;  margin-right: auto;"></div>
+</section>
+
+<div align=center>
+        <blockquote>
+          <p><em>28 items: 923810 valid build orders exist.</em></p>
+        </blockquote>
+        </div>
+        
+<div id='chart_div' style="width: 80%; height: 300px; margin-left: auto; margin-right: auto;">
+        </div>
+        
+<section id="content2" class="body content">
+ <article id="body2">
+        <h2>Suggested build order</h2>
+
+       
+        <div id="dpstab", class="dpstab">
+          <table width="80%">
+            <tr>
+              <th width="10%" scope="row">1000G</th>
+              <td width="90%">Long Sword &rarr; Long Sword  &rarr;</td>
+            </tr>
+            <tr>
+              <th scope="row">2000G</th>
+              <td>Brutalizer &rarr; Brawler's Gloves  &rarr;</td>
+            </tr>
+            <tr>
+              <th scope="row">3000G</th>
+              <td>Avarice Blade &rarr; Ghostblade</td>
+            </tr>
+          </table>
+    </div>
+         
+    
+          <h3>DPS distribution</h3>
+     
+        
+     
+        <div id="info"></div>
+  </article>
+</section>
+-->
+</body>
+</html>

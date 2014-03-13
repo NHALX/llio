@@ -3,6 +3,7 @@ div.graph-frame {
 }
 
 div.graph-canvas {
+background-color: lightgray;
 }
 
 div.graph-axis {

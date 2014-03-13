@@ -1,0 +1,218 @@
+<!DOCTYPE HTML>
+
+<html>
+<head>
+<link href="http://fonts.googleapis.com/css?family=Ubuntu+Mono:400|Quicksand:400|Anonymous+Pro:400|Josefin+Sans:400|Roboto:400,100italic,100,300italic,300,400italic,500italic,500,700italic,700,900italic,900" rel="stylesheet" type="text/css">
+
+    <title>Graph demo</title>
+
+<link rel="stylesheet" href="llio.css" type="text/css" />
+ 
+    <script type="text/javascript" src="data/db_items.js"></script>
+    <script type="text/javascript" src="lib/misc.js"></script>
+    <script type="text/javascript" src="league.js"></script>
+    <script type="text/javascript" src="llio.js"></script>
+    <script type="text/javascript" src="llio_html.js"></script>
+    
+    <script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+
+<script type="text/javascript"
+  src="lib/MathJax/MathJax.js?config=TeX-AMS_HTML">
+</script>
+
+<style type="text/css">
+
+    #inventory_list ol {list-style: none; margin: 0 auto; width: 400px;}
+	#inventory_list li {float: left; display: inline; margin: 0; padding-right:20px}
+</style>
+
+</head>
+
+<!---------------- top ----------------->
+<header id="banner" class="body">
+    <strong><a href="index.html">GTheory</a> | <a href="league.html">League of Legends</a></strong>
+	<nav>
+         <ul>
+         <li><a href="llio.html">optimizer</a></li>
+         <li><a href="analysis.html">analysis</a></li></ul>
+         <li><a href="data.html">data</a></li>
+
+    </nav>
+</header>
+<!---------------- middle -----------------	
+
+<body id="index">
+<div class="logo" style="margin-left: 60px">
+    <h1>[G]Theory <br> <strong>Theorycraft and analysis</strong></h1>
+</div>
+<div id="middle" class="gradient" style="width:100%; ">
+
+</div>
+
+<br>
+
+<!---------------- bottom ----------------->
+<body id="index" class="gradient_horizontal_reverse" style="background:#111111;">
+<div id="bottom" class="gradient_horizontal" style="width:100%; height:100%; position: relative"> <!--height:372px;-->
+
+        <div id="featured2" class="analysis_page">
+        <h1> Stat Analysis </h1>
+        <h2> Auto-attack Damage </h2>
+
+            Pro: <ul>
+                <li>Exponential damage scaling (mid-late game)</li>
+                <li>No mana/resource/cooldown constraints</li>
+                <li>High sustained DPS as well as late game burst</li>
+                <li>Health regeneration via lifesteal</li>
+                </ul>
+            Con: <ul>
+                 <li>High gold cost per stat??</li>
+                 <li>Early game damage scaling is, at best, linear</li>
+                 </ul>
+
+         
+        <!--#include file="mathematica.dps_analysis" -->
+<!--
+        <div style="z-index:0; height:80%; width:60%; right: 0; position: absolute; margin-left:auto; margin-right:auto;">
+        <img src="images/llio_dps_contour.png" width=100% height=100% alt=""/ >
+        </div>
+        
+        
+        </div>
+        <div class=" " style="width: 50%; height:100%; right:5%; position: absolute;">
+        <img src="images/llio_dps_contour.png" width=100% height=100% alt=""/ >
+        </div>
+        -->
+        
+            <!--
+    <div id="mygraph" style="width: 60%; right:0; height: 100%; z-index:0; position: absolute"></div>
+    <div id="sidebar_container" style="float: left; position: relative; z-index: 2;"> 
+
+        <div id="featured2" class="gradient sidebox" style="">
+            <form>
+              Item: <select id="item_selector">
+                <script type="text/javascript">
+                    var sel = document.getElementById("item_selector"); 
+                    var	item_names = get_item_names();
+                    
+                    for(var i = 0; i < item_names.length; i++) 
+                    {
+                        var opt = item_names[i];
+                        var el = document.createElement("option");
+                        el.textContent = opt;
+                        el.value = opt;
+                        sel.appendChild(el);
+                    }
+                </script>
+            </select>
+              <input type="button" value="Add" onClick="formAddItem()">
+            </form>
+        </div>
+
+        
+
+    </div> 
+        <div id="inventory_list" class="gradient" style="bottom: 0; left:0; position: absolute;">
+      
+                Inventory:
+
+                <ol>
+                  <li id="item_1"></li>
+                  <li id="item_2"></li>
+                  <li id="item_3"></li>
+                  <li id="item_4"></li>
+                  <li id="item_5"></li>
+                  <li id="item_6"></li>
+                </ol>
+                   
+
+        </div>
+        
+        <div id="featured3" class="gradient" style="z-index:2; right: 0; bottom: 0; position: absolute;">
+    	
+        <table width="100%" border="0" class="dpstab">
+          <tr>
+            <td width="50%">Metrics:</td>
+            <td width="50%">Combined stats:</td>
+          </tr>
+          <tr>
+            <td width="50%" align="left" valign="top" scope="row">
+            	<pre id="metrics">
+                </pre>
+            </td>
+            <td width="50%" align="left" valign="top">
+            	<pre id="combined_stats">
+            	</pre>
+            </td>
+          </tr>
+        </table>
+       
+        </div>
+    -->
+</div>
+
+    <!--
+       <div class="content" style="width: 100%; z-index: 1; margin-right: 0px; padding-top: 0px; padding-right: 40%; padding-left: 20%; padding-bottom: 0px; float: left;"> 
+blah
+    </div>-->
+
+    <!--
+<section id="content" class="content body">
+	<aside id="featured" class="content body">
+        <h2>Inventory configuration</h2>
+        </aside>
+<aside id="featured" class="content body">
+
+
+
+</aside>
+ <div id="mygraph" style="width: 100%; height: 300px;"></div>
+ <div id="mygraph_ehp" style="width: 80%; height: 300px;  margin-left: auto;  margin-right: auto;"></div>
+</section>
+
+<div align=center>
+        <blockquote>
+          <p><em>28 items: 923810 valid build orders exist.</em></p>
+        </blockquote>
+        </div>
+        
+<div id='chart_div' style="width: 80%; height: 300px; margin-left: auto; margin-right: auto;">
+        </div>
+        
+<section id="content2" class="body content">
+ <article id="body2">
+        <h2>Suggested build order</h2>
+
+       
+        <div id="dpstab", class="dpstab">
+          <table width="80%">
+            <tr>
+              <th width="10%" scope="row">1000G</th>
+              <td width="90%">Long Sword &rarr; Long Sword  &rarr;</td>
+            </tr>
+            <tr>
+              <th scope="row">2000G</th>
+              <td>Brutalizer &rarr; Brawler's Gloves  &rarr;</td>
+            </tr>
+            <tr>
+              <th scope="row">3000G</th>
+              <td>Avarice Blade &rarr; Ghostblade</td>
+            </tr>
+          </table>
+    </div>
+         
+    
+          <h3>DPS distribution</h3>
+     
+        
+     
+        <div id="info"></div>
+  </article>
+</section>
+-->
+</body>
+</html>

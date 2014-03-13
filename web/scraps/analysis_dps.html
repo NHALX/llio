@@ -1,0 +1,29 @@
+       
+Assuming that DPS is calculated as:
+        $$ DPS_N = \text{AS}_n \left(\text{AD}_n+\text{bonus}_{\text{AD}}\right) \left(1+\text{bonus}_{\text{AS}}\right) \left(1+\text{bonus}_{\text{CC}}\right) $$
+        where:
+        $$AD_n = {base}_{AD} + (n-1) \cdot {perLV}_{AD}$$
+        $$AS_n = {base}_{AS} + (n-1) \cdot {perLV}_{AS}$$
+        $$AD = \text{attack damage}, AS = \text{attack speed}, CC = \text{critical hit chance.}$$
+        </p>
+        
+        Assuming that a unit increase of each stat costs: 
+        $$cost_{\{AD,AS,CC\}} = \{36, 33 \cdot 100, 50 \cdot 100 \} $$
+        We have dps as a function of gold spent:
+
+        $$DPS_{gold} = \text{AS}_n \left(\text{AD}_n+\frac{\text{gold}_{\text{AD}}}{36}\right) \left(1+\frac{\text{gold}_{\text{AS}}}{3300}\right) \left(1+\frac{\text{gold}_{\text{CC}}}{5000}\right) $$
+        
+        Note that the DPS function increases monotonically, so it does not have any extrema.
+        
+        <h2> Optimal gold allocation </h2>
+        Take the gradient vector:
+        $$ g = \nabla dps_{gold} = \{dps'_{{gold}_{(gold_{AS})}},dps'_{{gold}_{(gold_{CC})}},dps'_{{gold}_{(gold_{AD})}} \}$$
+        $$ g_0 = \text{List} $$
+        $$ g_1 = \frac{\text{AS}_n \left(\text{AD}_n+\frac{\text{gold}_{\text{AD}}}{36}\right) \left(1+\frac{\text{gold}_{\text{CC}}}{5000}\right)}{3300} $$
+        $$ g_2 = \frac{\text{AS}_n \left(\text{AD}_n+\frac{\text{gold}_{\text{AD}}}{36}\right) \left(1+\frac{\text{gold}_{\text{AS}}}{3300}\right)}{5000} $$
+        Solve the differential system:
+        $$ distro_{CC}[gold_{AD}]' = \frac{g_2}{g_1}, distro_{AS}[gold_{AD}]' = \frac{g_2}{g_0}$$
+        gives us: 
+		$$ \text{distro}_{\text{CC}}\left[\text{gold}_{\text{AD}}\right]\to -5000+C[1] \left(36 \text{AD}_n+\text{gold}_{\text{AD}}\right) $$ 
+		$$ \text{distro}_{\text{AS}}\left[\text{gold}_{\text{AD}}\right]\to -3300+C[2] \left(36 \text{AD}_n+\text{gold}_{\text{AD}}\right) $$ 	
+	

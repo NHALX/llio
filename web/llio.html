@@ -1,215 +1,215 @@
 <!DOCTYPE HTML>
+
 <html>
 <head>
+<link href="http://fonts.googleapis.com/css?family=Ubuntu+Mono:400|Quicksand:400|Anonymous+Pro:400|Josefin+Sans:400|Roboto:400,100italic,100,300italic,300,400italic,500italic,500,700italic,700,900italic,900" rel="stylesheet" type="text/css">
+
     <title>Graph demo</title>
 
-<link rel="stylesheet" href="llio.css" type="text/css" />
- 
+    <link rel="stylesheet" href="llio.css" type="text/css" />
     <script type="text/javascript" src="http://www.google.com/jsapi"></script>
-    <script type="text/javascript" src="lib/graph.js"></script>
-    <!--[if IE]><script type="text/javascript" src="../excanvas.js"></script><![endif]-->
-    <link rel="stylesheet" type="text/css" href="lib/graph.css">
-    <script type="text/javascript" src="lib/network.js"></script>
-
     <script type="text/javascript" src="data/db_items.js"></script>
     <script type="text/javascript" src="lib/misc.js"></script>
     <script type="text/javascript" src="league.js"></script>
     <script type="text/javascript" src="llio.js"></script>
- 
-<script type="text/javascript">
-var items = ["item_1","item_2","item_3","item_4","item_5","item_6"];
-
-function metricText(dps, sustain, durability, cost)
-{
-	return 'DPS: 468.00\n' + 'Sustain: 25.37\n' + 'Effective HP: 5800\n' + 'Cost: ' + cost + '\n';
-}
-function sumItems()
-{
-	var combined_stats = document.getElementById("combined_stats");
-	var metrics = document.getElementById("metrics");
-	var stats = {};
-	var total_cost = 0;
-	
-	for (var i = 0; i < items.length; i++) 
-	{
-		var text = document.getElementById(items[i]);
-		
-		if (text.firstChild != null && text.firstChild.data != null)
-		{
-			var itm = db_items[text.firstChild.data];
-
-			stats = NICOLA.merge(itm['stats'], stats);
-			stats = NICOLA.merge(itm['passive_stats'], stats);
-			total_cost += itm['total_cost'];
-			
-//			label.firstChild.data = c['id']; .innerHTML
-		}
-	}
-	
-	combined_stats.firstChild.data = NICOLA.showobject(stats) 
-	metrics.firstChild.data = metricText(0,0,0,total_cost);
-}
-
-function formAddItem()
-{
-	var item_selector = document.getElementById("item_selector");
-
-	for (var i = 0; i < items.length; i++) 
-	{
-		var text = document.getElementById(items[i]);
-		
-		if (text.firstChild == null)
-		{
-			var txt = document.createTextNode(item_selector.options[item_selector.selectedIndex].text);
-			var node = document.createElement("href")
-			node.style = "padding: 0; border: none; background: none;";
-			node.appendChild(document.createTextNode("\t\u2716"));
-			node.onclick = function()
-			{ 
-				text.removeChild(txt);
-				text.removeChild(node); 
-				sumItems();
-			}
-			
-			text.appendChild(txt);
-			text.appendChild(node);
-			break;
-		}
-	}
-    sumItems();
-	/*document.theForm.submit();*/
-}
+    <script type="text/javascript" src="llio_bp.js"></script>
+   <!-- 
+    <script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
 </script>
-    
+
+<script type="text/javascript"
+  src="lib/MathJax/MathJax.js?config=TeX-AMS_HTML">
+</script>
+-->
+<style type="text/css">
+
+    #inventory_list ol {list-style: none; margin: 0 auto; width: 400px;}
+	#inventory_list li {float: left; display: inline; margin: 0; padding-right:20px}
+</style>
+
 </head>
 
+<!---------------- top ----------------->
 <header id="banner" class="body">
-	<h1><a href="#">[G]Theory <br> <strong>Theorycraft and analysis: <ins>League of Legends</ins></strong></a></h1>
- 
-	<nav><ul>
-		<li class="active"><a href="#">intro</a></li>
-		<li><a href="#">optimize</a></li>
- 
-		<li><a href="#">data</a></li>
-		<li><a href="#">math</a></li>
-	</ul></nav>
- 
-</header><!-- /#banner -->	
+    <strong><a href="index.html">GTheory</a> | <a href="league.html">League of Legends</a></strong>
+	<nav>
+         <ul>
+         <li><a href="llio.html">optimizer</a></li>
+         <li><a href="analysis.html">analysis</a></li></ul>
+         <li><a href="data.html">data</a></li>
 
-<body id="index" class="home">
+    </nav>
+</header>
 
-	<aside id="featured" class="body"><article>
-		<figure>
-			<img src="images/logo.jpg" alt="Smashing Magazine" />
-		</figure>
-		<hgroup>
-			<h2>Combinatorial Optimization</h2>
-			<h3><a href="#">Item build order</a></h3>
-		</hgroup>
-		<p>Discover how to use Graceful Degradation and Progressive Enhancement techniques to achieve an outstanding, cross-browser <a href="http://dev.w3.org/html5/spec/Overview.html" rel="external">HTML5</a> and <a href="http://www.w3.org/TR/css3-roadmap/" rel="external">CSS3</a> website today!</p>
-	</article></aside><!-- /#featured -->
-    
+<!---------------- middle -----------------	
 
-<section id="content" class="content body">
-        <h2>Inventory configuration</h2>
-<aside id="featured" class="body">
+<body id="index">
+<div class="logo" style="margin-left: 60px">
+    <h1>[G]Theory <br> <strong>Theorycraft and analysis</strong></h1>
+</div>
+<div id="middle" class="gradient" style="width:100%; ">
 
+</div>
 
-  <div style="width: 50%; float: left;">      
-        <form>
-  Item: <select id="item_selector">
-    <script type="text/javascript">
-		var sel = document.getElementById("item_selector"); 
-    	var	item_names = get_item_names();
-		
-		for(var i = 0; i < item_names.length; i++) 
-		{
-			var opt = item_names[i];
-			var el = document.createElement("option");
-			el.textContent = opt;
-			el.value = opt;
-			sel.appendChild(el);
-		}
-	</script>
-</select>
-  <input type="button" value="Add" onClick="formAddItem()">
-</form>
+<br>
+class="gradient_horizontal_reverse" style="background:#111111;">
+<!---------------- bottom ----------------->
+<body id="index" >
+<div id="bottom" class="" style="width:100%; height:100%; position: relative"> <!--height:372px;-->
+        <div class="gradient widget" style="margin-left: auto; margin-right:auto; width:50%; ">
+            <div style="float:left; display:inline-block; padding: 10px;">
+            <h2> Input: Parameters </h2>
+            
+              <div style="float:left; display:inline-block; padding: 10px;">
+                  Per level scaling:
+                  <p>
+                  HPn: <input type="text" size="6" name="lname"><br>
+                  ARn: <input type="text" size="6" name="lname"><br>
+                  MRn: <input type="text" size="6" name="lname"><br>
+                  </p>
+              </div>
+              
+              <div style="float:left; display:inline-block; padding: 10px;">
+                  Enemy damage distribution:<br>
+                  <p>
 
-        <ol>
-       	  <li id="item_1"></li>
-          <li id="item_2"></li>
-          <li id="item_3"></li>
-          <li id="item_4"></li>
-          <li id="item_5"></li>
-          <li id="item_6"></li>
-        </ol>
-       
-	</div>
-    
-    	<div style="float: right; size: 50%; width: 50%;">
-        <table width="100%" border="0" class="dpstab">
-          <tr>
-            <td width="50%">Metrics:</td>
-            <td width="50%">Combined stats:</td>
-          </tr>
-          <tr>
-            <td width="50%" align="left" valign="top" scope="row">
-            	<pre id="metrics">
-                </pre>
-            </td>
-            <td width="50%" align="left" valign="top">
-            	<pre id="combined_stats">
-            	</pre>
-            </td>
-          </tr>
-        </table>
-			
+                  Physical % <input type="text" size="2" name="lname"><br>
+                  Magic % <input type="text" size="2" name="lname"><br>
+                  True % <input type="text" size="2" name="lname"><br>
+                  </p>
+                  <br>
+              </div>
+            </div>
+            <div style="float:left; display:inline-block; padding: 10px;">
+                        <h2> Input: inventory </h2>
+            
+
+              <form>
+              Item: 
+              <select id="item_selector">
+                <script type="text/javascript">
+                    var sel = document.getElementById("item_selector"); 
+                    var	item_names = get_item_names();
+                    
+                    for(var i = 0; i < item_names.length; i++) 
+                    {
+                        var opt = item_names[i];
+                        var el = document.createElement("option");
+                        el.textContent = opt;
+                        el.value = opt;
+                        sel.appendChild(el);
+                    }
+                </script>
+            </select>
+              <input type="button" value="Add" onClick="formAddItem()">
+            </form>
+            
+                <ol>
+                  <li id="item_1"></li>
+                  <li id="item_2"></li>
+                  <li id="item_3"></li>
+                  <li id="item_4"></li>
+                  <li id="item_5"></li>
+                  <li id="item_6"></li>
+                </ol>
+                   
+            </div>
+           
+            <table width="50%" border="0" class="dpstab">
+              <tr>
+                <td width="50%">Metrics:</td>
+                <td width="50%">Combined stats:</td>
+              </tr>
+              <tr>
+                <td width="50%" align="left" valign="top" scope="row">
+                    <pre id="metrics">
+                    </pre>
+                </td>
+                <td width="50%" align="left" valign="top">
+                    <pre id="combined_stats">
+                    </pre>
+                </td>
+              </tr>
+            </table>
+           
+                       <div align=center>
+                    <blockquote>
+                      <p><em>28 component items: 923810 valid build orders exist.</em></p>
+                    </blockquote>
+                    </div>
+          
         </div>
-        
 
- 
-</aside>
-</section>
-
-<div align=center>
-        <blockquote>
-          <p><em>28 items: 923810 valid build orders exist.</em></p>
-        </blockquote>
-        </div>
         
-<div id='chart_div' style="width: 80%; height: 300px; margin-left: auto; margin-right: auto;">
-        </div>
-        
-<section id="content2" class="body content">
- <article id="body2">
-        <h2>Suggested build order</h2>
+        <div id="featured2" class="gradient widget" style="margin-left: auto; margin-right:auto; width:50%; ">
 
-       
-        <div id="dpstab", class="dpstab">
-          <table width="80%">
-            <tr>
-              <th width="10%" scope="row">1000G</th>
-              <td width="90%">Long Sword &rarr; Long Sword  &rarr;</td>
-            </tr>
-            <tr>
-              <th scope="row">2000G</th>
-              <td>Brutalizer &rarr; Brawler's Gloves  &rarr;</td>
-            </tr>
-            <tr>
-              <th scope="row">3000G</th>
-              <td>Avarice Blade &rarr; Ghostblade</td>
-            </tr>
-          </table>
-    </div>
-         
-    
-          <h3>DPS distribution</h3>
+                
      
+                    
+           
+            <!--
+            
+             <div id="mygraph" style="width: 100%; height: 300px;"></div>
+             <div id="mygraph_ehp" style="width: 80%; height: 300px;  margin-left: auto;  margin-right: auto;"></div>
+             <div id='chart_div' style="width: 80%; height: 300px; margin-left: auto; margin-right: auto;">
+            
+            -->
+
+                    
+            
+              
+                    
+                    <h2>Suggested build order</h2>
+                    <div style="float:left; display:inline-block; padding:20px;">
+                    [ Back 1 | 1000G | 15min ]
+                    <ul>
+                    <li>Long Sword</li>
+                    <li>Long Sword</li>
+                    </ul>
+                    </div>
+                    <div style="float:left; display:inline-block; padding:20px;">
+                    [ Back 2 | 2000G | 25min ]
+                    <ul>
+                    <li>Brutalizer</li>
+                    <li>Brawlers Gloves</li>
+                    </ul>
+                    </div>
+                    <div style="float:left; display:inline-block; padding:20px;">
+                    [ Back 3 | 3000G | 35min ]
+                    <ul>
+                    <li>Avarice Blade</li>
+                    <li>Ghost Blade</li>
+                    </ul>
+                    </div>
+                    
+                     
+                
+
+            </div>     
+            <div id="featured2" class="gradient widget" style="margin-left: auto; margin-right:auto; width:50%; ">
+                      <h3>DPS distribution</h3>
+             
+                    <div id="mygraph" style="width: 100%; height: 300px;"></div>
+                 
+                    <div id="info"></div>
+            </div>
+        </div>  
+
         
-      <div id="mygraph"></div>
-        <div id="info"></div>
-  </article>
-</section>
+
+        
+
+</div> 
+        
+
+   
+
+    
+
+
 
 </body>
 </html>

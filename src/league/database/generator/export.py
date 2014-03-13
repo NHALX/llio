@@ -254,4 +254,4 @@ def js_output(file):
 }
 """)
 
-js_output("C:\\Users\\Media Markt\\Downloads\\graph-1.3.2\\data\\db_items.js")                
+js_output("D:\\GitRoot\\llio\\web\\data\\db_items.js")                

@@ -260,7 +260,7 @@ def _setItemStats(item, fileid, strings, db, output):
     #item.MagicPen      = get_f("MagicPenetration")
     #item.CDR           = get_f("PercentCooldownReduction")
     item.Armor         = get_i("Armor")
-    item.MagicRest     = get_i("MagicResist")
+    item.MagicResist   = get_i("MagicResist")
     #item.Tenacity      = get()
   
     #item.ResellValue   = get_f("ResellValue")

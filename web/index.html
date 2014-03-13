@@ -1,0 +1,185 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<link href="http://fonts.googleapis.com/css?family=Ubuntu+Mono:400|Quicksand:400|Anonymous+Pro:400|Josefin+Sans:400|Roboto:400,100italic,100,300italic,300,400italic,500italic,500,700italic,700,900italic,900" rel="stylesheet" type="text/css">
+
+    <title>Graph demo</title>
+
+<link rel="stylesheet" href="llio.css" type="text/css" />
+ 
+    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+    <script type="text/javascript" src="lib/graph.js"></script>
+    <script type="text/javascript" src="lib/graph3d.js"></script>
+<!--[if IE]><script type="text/javascript" src="../excanvas.js"></script><![endif]-->
+    <link rel="stylesheet" type="text/css" href="lib/graph.css">
+    <script type="text/javascript" src="lib/network.js"></script>
+
+    <script type="text/javascript" src="data/db_items.js"></script>
+    <script type="text/javascript" src="lib/misc.js"></script>
+    <script type="text/javascript" src="league.js"></script>
+    <script type="text/javascript" src="llio.js"></script>
+    <script type="text/javascript" src="llio_html.js"></script>
+</head>
+
+<!---------------- top ----------------->	
+
+<div class="logo" style="margin-left: 60px">
+    <h1>[G]Theory <br> <strong>Theorycraft and analysis</strong></h1>
+</div>
+<!---------------- middle ----------------->	
+
+<body id="index">
+
+<div id="middle" class="" style="width:100%; ">
+	<img style="display: block;margin-left: auto; margin-right: auto" width="100%" src="images/banner.png"  alt=""/>
+</div>
+
+<br>
+
+<!---------------- bottom ----------------->
+<div id="bottom" class="gradient" style="width:100%;  position: absolute "> <!--height:372px;-->
+    
+    <div id="sidebar_container" style="float: left; position: relative; z-index: 2;"> 
+        <div id="featured2" class="gradient widget sidebox" style="">
+
+            <strong>Theorycraft</strong>
+            <p>
+            A form of applied game theory; the mathematical analysis of game mechanics to discover strategies and tactics that maximize player effectiveness.
+            fields: statistics, operations research, modeling, analytical/combinatorial optimization, simulation.
+
+            </p>
+
+        </div>
+
+        <div id="featured2" class="gradient widget sidebox" style="float:left;">
+            <strong> Goals</strong><p>
+                Providing a framework which facilitates detailed analysis of optimal strategy, and resource allocation, 
+                in the context of today's popular games; and to provoke the reader to learn, participate, refine, and develop novel solutions.</p>
+        </div>
+        
+
+    </div>    
+        <div id="featured3" class="gradient widget sidebox" style="float: left;">
+        
+            <strong>Current games</strong>
+            <p>
+            <strong><a href="league.html">League of Legends</a></strong><br> 
+            Company: Riot Games <br> 
+            Type: MOBA <br>
+            </p>
+        
+            <img align="left" src="images/league_singed.png" alt=""/>
+        
+        </div>
+
+    
+</div>
+    <!--
+       <div class="content" style="width: 100%; z-index: 1; margin-right: 0px; padding-top: 0px; padding-right: 40%; padding-left: 20%; padding-bottom: 0px; float: left;"> 
+blah
+    </div>-->
+
+<!--
+<section id="content" class="content body">
+	<aside id="featured" class="content body">
+        <h2>Inventory configuration</h2>
+        </aside>
+<aside id="featured" class="content body">
+
+
+  <div style="width: 50%; float: left;">      
+        <form>
+  Item: <select id="item_selector">
+    <script type="text/javascript">
+		var sel = document.getElementById("item_selector"); 
+    	var	item_names = get_item_names();
+		
+		for(var i = 0; i < item_names.length; i++) 
+		{
+			var opt = item_names[i];
+			var el = document.createElement("option");
+			el.textContent = opt;
+			el.value = opt;
+			sel.appendChild(el);
+		}
+	</script>
+</select>
+  <input type="button" value="Add" onClick="formAddItem()">
+</form>
+
+        <ol>
+       	  <li id="item_1"></li>
+          <li id="item_2"></li>
+          <li id="item_3"></li>
+          <li id="item_4"></li>
+          <li id="item_5"></li>
+          <li id="item_6"></li>
+        </ol>
+       
+	</div>
+    
+    	<div style="float: right; size: 50%; width: 50%;">
+        <table width="100%" border="0" class="dpstab">
+          <tr>
+            <td width="50%">Metrics:</td>
+            <td width="50%">Combined stats:</td>
+          </tr>
+          <tr>
+            <td width="50%" align="left" valign="top" scope="row">
+            	<pre id="metrics">
+                </pre>
+            </td>
+            <td width="50%" align="left" valign="top">
+            	<pre id="combined_stats">
+            	</pre>
+            </td>
+          </tr>
+        </table>
+        </div>
+</aside>
+ <div id="mygraph" style="width: 100%; height: 300px;"></div>
+ <div id="mygraph_ehp" style="width: 80%; height: 300px;  margin-left: auto;  margin-right: auto;"></div>
+</section>
+
+<div align=center>
+        <blockquote>
+          <p><em>28 items: 923810 valid build orders exist.</em></p>
+        </blockquote>
+        </div>
+        
+<div id='chart_div' style="width: 80%; height: 300px; margin-left: auto; margin-right: auto;">
+        </div>
+        
+<section id="content2" class="body content">
+ <article id="body2">
+        <h2>Suggested build order</h2>
+
+       
+        <div id="dpstab", class="dpstab">
+          <table width="80%">
+            <tr>
+              <th width="10%" scope="row">1000G</th>
+              <td width="90%">Long Sword &rarr; Long Sword  &rarr;</td>
+            </tr>
+            <tr>
+              <th scope="row">2000G</th>
+              <td>Brutalizer &rarr; Brawler's Gloves  &rarr;</td>
+            </tr>
+            <tr>
+              <th scope="row">3000G</th>
+              <td>Avarice Blade &rarr; Ghostblade</td>
+            </tr>
+          </table>
+    </div>
+         
+    
+          <h3>DPS distribution</h3>
+     
+        
+     
+        <div id="info"></div>
+  </article>
+</section>
+-->
+</body>
+</html>

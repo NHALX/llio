@@ -1,0 +1,194 @@
+< file: D:\Dargon\output_dump\DATA\Spells\IreliaTranscendentBlades.inibin >
+< format-ver: 2 >
+< types-mask: 0x1037 >
+< sizes: (symtab=706, total=1697) >
+
+| KEY        | VALUE                                    | TYPE                
+| 0x036ea71d Unknown              | True                                     | FMT_BITFIELD        
+| 0x03ec3253 Effect4AmountLV4     | False                                    | FMT_BITFIELD        
+| 0x050125da Unknown              | False                                    | FMT_BITFIELD        
+| 0x05791117 Unknown              | AnnieSparks.troy                         | FMT_OFFSET          
+| 0x08930877 Unknown              | 0.0000 0.0000 0.0000                     | FMT_OFFSET          
+| 0x0d8f03d3 Effect3AmountLV5     | False                                    | FMT_BITFIELD        
+| 0x0e284e9b Unknown              | 0                                        | FMT_OFFSET          
+| 0x12303e4d Unknown              | False                                    | FMT_BITFIELD        
+| 0x12500410 Unknown              | 0                                        | FMT_OFFSET          
+| 0x13cdfccb Unknown              | 10000.0000                               | FMT_OFFSET          
+| 0x13cdfccc Unknown              | 10000.0000                               | FMT_OFFSET          
+| 0x13cdfccd Unknown              | 10000.0000                               | FMT_OFFSET          
+| 0x13cdfcce Unknown              | 10000.0000                               | FMT_OFFSET          
+| 0x13cdfccf Unknown              | 10000.0000                               | FMT_OFFSET          
+| 0x13cdfcd0 Unknown              | 1200.0000                                | FMT_OFFSET          
+| 0x15e8fb50 Unknown              | 0                                        | FMT_OFFSET          
+| 0x1731d553 Unknown              | False                                    | FMT_BITFIELD        
+| 0x1802665f Unknown              | False                                    | FMT_BITFIELD        
+| 0x18026660 Unknown              | False                                    | FMT_BITFIELD        
+| 0x18026661 Unknown              | False                                    | FMT_BITFIELD        
+| 0x18026662 Unknown              | False                                    | FMT_BITFIELD        
+| 0x18026663 Unknown              | False                                    | FMT_BITFIELD        
+| 0x18026664 Unknown              | False                                    | FMT_BITFIELD        
+| 0x1b535f81 Unknown              | 0                                        | FMT_OFFSET          
+| 0x1bd30fcd Effect1AmountLV1     | 80.0000                                  | FMT_OFFSET          
+| 0x1dab6ac1 Unknown              | False                                    | FMT_BITFIELD        
+| 0x20004c61 AppliesOnHit         | True                                     | FMT_BITFIELD        
+| 0x241e7252 Effect5AmountLV2     | False                                    | FMT_BITFIELD        
+| 0x24b76d11 Unknown              | False                                    | FMT_BITFIELD        
+| 0x24b76d12 Unknown              | False                                    | FMT_BITFIELD        
+| 0x24b76d13 Unknown              | False                                    | FMT_BITFIELD        
+| 0x24b76d14 Unknown              | False                                    | FMT_BITFIELD        
+| 0x24b76d15 Unknown              | False                                    | FMT_BITFIELD        
+| 0x2950e937 Unknown              | Level 2                                  | FMT_OFFSET          
+| 0x2c1c7d1c Unknown              | 0                                        | FMT_OFFSET          
+| 0x2dc143d2 Effect4AmountLV3     | False                                    | FMT_BITFIELD        
+| 0x325c8a5a Unknown              | False                                    | FMT_BITFIELD        
+| 0x325d30bd Scaling1             | 0.5                                      | FMT_U8_PT           
+| 0x37641552 Effect3AmountLV4     | False                                    | FMT_BITFIELD        
+| 0x3852c5e3 Unknown              | 0                                        | FMT_OFFSET          
+| 0x3902653b Unknown              | Level 6                                  | FMT_OFFSET          
+| 0x4106e6d2 Effect2AmountLV5     | False                                    | FMT_BITFIELD        
+| 0x426dde0a Unknown              | C_BuffBone_Glb_Center_Loc                | FMT_OFFSET          
+| 0x4395f889 Unknown              | 1200.0000                                | FMT_OFFSET          
+| 0x45a8214c Unknown              | False                                    | FMT_BITFIELD        
+| 0x4690dedf Unknown              | 0                                        | FMT_OFFSET          
+| 0x4690dee0 Unknown              | 2                                        | FMT_U8              
+| 0x4690dee1 Unknown              | 2                                        | FMT_U8              
+| 0x4690dee2 Unknown              | 2                                        | FMT_U8              
+| 0x4690dee3 Unknown              | 2                                        | FMT_U8              
+| 0x4690dee4 Unknown              | 2                                        | FMT_U8              
+| 0x479a1b20 Unknown              | AnnieBasicAttack_mis.troy                | FMT_OFFSET          
+| 0x494f9223 FlatCooldown         | 60.0000                                  | FMT_OFFSET          
+| 0x4aa9b852 Unknown              | False                                    | FMT_BITFIELD        
+| 0x4c31b437 Unknown              | False                                    | FMT_BITFIELD        
+| 0x4df383d1 Effect5AmountLV1     | False                                    | FMT_BITFIELD        
+| 0x552e6d92 Unknown              | 0                                        | FMT_OFFSET          
+| 0x56cff119 Unknown              | 779.9000244140625                        | FMT_FLOAT           
+| 0x57965551 Effect4AmountLV2     | False                                    | FMT_BITFIELD        
+| 0x5b916d2c Unknown              | 0                                        | FMT_OFFSET          
+| 0x5c04524b Unknown              | 0                                        | FMT_OFFSET          
+| 0x613926d1 Effect3AmountLV3     | False                                    | FMT_BITFIELD        
+| 0x681c7297 SpellSlot            | Spell4                                   | FMT_OFFSET          
+| 0x6990acaa Unknown              | False                                    | FMT_BITFIELD        
+| 0x6a07de97 Unknown              | True                                     | FMT_BITFIELD        
+| 0x6adbf851 Effect2AmountLV4     | False                                    | FMT_BITFIELD        
+| 0x6b9e52d5 Name                 | game_spell_displayname_IreliaTranscendentBlades | FMT_OFFSET          
+| 0x6d0a0522 TargetFlags          | Instacast | AffectFriends | AffectHeroes | AlwaysSelf | FMT_OFFSET          
+| 0x6d3d4838 Unknown              | Level 3                                  | FMT_OFFSET          
+| 0x70176eac Unknown              | False                                    | FMT_BITFIELD        
+| 0x73204756 Unknown              | 0                                        | FMT_OFFSET          
+| 0x73f0b6bb Unknown              | 0                                        | FMT_OFFSET          
+| 0x747ec9d1 Effect1AmountLV5     | False                                    | FMT_BITFIELD        
+| 0x77c89550 Unknown              | False                                    | FMT_BITFIELD        
+| 0x796a8786 Unknown              | False                                    | FMT_BITFIELD        
+| 0x7ac339dd ImageFileName        | Irelia_TranscendentBlades.dds            | FMT_OFFSET          
+| 0x7cca2c56 Unknown              | False                                    | FMT_BITFIELD        
+| 0x7d70eccb Unknown              | 100.0000                                 | FMT_OFFSET          
+| 0x804cd25a Unknown              | 0                                        | FMT_OFFSET          
+| 0x816b66d0 Unknown              | False                                    | FMT_BITFIELD        
+| 0x828e83ba Unknown              | 0                                        | FMT_OFFSET          
+| 0x82f1f008 Unknown              | False                                    | FMT_BITFIELD        
+| 0x831ef894 Unknown              |                                          | FMT_OFFSET          
+| 0x8345eb92 Unknown              | False                                    | FMT_BITFIELD        
+| 0x86788e0d Unknown              | 0                                        | FMT_OFFSET          
+| 0x8689f672 Unknown              | kayle_ability_righteous_fury_cast.wav    | FMT_OFFSET          
+| 0x885bea91 Unknown              | game_buff_tooltip_IreliaTranscendentBlades | FMT_OFFSET          
+| 0x88cc033d Unknown              | weapon                                   | FMT_OFFSET          
+| 0x88dde704 Unknown              | 0                                        | FMT_OFFSET          
+| 0x897ef7f7 Unknown              | 0                                        | FMT_OFFSET          
+| 0x8a05f8b9 Unknown              | 45.0000                                  | FMT_OFFSET          
+| 0x8a32df02 Unknown              | 0                                        | FMT_OFFSET          
+| 0x8b0e3850 Unknown              | False                                    | FMT_BITFIELD        
+| 0x8b4cdd97 Unknown              | 0                                        | FMT_OFFSET          
+| 0x8e7f2751 Unknown              | 0                                        | FMT_OFFSET          
+| 0x94b109d0 Effect2AmountLV3     | False                                    | FMT_BITFIELD        
+| 0x95abfeb5 Unknown              | 0.7                                      | FMT_U8_PT           
+| 0x95cb76f7 Unknown              | False                                    | FMT_BITFIELD        
+| 0x95cb76f8 Unknown              | False                                    | FMT_BITFIELD        
+| 0x95cb76f9 Unknown              | False                                    | FMT_BITFIELD        
+| 0x95cb76fa Unknown              | False                                    | FMT_BITFIELD        
+| 0x95cb76fb Unknown              | False                                    | FMT_BITFIELD        
+| 0x95cb76fc Unknown              | False                                    | FMT_BITFIELD        
+| 0x9644d8e8 Unknown              | True                                     | FMT_BITFIELD        
+| 0x96da0628 Unknown              | 1000.0000                                | FMT_OFFSET          
+| 0x987f0010 Unknown              | False                                    | FMT_BITFIELD        
+| 0x9a34c4ef Target               | none                                     | FMT_OFFSET          
+| 0x9aabda72 Unknown              | False                                    | FMT_BITFIELD        
+| 0x9aabda73 Unknown              | False                                    | FMT_BITFIELD        
+| 0x9aabda74 Unknown              | False                                    | FMT_BITFIELD        
+| 0x9aabda75 Unknown              | False                                    | FMT_BITFIELD        
+| 0x9aabda76 Unknown              | False                                    | FMT_BITFIELD        
+| 0x9aabda77 Unknown              | False                                    | FMT_BITFIELD        
+| 0x9b781f03 Unknown              | 779.9000244140625                        | FMT_FLOAT           
+| 0x9cb7f6ce CooldownLV1          | 70.0000                                  | FMT_OFFSET          
+| 0x9cb7f6cf CooldownLV2          | 60.0000                                  | FMT_OFFSET          
+| 0x9cb7f6d0 CooldownLV3          | 50.0000                                  | FMT_OFFSET          
+| 0x9cb7f6d1 CooldownLV4          | 75.0000                                  | FMT_OFFSET          
+| 0x9cb7f6d2 CooldownLV5          | 75.0000                                  | FMT_OFFSET          
+| 0x9cb7f6d3 Unknown              | 60.0000                                  | FMT_OFFSET          
+| 0x9d0dacfc Description          | game_spell_tooltip_IreliaTranscendentBlades | FMT_OFFSET          
+| 0x9d2e66f1 Unknown              | 6                                        | FMT_U8              
+| 0x9e53db50 Effect1AmountLV4     | False                                    | FMT_BITFIELD        
+| 0x9f221e9f Unknown              | Disintegrate_mis.troy                    | FMT_OFFSET          
+| 0xa09c5a07 Unknown              | 6                                        | FMT_U8              
+| 0xa3a954ef Unknown              | 100.0000                                 | FMT_OFFSET          
+| 0xa61a362b Unknown              | False                                    | FMT_BITFIELD        
+| 0xa69f3dd5 Unknown              | False                                    | FMT_BITFIELD        
+| 0xab40784f Unknown              | False                                    | FMT_BITFIELD        
+| 0xac791d16 Unknown              | none.wav                                 | FMT_OFFSET          
+| 0xaee0e6da Unknown              | False                                    | FMT_BITFIELD        
+| 0xb0420f55 Unknown              | False                                    | FMT_BITFIELD        
+| 0xb0b51d2e Unknown              | 0                                        | FMT_OFFSET          
+| 0xb0b51d2f Unknown              | 2                                        | FMT_U8              
+| 0xb0b51d30 Unknown              | 2                                        | FMT_U8              
+| 0xb0b51d31 Unknown              | 2                                        | FMT_U8              
+| 0xb0b51d32 Unknown              | 2                                        | FMT_U8              
+| 0xb0b51d33 Unknown              | 2                                        | FMT_U8              
+| 0xb0c69808 Unknown              | -0.5                                     | FMT_FLOAT           
+| 0xb129a739 Unknown              | Level 4                                  | FMT_OFFSET          
+| 0xb4e349cf Unknown              | False                                    | FMT_BITFIELD        
+| 0xb4fc974f Unknown              | 329764                                   | FMT_U32             
+| 0xb8429e6d Unknown              | IreliaTranscendentBlades                 | FMT_OFFSET          
+| 0xb877a631 Unknown              | False                                    | FMT_BITFIELD        
+| 0xb95c8c5a Unknown              | True                                     | FMT_BITFIELD        
+| 0xbb71873f Unknown              | -0.5                                     | FMT_FLOAT           
+| 0xbe861b4f Effect2AmountLV2     | False                                    | FMT_BITFIELD        
+| 0xc465dd76 Unknown              | 7.5                                      | FMT_U8_PT           
+| 0xc4b95440 Unknown              | False                                    | FMT_BITFIELD        
+| 0xc68fa340 Unknown              | game_spell_levelup_IreliaTranscendentBlades | FMT_OFFSET          
+| 0xc7dc7771 Unknown              | 779.9000244140625                        | FMT_FLOAT           
+| 0xc828eccf Effect1AmountLV3     | 160.0000                                 | FMT_OFFSET          
+| 0xca91ecd2 Unknown              | 0                                        | FMT_OFFSET          
+| 0xcabce8f2 Unknown              | AOE.tga                                  | FMT_OFFSET          
+| 0xcc8dee24 FlavorText           | game_spell_description_IreliaTranscendentBlades | FMT_OFFSET          
+| 0xd0744f54 Unknown              | False                                    | FMT_BITFIELD        
+| 0xd08392f7 Unknown              | True                                     | FMT_BITFIELD        
+| 0xd4aba7db Unknown              |                                          | FMT_OFFSET          
+| 0xda1720d4 Unknown              | False                                    | FMT_BITFIELD        
+| 0xdb41b812 Unknown              | 0                                        | FMT_OFFSET          
+| 0xdbfb668d Unknown              | 0                                        | FMT_OFFSET          
+| 0xdeb85b4e Unknown              | False                                    | FMT_BITFIELD        
+| 0xe0cff2a5 ManaLV1              | 100.0000                                 | FMT_OFFSET          
+| 0xe0cff2a6 ManaLV2              | 100.0000                                 | FMT_OFFSET          
+| 0xe0cff2a7 ManaLV3              | 100.0000                                 | FMT_OFFSET          
+| 0xe0cff2a8 ManaLV4              | 250.0000                                 | FMT_OFFSET          
+| 0xe0cff2a9 ManaLV5              | 300.0000                                 | FMT_OFFSET          
+| 0xe0cff2aa Unknown              | False                                    | FMT_BITFIELD        
+| 0xe0de5a2d Unknown              | False                                    | FMT_BITFIELD        
+| 0xe2e73ce6 Range                | 1200.0000                                | FMT_OFFSET          
+| 0xe3b9f254 Unknown              | False                                    | FMT_BITFIELD        
+| 0xe3cf25d5 Unknown              | False                                    | FMT_BITFIELD        
+| 0xe5648a36 Unknown              | Level 1                                  | FMT_OFFSET          
+| 0xe7f4857f Unknown              | False                                    | FMT_BITFIELD        
+| 0xe85b2cce Effect2AmountLV1     | False                                    | FMT_BITFIELD        
+| 0xeb7209b4 Unknown              | 0                                        | FMT_OFFSET          
+| 0xed06b7e0 Unknown              | True                                     | FMT_BITFIELD        
+| 0xefbaaa01 Unknown              |                                          | FMT_OFFSET          
+| 0xf1244d92 Unknown              | 450.0000                                 | FMT_OFFSET          
+| 0xf1e4103f Unknown              | 1.0000                                   | FMT_OFFSET          
+| 0xf1e5aabf Unknown              | False                                    | FMT_BITFIELD        
+| 0xf1fdfe4e Effect1AmountLV2     | 120.0000                                 | FMT_OFFSET          
+| 0xf516063a Unknown              | Level 5                                  | FMT_OFFSET          
+| 0xf7c5e6d0 Unknown              |                                          | FMT_OFFSET          
+| 0xf85da951 Unknown              | 0                                        | FMT_OFFSET          
+| 0xfa4960d3 Unknown              | False                                    | FMT_BITFIELD        
+| 0xff12449e Unknown              | 0                                        | FMT_OFFSET          
+| 0xff650084 Unknown              | 0                                        | FMT_OFFSET          

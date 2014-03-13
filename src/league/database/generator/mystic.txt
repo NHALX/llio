@@ -1,0 +1,116 @@
+< file: D:\Dargon\output_dump\DATA\Spells\EzrealMysticShot.inibin >
+< format-ver: 2 >
+< types-mask: 0x1037 >
+< sizes: (symtab=541, total=1158) >
+
+| KEY        | VALUE                                    | TYPE                
+| 0x036ea71d Unknown              | True                                     | FMT_BITFIELD        
+| 0x05791117 Unknown              |                                          | FMT_OFFSET          
+| 0x08930877 Unknown              | 0.0000 0.0000 0.0000                     | FMT_OFFSET          
+| 0x0d8f03d3 Effect3AmountLV5     | False                                    | FMT_BITFIELD        
+| 0x0e284e9b Unknown              | 0                                        | FMT_OFFSET          
+| 0x10a0151c Unknown              | DefaultRangeIndicator.dds                | FMT_OFFSET          
+| 0x12303e4d Unknown              | False                                    | FMT_BITFIELD        
+| 0x12500410 Unknown              | 0                                        | FMT_OFFSET          
+| 0x15e8fb50 Unknown              | 0                                        | FMT_OFFSET          
+| 0x1802665f Unknown              | False                                    | FMT_BITFIELD        
+| 0x18026660 Unknown              | False                                    | FMT_BITFIELD        
+| 0x18026661 Unknown              | False                                    | FMT_BITFIELD        
+| 0x18026662 Unknown              | False                                    | FMT_BITFIELD        
+| 0x18026663 Unknown              | False                                    | FMT_BITFIELD        
+| 0x1b535f81 Unknown              | 0                                        | FMT_OFFSET          
+| 0x1bd30fcd Effect1AmountLV1     | 35.0000                                  | FMT_OFFSET          
+| 0x20004c61 AppliesOnHit         | True                                     | FMT_BITFIELD        
+| 0x2950e937 Unknown              | Level 2                                  | FMT_OFFSET          
+| 0x325d30bd Scaling1             | 1.0000                                   | FMT_OFFSET          
+| 0x37641552 Effect3AmountLV4     | False                                    | FMT_BITFIELD        
+| 0x3852c5e3 Unknown              | 0                                        | FMT_OFFSET          
+| 0x4106e6d2 Effect2AmountLV5     | False                                    | FMT_BITFIELD        
+| 0x426dde0a Unknown              |                                          | FMT_OFFSET          
+| 0x4395f889 Unknown              | 210.0000                                 | FMT_OFFSET          
+| 0x45a8214c Unknown              | False                                    | FMT_BITFIELD        
+| 0x4690dedf Unknown              | 0                                        | FMT_OFFSET          
+| 0x4690dee0 Unknown              | 0                                        | FMT_OFFSET          
+| 0x4690dee1 Unknown              | 0                                        | FMT_OFFSET          
+| 0x479a1b20 Unknown              |                                          | FMT_OFFSET          
+| 0x494f9223 FlatCooldown         | False                                    | FMT_BITFIELD        
+| 0x56cff119 Unknown              | 1200.0000                                | FMT_OFFSET          
+| 0x613926d1 Effect3AmountLV3     | False                                    | FMT_BITFIELD        
+| 0x681c7297 SpellSlot            | Attack1                                  | FMT_OFFSET          
+| 0x6a07de97 Unknown              | True                                     | FMT_BITFIELD        
+| 0x6adbf851 Effect2AmountLV4     | False                                    | FMT_BITFIELD        
+| 0x6b9e52d5 Name                 | game_spell_displayname_EzrealMysticShot  | FMT_OFFSET          
+| 0x6d0a0522 TargetFlags          | Instacast | AffectEnemies | AffectFriends | AffectNeutral | AffectHeroes | AlwaysSelf | FMT_OFFSET          
+| 0x6d3d4838 Unknown              | Level 3                                  | FMT_OFFSET          
+| 0x70176eac Unknown              | False                                    | FMT_BITFIELD        
+| 0x73204756 Unknown              | 0                                        | FMT_OFFSET          
+| 0x747ec9d1 Effect1AmountLV5     | 115.0000                                 | FMT_OFFSET          
+| 0x7ac339dd ImageFileName        | Ezreal_MysticShot.dds                    | FMT_OFFSET          
+| 0x804cd25a Unknown              | 0                                        | FMT_OFFSET          
+| 0x828e83ba Unknown              | 0                                        | FMT_OFFSET          
+| 0x82f1f008 Unknown              | False                                    | FMT_BITFIELD        
+| 0x831ef894 Unknown              |                                          | FMT_OFFSET          
+| 0x8345eb92 Unknown              | False                                    | FMT_BITFIELD        
+| 0x86788e0d Unknown              | 0                                        | FMT_OFFSET          
+| 0x88cc033d Unknown              |                                          | FMT_OFFSET          
+| 0x88dde704 Unknown              | 0                                        | FMT_OFFSET          
+| 0x897ef7f7 Unknown              | True                                     | FMT_BITFIELD        
+| 0x8a05f8b9 Unknown              | 45.0000                                  | FMT_OFFSET          
+| 0x8a32df02 Unknown              | 0                                        | FMT_OFFSET          
+| 0x8b0e3850 Unknown              | False                                    | FMT_BITFIELD        
+| 0x8e7f2751 Unknown              | 0                                        | FMT_OFFSET          
+| 0x94b109d0 Effect2AmountLV3     | False                                    | FMT_BITFIELD        
+| 0x95cb76f7 Unknown              | False                                    | FMT_BITFIELD        
+| 0x95cb76f8 Unknown              | False                                    | FMT_BITFIELD        
+| 0x95cb76f9 Unknown              | False                                    | FMT_BITFIELD        
+| 0x95cb76fa Unknown              | False                                    | FMT_BITFIELD        
+| 0x95cb76fb Unknown              | False                                    | FMT_BITFIELD        
+| 0x96da0628 Unknown              | 1150.0000                                | FMT_OFFSET          
+| 0x9a34c4ef Target               | friend                                   | FMT_OFFSET          
+| 0x9cb7f6ce CooldownLV1          | 6.0000                                   | FMT_OFFSET          
+| 0x9cb7f6cf CooldownLV2          | 5.5                                      | FMT_U8_PT           
+| 0x9cb7f6d0 CooldownLV3          | 5.0000                                   | FMT_OFFSET          
+| 0x9cb7f6d1 CooldownLV4          | 4.5                                      | FMT_U8_PT           
+| 0x9cb7f6d2 CooldownLV5          | 4.0000                                   | FMT_OFFSET          
+| 0x9d0dacfc Description          | game_spell_tooltip_EzrealMysticShot      | FMT_OFFSET          
+| 0x9d2e66f1 Unknown              | 6                                        | FMT_U8              
+| 0x9e53db50 Effect1AmountLV4     | 95.0000                                  | FMT_OFFSET          
+| 0x9f221e9f Unknown              |                                          | FMT_OFFSET          
+| 0xa09c5a07 Unknown              | 0                                        | FMT_OFFSET          
+| 0xa3a954ef Unknown              | 100.0000                                 | FMT_OFFSET          
+| 0xaee0e6da Unknown              | 80.0000                                  | FMT_OFFSET          
+| 0xb0c69808 Unknown              | -0.5                                     | FMT_FLOAT           
+| 0xb129a739 Unknown              | Level 4                                  | FMT_OFFSET          
+| 0xb4e349cf Unknown              | False                                    | FMT_BITFIELD        
+| 0xb4fc974f Unknown              | 347136                                   | FMT_U32             
+| 0xb95c8c5a Unknown              | True                                     | FMT_BITFIELD        
+| 0xbb71873f Unknown              | -0.5                                     | FMT_FLOAT           
+| 0xbe861b4f Effect2AmountLV2     | False                                    | FMT_BITFIELD        
+| 0xc465dd76 Unknown              | 1.9800000190734863                       | FMT_FLOAT           
+| 0xc4b95440 Unknown              | False                                    | FMT_BITFIELD        
+| 0xc68fa340 Unknown              | game_spell_levelup_EzrealMysticShot      | FMT_OFFSET          
+| 0xc828eccf Effect1AmountLV3     | 75.0000                                  | FMT_OFFSET          
+| 0xca91ecd2 Unknown              | 0                                        | FMT_OFFSET          
+| 0xcc8dee24 FlavorText           | game_spell_description_EzrealMysticShot  | FMT_OFFSET          
+| 0xd08392f7 Unknown              | 0                                        | FMT_OFFSET          
+| 0xd4aba7db Unknown              |                                          | FMT_OFFSET          
+| 0xdb41b812 Unknown              | 0                                        | FMT_OFFSET          
+| 0xdbfb668d Unknown              | 0                                        | FMT_OFFSET          
+| 0xdeb85b4e Unknown              | False                                    | FMT_BITFIELD        
+| 0xe0cff2a5 ManaLV1              | 28.0000                                  | FMT_OFFSET          
+| 0xe0cff2a6 ManaLV2              | 31.0000                                  | FMT_OFFSET          
+| 0xe0cff2a7 ManaLV3              | 34.0000                                  | FMT_OFFSET          
+| 0xe0cff2a8 ManaLV4              | 37.0000                                  | FMT_OFFSET          
+| 0xe0cff2a9 ManaLV5              | 40.0000                                  | FMT_OFFSET          
+| 0xe2e73ce6 Range                | 10000.0000                               | FMT_OFFSET          
+| 0xe3cf25d5 Unknown              | False                                    | FMT_BITFIELD        
+| 0xe5648a36 Unknown              | Level 1                                  | FMT_OFFSET          
+| 0xe85b2cce Effect2AmountLV1     | False                                    | FMT_BITFIELD        
+| 0xed06b7e0 Unknown              | True                                     | FMT_BITFIELD        
+| 0xefbaaa01 Unknown              |                                          | FMT_OFFSET          
+| 0xf1244d92 Unknown              | 450.0000                                 | FMT_OFFSET          
+| 0xf1e4103f Unknown              | 1.0000                                   | FMT_OFFSET          
+| 0xf1fdfe4e Effect1AmountLV2     | 55.0000                                  | FMT_OFFSET          
+| 0xf516063a Unknown              | Level 5                                  | FMT_OFFSET          
+| 0xf85da951 Unknown              | 0                                        | FMT_OFFSET          
+| 0xff12449e Unknown              | 0                                        | FMT_OFFSET          
